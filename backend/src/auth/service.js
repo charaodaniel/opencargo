@@ -54,7 +54,7 @@ export class AuthService {
 
   async me(userId) {
     const user = queryOne(
-      `SELECT id, name, email, role, created_at FROM users WHERE id = ?`,
+      `SELECT id, name, email, role, phone, created_at FROM users WHERE id = ?`,
       [userId]
     );
 
