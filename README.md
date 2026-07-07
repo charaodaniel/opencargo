@@ -4,6 +4,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
+[![Tests](https://img.shields.io/badge/Tests-38%20passing-brightgreen)](https://github.com/charaodaniel/opencargo)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)](https://www.postgresql.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](docs/CONTRIBUTING.md)
+[![GitHub last commit](https://img.shields.io/github/last-commit/charaodaniel/opencargo)](https://github.com/charaodaniel/opencargo/commits/master)
+[![GitHub stars](https://img.shields.io/github/stars/charaodaniel/opencargo?style=social)](https://github.com/charaodaniel/opencargo)
 
 ---
 
