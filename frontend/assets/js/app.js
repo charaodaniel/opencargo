@@ -20,9 +20,42 @@ const App = {
     const isLoggedIn = Storage.isLoggedIn();
 
     if (isLoggedIn) {
-      await this._renderApp();
+      // Valida o token com a API antes de renderizar o app
+      const tokenValid = await this._validateToken();
+      if (tokenValid) {
+        await this._renderApp();
+      } else {
+        Storage.logout();
+        this._renderLanding();
+      }
     } else {
       this._renderLanding();
+    }
+  },
+
+  /**
+   * Valida o token JWT com o backend
+   * @returns {Promise<boolean>}
+   */
+  async _validateToken() {
+    try {
+      const token = Storage.getToken();
+      if (!token) return false;
+
+      const res = await fetch(`${CONFIG.API_BASE_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) return false;
+
+      const user = await res.json();
+      Storage.setUser(user);
+      return true;
+    } catch {
+      // Se a API não estiver disponível (dev), mantém sessão local
+      return Storage.isLoggedIn();
     }
   },
 

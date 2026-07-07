@@ -8,8 +8,11 @@ const CONFIG = {
   APP_NAME: "OpenCargo",
   APP_VERSION: "0.1.0",
 
-  // URLs (para futura integração com backend)
-  API_BASE_URL: "",
+  // URLs da API
+  // Em produção, altere para a URL do backend (ex: https://api.opencargo.com.br)
+  API_BASE_URL: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:3000/api"
+    : "https://api.opencargo.com.br/api",
 
   // Intervalos de atualização (ms)
   REFRESH_INTERVAL: 30000,
