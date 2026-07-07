@@ -1,7 +1,6 @@
 {
   "name": "opencargo",
   "version": 2,
-  "rootDirectory": "frontend",
   "buildCommand": null,
   "outputDirectory": ".",
   "framework": null,
