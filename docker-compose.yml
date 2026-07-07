@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: opencargo-backend
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/data:/app/data
+    depends_on:
+      - database
+    networks:
+      - opencargo-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: opencargo-frontend
+    ports:
+      - "5173:80"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+    networks:
+      - opencargo-network
+
+  database:
+    image: nouchka/sqlite3:latest
+    container_name: opencargo-database
+    volumes:
+      - ./database:/data
+    networks:
+      - opencargo-network
+
+networks:
+  opencargo-network:
+    driver: bridge

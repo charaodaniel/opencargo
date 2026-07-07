@@ -1,0 +1,80 @@
+/* ── OpenCargo — Estilos Customizados ────────────────── */
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Transições suaves */
+.transition-fast {
+  transition: all 0.15s ease;
+}
+
+/* Cards */
+.card-hover {
+  transition: all 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-available {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-pending {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+.badge-matched {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Tabelas responsivas */
+@media (max-width: 640px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+}
