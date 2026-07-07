@@ -5,6 +5,9 @@
  */
 
 const LandingPage = {
+  /** Observer para animações de scroll */
+  _observer: null,
+
   /**
    * Renderiza a landing page completa
    */
@@ -23,11 +26,58 @@ const LandingPage = {
   },
 
   /**
+   * Hook executado após renderização — ativa as animações de scroll
+   */
+  afterRender() {
+    this._initScrollReveal();
+  },
+
+  /**
+   * Inicializa Intersection Observer para animações de scroll
+   */
+  _initScrollReveal() {
+    // Limpa observer anterior (se houver re-render)
+    if (this._observer) {
+      this._observer.disconnect();
+    }
+
+    this._observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const delay = el.dataset.revealDelay || "0";
+            const variant = el.dataset.reveal || "up";
+
+            // Aplica delay personalizado
+            el.style.transitionDelay = `${delay}s`;
+
+            // Adiciona a classe de animação baseada na variante
+            el.classList.add(`reveal-${variant}-visible`);
+
+            // Para de observar depois que animou
+            this._observer.unobserve(el);
+          }
+        });
+      },
+      {
+        threshold: 0.15,
+        rootMargin: "0px 0px -60px 0px",
+      }
+    );
+
+    // Observa todos os elementos com data-reveal
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      this._observer.observe(el);
+    });
+  },
+
+  /**
    * Navbar da landing
    */
   _navbar() {
     return `
-      <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+      <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 reveal-down">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <!-- Logo -->
@@ -74,27 +124,27 @@ const LandingPage = {
         <div class="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl"></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center max-w-4xl mx-auto fade-in">
+          <div class="text-center max-w-4xl mx-auto">
             <!-- Badge -->
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium mb-8">
+            <div data-reveal="up" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium mb-8">
               <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
               Plataforma Open Source de Logística Colaborativa
             </div>
 
             <!-- Headline -->
-            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight mb-6">
+            <h1 data-reveal="up" data-reveal-delay="0.1" class="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight mb-6">
               Reduza viagens vazias e<br/>
               <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">otimize seu transporte</span>
             </h1>
 
             <!-- Subheadline -->
-            <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p data-reveal="up" data-reveal-delay="0.2" class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
               Conecte cargas disponíveis com caminhões que já realizarão determinada rota.
               Reduza custos, aumente a eficiência e diminua a emissão de CO₂.
             </p>
 
             <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div data-reveal="up" data-reveal-delay="0.3" class="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button onclick="Router.go('login')" class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 hover:-translate-y-0.5">
                 Começar Agora
                 <svg class="inline-block w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +157,7 @@ const LandingPage = {
             </div>
 
             <!-- Mockup / Illustration -->
-            <div class="mt-16 relative">
+            <div data-reveal="scale" data-reveal-delay="0.4" class="mt-16 relative">
               <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-4xl mx-auto">
                 <div class="flex items-center gap-2 mb-4">
                   <div class="w-3 h-3 bg-red-400 rounded-full"></div>
@@ -145,20 +195,20 @@ const LandingPage = {
     return `
       <section class="py-16 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 fade-in">
-            <div class="text-center">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div data-reveal="up" class="text-center">
               <div class="text-4xl font-bold text-blue-600 mb-2">100%</div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Open Source</p>
             </div>
-            <div class="text-center">
+            <div data-reveal="up" data-reveal-delay="0.1" class="text-center">
               <div class="text-4xl font-bold text-blue-600 mb-2">38</div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Testes Automatizados</p>
             </div>
-            <div class="text-center">
+            <div data-reveal="up" data-reveal-delay="0.2" class="text-center">
               <div class="text-4xl font-bold text-blue-600 mb-2">9</div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Tabelas no Banco</p>
             </div>
-            <div class="text-center">
+            <div data-reveal="up" data-reveal-delay="0.3" class="text-center">
               <div class="text-4xl font-bold text-blue-600 mb-2">0</div>
               <p class="text-sm text-gray-600 dark:text-gray-400">APIs Pagas</p>
             </div>
@@ -208,7 +258,7 @@ const LandingPage = {
     return `
       <section id="features" class="py-20 bg-gray-50 dark:bg-gray-800/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center mb-16 fade-in">
+          <div data-reveal="up" class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Tudo que você precisa em um só lugar
             </h2>
@@ -220,8 +270,8 @@ const LandingPage = {
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             ${features
               .map(
-                (f) => `
-              <div class="group bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700 transition-all hover:shadow-xl hover:-translate-y-1 card-hover">
+                (f, i) => `
+              <div data-reveal="up" data-reveal-delay="${(i * 0.08).toFixed(2)}" class="group bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700 transition-all hover:shadow-xl hover:-translate-y-1 card-hover">
                 <div class="text-4xl mb-4">${f.icon}</div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">${f.title}</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">${f.desc}</p>
@@ -269,7 +319,7 @@ const LandingPage = {
     return `
       <section id="how-it-works" class="py-20 bg-white dark:bg-gray-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center mb-16 fade-in">
+          <div data-reveal="up" class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Como funciona
             </h2>
@@ -285,7 +335,7 @@ const LandingPage = {
             ${steps
               .map(
                 (s, i) => `
-              <div class="relative text-center fade-in" style="animation-delay: ${i * 0.1}s">
+              <div data-reveal="up" data-reveal-delay="${(i * 0.12).toFixed(2)}" class="relative text-center">
                 <div class="relative z-10 w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
                   <span class="text-3xl">${s.icon}</span>
                   <div class="absolute -top-2 -right-2 w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center border-2 border-blue-500">
@@ -309,7 +359,7 @@ const LandingPage = {
    */
   _cta() {
     return `
-      <section class="py-20 bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
+      <section data-reveal="up" class="py-20 bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
         <div class="absolute inset-0">
           <div class="absolute top-10 left-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
           <div class="absolute bottom-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
@@ -348,7 +398,7 @@ const LandingPage = {
       <footer class="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
+            <div data-reveal="up" class="fade-in">
               <div class="flex items-center gap-2 mb-4">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,7 +411,7 @@ const LandingPage = {
                 Plataforma open source para logística colaborativa. Reduzindo viagens vazias e otimizando o transporte.
               </p>
             </div>
-            <div>
+            <div data-reveal="up" data-reveal-delay="0.1">
               <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Produto</h4>
               <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                 <li><a href="javascript:void(0)" onclick="document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Funcionalidades</a></li>
@@ -369,7 +419,7 @@ const LandingPage = {
                 <li><button onclick="Router.go('login')" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Login</button></li>
               </ul>
             </div>
-            <div>
+            <div data-reveal="up" data-reveal-delay="0.2">
               <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Desenvolvedor</h4>
               <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                 <li><a href="https://github.com/charaodaniel/opencargo" target="_blank" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">GitHub</a></li>
@@ -377,7 +427,7 @@ const LandingPage = {
                 <li><a href="docs/CONTRIBUTING.md" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contribuir</a></li>
               </ul>
             </div>
-            <div>
+            <div data-reveal="up" data-reveal-delay="0.3">
               <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Tecnologias</h4>
               <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                 <li>Node.js + Fastify</li>
