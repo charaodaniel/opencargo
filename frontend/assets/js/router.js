@@ -115,6 +115,7 @@ const Router = {
       chat: "chat",
       notifications: "notifications",
       maps: "maps",
+      landing: "landing",
       login: "login",
       profile: "profile",
       settings: "settings",
@@ -139,6 +140,7 @@ const Router = {
       chat: "ChatPage",
       notifications: "NotificationsPage",
       maps: "MapsPage",
+      landing: "LandingPage",
       login: "LoginPage",
     };
 

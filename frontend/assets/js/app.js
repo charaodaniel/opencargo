@@ -22,7 +22,7 @@ const App = {
     if (isLoggedIn) {
       await this._renderApp();
     } else {
-      this._renderLogin();
+      this._renderLanding();
     }
   },
 
@@ -67,15 +67,14 @@ const App = {
   },
 
   /**
-   * Renderiza tela de login
+   * Renderiza landing page para visitantes não autenticados
    */
-  _renderLogin() {
+  _renderLanding() {
     const root = document.getElementById("app");
-    // Usa Router para exibir a página de login
-    window.LoginPage = LoginPage;
+    window.LandingPage = LandingPage;
     root.innerHTML = `<div id="main-content"></div>`;
     Router.init("main-content");
-    Router.go("login");
+    Router.go("landing");
   },
 
   /**
