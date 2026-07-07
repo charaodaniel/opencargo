@@ -113,8 +113,11 @@ const MapsPage = {
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🗺️ Mapa de Rotas</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">Visualize rotas, cargas e cidades no mapa</p>
           </div>
-          <!-- Filtros rápidos -->
-          <div class="flex flex-wrap gap-2" id="map-filters">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Busca de cidade -->
+            <div class="w-64" id="map-search-wrapper"></div>
+            <!-- Filtros rápidos -->
+            <div class="flex flex-wrap gap-2" id="map-filters">
             <label class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
               this._filters.active ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
             }">
@@ -238,6 +241,21 @@ const MapsPage = {
    * AfterRender — executa após o HTML ser inserido no DOM
    */
   afterRender() {
+    // Injeta o autocomplete de busca de cidades
+    const searchWrapper = document.getElementById("map-search-wrapper");
+    if (searchWrapper) {
+      searchWrapper.innerHTML = Geocoding.createAutocomplete({
+        placeholder: "Buscar cidade...",
+        id: "map-city-search",
+        onSelect: (result) => this._flyToCity(result),
+      });
+      Geocoding.initAutocomplete({
+        inputId: "map-city-search",
+        onSelect: (result) => this._flyToCity(result),
+        debounce: 400,
+      });
+    }
+
     this._loadLeaflet();
 
     // Registra eventos dos filtros
@@ -292,23 +310,45 @@ const MapsPage = {
   },
 
   async _bootstrapLeaflet() {
-    if (window.L) {
+    if (window.L && window.L.markerClusterGroup) {
       this._initMap();
       return;
     }
 
     try {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
+      // 1. Leaflet CSS
+      const leafletCss = document.createElement("link");
+      leafletCss.rel = "stylesheet";
+      leafletCss.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(leafletCss);
 
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      // 2. MarkerCluster CSS
+      const clusterCss = document.createElement("link");
+      clusterCss.rel = "stylesheet";
+      clusterCss.href = "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css";
+      document.head.appendChild(clusterCss);
+
+      const clusterDefaultCss = document.createElement("link");
+      clusterDefaultCss.rel = "stylesheet";
+      clusterDefaultCss.href = "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css";
+      document.head.appendChild(clusterDefaultCss);
+
+      // 3. Leaflet JS
+      const leafletScript = document.createElement("script");
+      leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
       await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = reject;
-        document.body.appendChild(script);
+        leafletScript.onload = resolve;
+        leafletScript.onerror = reject;
+        document.body.appendChild(leafletScript);
+      });
+
+      // 4. MarkerCluster JS
+      const clusterScript = document.createElement("script");
+      clusterScript.src = "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js";
+      await new Promise((resolve, reject) => {
+        clusterScript.onload = resolve;
+        clusterScript.onerror = reject;
+        document.body.appendChild(clusterScript);
       });
 
       this._initMap();
@@ -557,10 +597,17 @@ const MapsPage = {
     `;
   },
 
-  // ── Plotar Cargas ────────────────────────────────────
+  // ── Plotar Cargas (com clustering) ─────────────────
 
   _plotLoads() {
-    const group = L.featureGroup();
+    const group = L.markerClusterGroup({
+      chunkedLoading: true,
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      disableClusteringAtZoom: 15,
+    });
 
     this._loads.forEach((l) => {
       const dest = this._getCoords(l.destination_city, l.destination_state);
@@ -611,10 +658,28 @@ const MapsPage = {
     this._groups.loads = group;
   },
 
-  // ── Plotar Cidades ───────────────────────────────────
+  // ── Plotar Cidades (com clustering) ─────────────────
 
   _plotCities() {
-    const group = L.featureGroup();
+    const group = L.markerClusterGroup({
+      chunkedLoading: true,
+      maxClusterRadius: 80,
+      spiderfyOnMaxZoom: false,
+      showCoverageOnHover: false,
+      disableClusteringAtZoom: 8,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        let bg = "rgba(139,92,246,0.7)";
+        if (count >= 10) { bg = "rgba(124,58,237,0.8)"; }
+        if (count >= 50) { bg = "rgba(109,40,217,0.9)"; }
+        return L.divIcon({
+          html: `<div style="background:${bg};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:13px;border:2px solid rgba(255,255,255,0.8);box-shadow:0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
+          className: "",
+          iconSize: [40, 40],
+        });
+      },
+    });
+
     const added = new Set();
 
     this._routes.forEach((r) => {
@@ -645,21 +710,26 @@ const MapsPage = {
   // ── Aplicar Filtros ──────────────────────────────────
 
   /**
-   * Toggle visibilidade de grupos inteiros (seguro, sem iterar layers)
+   * Toggle visibilidade de grupos inteiros.
+   * Suporta tanto L.featureGroup quanto L.markerClusterGroup.
    */
   _applyFilters() {
     const toggle = (group, visible) => {
       if (!group || !this._map) return;
       if (visible) {
-        this._map.addLayer(group);
+        // MarkerClusterGroup e FeatureGroup usam addTo
+        group.addTo(this._map);
       } else {
-        this._map.removeLayer(group);
+        // FeatureGroup usa removeLayer; MarkerClusterGroup usa remove
+        if (group.remove) {
+          this._map.removeLayer(group);
+        }
       }
     };
 
     toggle(this._groups.activeRoutes, this._filters.active);
     toggle(this._groups.completedRoutes, this._filters.completed);
-    toggle(this._groups.cancelledRoutes, this._filters.active); // mostra canceladas junto com ativas, ou não
+    toggle(this._groups.cancelledRoutes, this._filters.active);
     toggle(this._groups.loads, this._filters.loads);
     toggle(this._groups.cities, this._filters.cities);
   },
@@ -733,6 +803,34 @@ const MapsPage = {
       // Fallback: centro do Brasil
       this._map.setView([-15.7801, -47.9292], 4.5);
     }
+  },
+
+  // ── Navegar para Cidade ────────────────────────────
+
+  /**
+   * Voar para uma cidade no mapa (vindo da busca)
+   */
+  _flyToCity(result) {
+    if (!this._map) return;
+    this._map.flyTo([result.lat, result.lng], 10, { duration: 1.5 });
+
+    // Adiciona marcador temporário
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:24px;height:24px;border-radius:50%;background:#3B82F6;border:3px solid white;box-shadow:0 2px 12px rgba(59,130,246,0.5);display:flex;align-items:center;justify-content:center;font-size:12px;">📍</div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+
+    const marker = L.marker([result.lat, result.lng], { icon })
+      .addTo(this._map)
+      .bindPopup(`<b>${Utils.escapeHtml(result.display)}</b><br><small>Clique no mapa para remover</small>`)
+      .openPopup();
+
+    // Remove ao clicar no mapa
+    this._map.once("click", () => {
+      if (marker) this._map.removeLayer(marker);
+    });
   },
 
   // ── Destroy ──────────────────────────────────────────

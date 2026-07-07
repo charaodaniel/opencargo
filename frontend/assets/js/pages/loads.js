@@ -81,10 +81,10 @@ const LoadsPage = {
       fields: [
         { name: "title", label: "Título da Carga", type: "text", required: true },
         { name: "description", label: "Descrição", type: "textarea" },
-        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true },
-        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true },
-        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true },
-        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true },
+        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true, autocomplete: "city", placeholder: "Ex: São Paulo" },
+        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true, placeholder: "SP" },
+        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true, autocomplete: "city", placeholder: "Ex: Rio de Janeiro" },
+        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true, placeholder: "RJ" },
         { name: "weight_kg", label: "Peso (kg)", type: "number", required: true, min: 1 },
         { name: "volume_m3", label: "Volume (m³)", type: "number", min: 0.1, step: 0.1 },
         { name: "type", label: "Tipo de Carga", type: "select", options: [

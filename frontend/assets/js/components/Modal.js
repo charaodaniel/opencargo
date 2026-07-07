@@ -176,6 +176,29 @@ const Modal = {
       return `<textarea id="${id}" name="${field.name}" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" rows="3" ${field.required ? "required" : ""}>${value}</textarea>`;
     }
 
+    // Campo com autocomplete de cidades (via Nominatim)
+    if (field.autocomplete === "city") {
+      const inputId = `modal-field-city-${field.name}`;
+      // Cria o HTML do autocomplete e agenda a inicialização
+      requestAnimationFrame(() => {
+        Geocoding.initAutocomplete({
+          inputId,
+          onSelect: (result) => {
+            // Preenche também o campo de estado se existir
+            const stateField = document.getElementById(`modal-field-${field.name.replace("_city", "_state")}`);
+            if (stateField && result.state) stateField.value = result.state;
+          },
+          debounce: 400,
+        });
+      });
+      return Geocoding.createAutocomplete({
+        placeholder: field.placeholder || "Digite o nome da cidade...",
+        id: inputId,
+        name: field.name,
+        value: String(value),
+      });
+    }
+
     return `<input type="${field.type || "text"}" id="${id}" name="${field.name}" value="${Utils.escapeHtml(String(value))}" placeholder="${Utils.escapeHtml(field.placeholder || "")}" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" ${field.required ? "required" : ""} ${field.min ? `min="${field.min}"` : ""} ${field.max ? `max="${field.max}"` : ""} />`;
   },
 
