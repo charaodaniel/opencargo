@@ -139,6 +139,7 @@ const Router = {
       chat: "ChatPage",
       notifications: "NotificationsPage",
       maps: "MapsPage",
+      login: "LoginPage",
     };
 
     const globalName = globalMap[moduleName];
