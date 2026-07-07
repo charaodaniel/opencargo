@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════
 //
 // Popula o banco de dados com dados de exemplo realistas.
+// Funciona com SQLite e PostgreSQL automaticamente.
 //
 // Uso:
 //   node scripts/seed.js            # Insere dados
@@ -16,8 +17,13 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 
-// Importa os helpers do banco (reusa schema, conexão e funções)
-import { query, queryOne, execute, uuid, initDatabase, db } from "../src/common/database.js";
+// Importa os helpers do banco (detecta SQLite vs PostgreSQL automaticamente)
+import { query, queryOne, execute, uuid, initDatabase, db, closePool } from "../src/common/database.js";
+
+// Detecta se está usando PostgreSQL
+const IS_PG =
+  (process.env.DATABASE_URL || "").startsWith("postgres://") ||
+  (process.env.DATABASE_URL || "").startsWith("postgresql://");
 
 // ── Tabelas na ordem para reset (filhas primeiro por FK) ─
 const TABLES = [
@@ -27,13 +33,33 @@ const TABLES = [
 ];
 
 // ── Reset ──────────────────────────────────────────────────
-function resetDatabase() {
+async function resetDatabase() {
   console.log("🧹 Removendo dados existentes...");
-  db.exec("PRAGMA foreign_keys = OFF;");
-  for (const table of TABLES) {
-    execute(`DELETE FROM ${table}`);
+
+  if (IS_PG) {
+    // PostgreSQL: desabilita FKs temporariamente
+    await execute("SET session_replication_role = 'replica';");
+    for (const table of TABLES) {
+      await execute(`DELETE FROM ${table}`);
+    }
+    await execute("SET session_replication_role = 'origin';");
+    // Reseta sequences
+    for (const table of TABLES) {
+      try {
+        await execute(`ALTER SEQUENCE ${table}_id_seq RESTART WITH 1;`);
+      } catch {
+        // Tabela pode não ter sequence (UUID PK)
+      }
+    }
+  } else {
+    // SQLite
+    db.exec("PRAGMA foreign_keys = OFF;");
+    for (const table of TABLES) {
+      execute(`DELETE FROM ${table}`);
+    }
+    db.exec("PRAGMA foreign_keys = ON;");
   }
-  db.exec("PRAGMA foreign_keys = ON;");
+
   console.log("✅ Banco limpo!\n");
 }
 
@@ -56,7 +82,7 @@ async function seed() {
   ];
 
   for (const u of users) {
-    execute(
+    await execute(
       `INSERT INTO users (id, name, email, password, role, phone) VALUES (?, ?, ?, ?, ?, ?)`,
       [u.id, u.name, u.email, passwordHash, u.role, u.phone]
     );
@@ -80,7 +106,7 @@ async function seed() {
   ];
 
   for (const c of companies) {
-    execute(
+    await execute(
       `INSERT INTO companies (id, user_id, name, document, address, city, state, phone)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [c.id, c.userId, c.name, c.document, c.address, c.city, c.state, c.phone]
@@ -105,7 +131,7 @@ async function seed() {
   ];
 
   for (const d of drivers) {
-    execute(
+    await execute(
       `INSERT INTO drivers (id, user_id, name, document, cnh, phone, city, state, available)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [d.id, d.userId, d.name, d.document, d.cnh, d.phone, d.city, d.state, d.available]
@@ -135,7 +161,7 @@ async function seed() {
   ];
 
   for (const v of vehicles) {
-    execute(
+    await execute(
       `INSERT INTO vehicles (id, driver_id, plate, model, year, capacity_kg, capacity_m3, type)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [v.id, v.driverId, v.plate, v.model, v.year, v.capacityKg, v.capacityM3, v.type]
@@ -185,7 +211,7 @@ async function seed() {
   ];
 
   for (const r of routes) {
-    execute(
+    await execute(
       `INSERT INTO routes (id, driver_id, origin_city, origin_state, destination_city, destination_state, departure_date, arrival_date, available_weight, available_volume, is_return, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [r.id, r.driverId, r.originCity, r.originState, r.destinationCity, r.destinationState, r.departureDate, r.arrivalDate, r.availableWeight, r.availableVolume, r.isReturn, r.status]
@@ -242,7 +268,6 @@ async function seed() {
       weightKg: 6000, volumeM3: 40, type: "têxtil",
       pickupDate: "2026-07-14", deliveryDate: "2026-07-15", status: "pending",
     },
-    // Carga já entregue
     {
       id: uuid(), companyId: companies[0].id,
       title: "Material de Construção — SP para Campinas",
@@ -252,7 +277,6 @@ async function seed() {
       weightKg: 10000, volumeM3: 50, type: "construção",
       pickupDate: "2026-06-20", deliveryDate: "2026-06-20", status: "delivered",
     },
-    // Carga cancelada
     {
       id: uuid(), companyId: companies[1].id,
       title: "Produtos Químicos — RJ para SP",
@@ -265,7 +289,7 @@ async function seed() {
   ];
 
   for (const l of loads) {
-    execute(
+    await execute(
       `INSERT INTO loads (id, company_id, title, description, origin_city, origin_state, destination_city, destination_state, weight_kg, volume_m3, type, pickup_date, delivery_date, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [l.id, l.companyId, l.title, l.description, l.originCity, l.originState, l.destinationCity, l.destinationState, l.weightKg, l.volumeM3, l.type, l.pickupDate, l.deliveryDate, l.status]
@@ -276,26 +300,23 @@ async function seed() {
   // ── 7. MATCHES ───────────────────────────────────────────
   console.log("🤝 Matches...");
 
-  // Match 1: Carga "Eletrônicos" com rota SP→POA (João) — aceito
   const match1Id = uuid();
-  execute(
+  await execute(
     `INSERT INTO matches (id, load_id, driver_id, route_id, score, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [match1Id, loads[0].id, drivers[0].id, routes[0].id, 92, "accepted"]
   );
-  execute(`UPDATE loads SET status = 'matched' WHERE id = ?`, [loads[0].id]);
+  await execute(`UPDATE loads SET status = 'matched'${IS_PG ? ", updated_at = NOW()" : ", updated_at = datetime('now')"} WHERE id = ?`, [loads[0].id]);
 
-  // Match 2: Carga "Alimentos" com rota Curitiba→BH (Maria) — pendente
   const match2Id = uuid();
-  execute(
+  await execute(
     `INSERT INTO matches (id, load_id, driver_id, route_id, score, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [match2Id, loads[2].id, drivers[1].id, routes[2].id, 78, "pending"]
   );
 
-  // Match 3: Carga "Peças Automotivas" com rota de retorno POA→SP (João) — pendente
   const match3Id = uuid();
-  execute(
+  await execute(
     `INSERT INTO matches (id, load_id, driver_id, route_id, score, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [match3Id, loads[3].id, drivers[0].id, routes[1].id, 85, "pending"]
@@ -307,40 +328,16 @@ async function seed() {
   console.log("💬 Mensagens...");
 
   const messages = [
-    {
-      matchId: match1Id, senderId: users[3].id,
-      content: "Olá! Vi que tenho uma rota compatível com sua carga. Posso transportar seus eletrônicos para Porto Alegre.",
-      read: 1,
-    },
-    {
-      matchId: match1Id, senderId: users[1].id,
-      content: "Ótimo! O prazo de coleta é 11/07. Conseguiria buscar no dia pela manhã?",
-      read: 1,
-    },
-    {
-      matchId: match1Id, senderId: users[3].id,
-      content: "Sim, sem problemas! Passo no endereço da Av. Paulista às 8h.",
-      read: 1,
-    },
-    {
-      matchId: match2Id, senderId: users[4].id,
-      content: "Bom dia! Tenho rota saindo de Curitiba para BH com capacidade disponível. Seu lote de alimentos encaixa perfeitamente.",
-      read: 0,
-    },
-    {
-      matchId: match3Id, senderId: users[1].id,
-      content: "Precisamos transportar peças automotivas de SP para Curitiba. Você tem retorno previsto para o dia 14?",
-      read: 0,
-    },
-    {
-      matchId: match3Id, senderId: users[3].id,
-      content: "Tenho sim! Vou chegar em POA no dia 12 e sigo para SP no dia 14. Posso incluir sua carga no retorno.",
-      read: 0,
-    },
+    { matchId: match1Id, senderId: users[3].id, content: "Olá! Vi que tenho uma rota compatível com sua carga. Posso transportar seus eletrônicos para Porto Alegre.", read: 1 },
+    { matchId: match1Id, senderId: users[1].id, content: "Ótimo! O prazo de coleta é 11/07. Conseguiria buscar no dia pela manhã?", read: 1 },
+    { matchId: match1Id, senderId: users[3].id, content: "Sim, sem problemas! Passo no endereço da Av. Paulista às 8h.", read: 1 },
+    { matchId: match2Id, senderId: users[4].id, content: "Bom dia! Tenho rota saindo de Curitiba para BH com capacidade disponível. Seu lote de alimentos encaixa perfeitamente.", read: 0 },
+    { matchId: match3Id, senderId: users[1].id, content: "Precisamos transportar peças automotivas de SP para Curitiba. Você tem retorno previsto para o dia 14?", read: 0 },
+    { matchId: match3Id, senderId: users[3].id, content: "Tenho sim! Vou chegar em POA no dia 12 e sigo para SP no dia 14. Posso incluir sua carga no retorno.", read: 0 },
   ];
 
   for (const m of messages) {
-    execute(
+    await execute(
       `INSERT INTO messages (id, match_id, sender_id, content, read)
        VALUES (?, ?, ?, ?, ?)`,
       [uuid(), m.matchId, m.senderId, m.content, m.read]
@@ -352,52 +349,17 @@ async function seed() {
   console.log("🔔 Notificações...");
 
   const notifications = [
-    {
-      userId: users[1].id, type: "match",
-      title: "Match confirmado!",
-      message: "João Silva aceitou transportar sua carga 'Eletrônicos — SP para POA'. Acesse o chat para combinar os detalhes.",
-      read: 0,
-    },
-    {
-      userId: users[3].id, type: "match",
-      title: "Match aceito!",
-      message: "Sua proposta para transportar 'Eletrônicos — SP para POA' foi aceita pela Transportadora ABC.",
-      read: 0,
-    },
-    {
-      userId: users[1].id, type: "system",
-      title: "Nova carga cadastrada",
-      message: "Sua carga 'Móveis — SP para POA' foi cadastrada com sucesso e já está disponível para matching.",
-      read: 0,
-    },
-    {
-      userId: users[3].id, type: "match",
-      title: "Nova oportunidade de carga!",
-      message: "Encontramos uma carga compatível com sua rota SP→POA: 'Peças Automotivas — SP para Curitiba'.",
-      read: 0,
-    },
-    {
-      userId: users[4].id, type: "match",
-      title: "Nova oportunidade de carga!",
-      message: "Encontramos uma carga compatível com sua rota Curitiba→BH: 'Alimentos — RJ para BH'.",
-      read: 0,
-    },
-    {
-      userId: users[1].id, type: "message",
-      title: "Nova mensagem no chat",
-      message: "João Silva enviou uma mensagem sobre o match de 'Eletrônicos — SP para POA'.",
-      read: 1,
-    },
-    {
-      userId: users[3].id, type: "message",
-      title: "Nova mensagem no chat",
-      message: "Transportadora ABC respondeu sobre o match de 'Eletrônicos — SP para POA'.",
-      read: 1,
-    },
+    { userId: users[1].id, type: "match", title: "Match confirmado!", message: "João Silva aceitou transportar sua carga 'Eletrônicos — SP para POA'. Acesse o chat para combinar os detalhes.", read: 0 },
+    { userId: users[3].id, type: "match", title: "Match aceito!", message: "Sua proposta para transportar 'Eletrônicos — SP para POA' foi aceita pela Transportadora ABC.", read: 0 },
+    { userId: users[1].id, type: "system", title: "Nova carga cadastrada", message: "Sua carga 'Móveis — SP para POA' foi cadastrada com sucesso e já está disponível para matching.", read: 0 },
+    { userId: users[3].id, type: "match", title: "Nova oportunidade de carga!", message: "Encontramos uma carga compatível com sua rota SP→POA: 'Peças Automotivas — SP para Curitiba'.", read: 0 },
+    { userId: users[4].id, type: "match", title: "Nova oportunidade de carga!", message: "Encontramos uma carga compatível com sua rota Curitiba→BH: 'Alimentos — RJ para BH'.", read: 0 },
+    { userId: users[1].id, type: "message", title: "Nova mensagem no chat", message: "João Silva enviou uma mensagem sobre o match de 'Eletrônicos — SP para POA'.", read: 1 },
+    { userId: users[3].id, type: "message", title: "Nova mensagem no chat", message: "Transportadora ABC respondeu sobre o match de 'Eletrônicos — SP para POA'.", read: 1 },
   ];
 
   for (const n of notifications) {
-    execute(
+    await execute(
       `INSERT INTO notifications (id, user_id, type, title, message, read)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [uuid(), n.userId, n.type, n.title, n.message, n.read]
@@ -425,7 +387,7 @@ async function seed() {
   console.log(`   🤝 3 matches`);
   console.log(`   💬 ${messages.length} mensagens`);
   console.log(`   🔔 ${notifications.length} notificações\n`);
-  console.log("💡 Dica: Faça login como empresa ou motorista para explorar o sistema.\n");
+  console.log(`💡 Banco: ${IS_PG ? "PostgreSQL" : "SQLite"}\n`);
 }
 
 // ── Main ───────────────────────────────────────────────────
@@ -437,15 +399,16 @@ if (args.includes("--help") || args.includes("-h")) {
 🌱 OpenCargo — Seed Script
 
 Popula o banco de dados com dados de exemplo realistas.
+Funciona com SQLite e PostgreSQL automaticamente.
 
 Uso:
   node scripts/seed.js            Insere dados
   node scripts/seed.js --reset    Remove dados existentes antes
   node scripts/seed.js --help     Mostra esta ajuda
 
-Requer:
-  - Backend configurado (.env ou defaults)
-  - Banco SQLite acessível pelo DATABASE_URL
+Configuração:
+  DATABASE_URL=file:./data/opencargo.db  → SQLite (dev)
+  DATABASE_URL=postgres://user:pass@... → PostgreSQL (prod)
 
 Comandos via npm (recomendado):
   cd backend
@@ -457,16 +420,18 @@ Comandos via npm (recomendado):
 
 try {
   // Garante que as tabelas existem
-  initDatabase();
+  await initDatabase();
 
   if (args.includes("--reset")) {
-    resetDatabase();
+    await resetDatabase();
   }
 
   await seed();
+  await closePool?.();
   process.exit(0);
 } catch (err) {
   console.error("\n❌ Erro ao executar seed:", err.message);
   console.error(err);
+  await closePool?.();
   process.exit(1);
 }
