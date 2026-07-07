@@ -32,6 +32,15 @@ export async function driverRoutes(app) {
     return query(`SELECT * FROM drivers`);
   });
 
+  app.get("/me", async (request) => {
+    const user = request.user;
+    const driver = queryOne(`SELECT * FROM drivers WHERE user_id = ?`, [user.id]);
+    if (!driver) {
+      throw { statusCode: 404, message: "Motorista não encontrado" };
+    }
+    return driver;
+  });
+
   app.get("/available", async () => {
     return query(`SELECT * FROM drivers WHERE available = 1`);
   });

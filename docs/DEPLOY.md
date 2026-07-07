@@ -123,14 +123,23 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## 5. Variáveis de Ambiente
 
-| Variável | Descrição | Obrigatório |
-|----------|-----------|-------------|
-| `PORT` | Porta do servidor | Não (3000) |
-| `HOST` | Host do servidor | Não (0.0.0.0) |
-| `NODE_ENV` | Ambiente | Sim |
-| `JWT_SECRET` | Chave secreta JWT | **Sim** |
-| `DATABASE_URL` | URL do banco | Sim |
-| `CORS_ORIGIN` | Origem permitida CORS | Sim |
+Todas as variáveis possuem valores padrão seguros para desenvolvimento.
+Copie `.env.example` para `.env` e ajuste conforme necessário.
+
+| Variável | Descrição | Default | Obrigatório |
+|----------|-----------|---------|:-----------:|
+| `PORT` | Porta do servidor | `3000` | ❌ |
+| `HOST` | Host do servidor | `0.0.0.0` | ❌ |
+| `NODE_ENV` | Ambiente (`development`, `production`, `test`) | `development` | ❌ |
+| `JWT_SECRET` | Chave secreta JWT | `opencargo-dev-secret` | **⚠️** |
+| `JWT_EXPIRES_IN` | Tempo de expiração do token | `7d` | ❌ |
+| `DATABASE_URL` | URL do banco de dados | `file:./data/opencargo.db` | ❌ |
+| `CORS_ORIGIN` | Origem permitida CORS | `http://localhost:5173` | **⚠️** |
+| `RATE_LIMIT_MAX` | Máx. requisições por janela | `100` | ❌ |
+| `RATE_LIMIT_WINDOW_MS` | Janela de rate limit (ms) | `60000` | ❌ |
+
+> **⚠️ Produção:** Altere `JWT_SECRET` e `CORS_ORIGIN` para valores adequados ao seu ambiente.
+> Gere um `JWT_SECRET` forte com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 ---
 

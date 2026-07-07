@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "load_id": 1,
+    "driver_id": 1,
+    "route_id": 2,
+    "load_title": "Eletrônicos para Porto Alegre",
+    "driver_name": "João Silva",
+    "route_origin": "Porto Alegre",
+    "route_destination": "São Paulo",
+    "score": 100,
+    "status": "pending",
+    "created_at": "2026-07-06T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "load_id": 3,
+    "driver_id": 2,
+    "route_id": 3,
+    "load_title": "Alimentos Refrigerados",
+    "driver_name": "Pedro Transportes",
+    "route_origin": "Rio de Janeiro",
+    "route_destination": "Belo Horizonte",
+    "score": 85,
+    "status": "accepted",
+    "created_at": "2026-07-07T09:00:00Z"
+  },
+  {
+    "id": 3,
+    "load_id": 2,
+    "driver_id": 4,
+    "route_id": 4,
+    "load_title": "Móveis para Campinas",
+    "driver_name": "Carlos Pereira",
+    "route_origin": "Curitiba",
+    "route_destination": "São Paulo",
+    "score": 95,
+    "status": "accepted",
+    "created_at": "2026-07-05T14:00:00Z"
+  }
+]

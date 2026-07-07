@@ -32,6 +32,15 @@ export async function companyRoutes(app) {
     return query(`SELECT * FROM companies`);
   });
 
+  app.get("/me", async (request) => {
+    const user = request.user;
+    const company = queryOne(`SELECT * FROM companies WHERE user_id = ?`, [user.id]);
+    if (!company) {
+      throw { statusCode: 404, message: "Empresa não encontrada" };
+    }
+    return company;
+  });
+
   app.get("/:id", async (request) => {
     const { id } = request.params;
     const company = queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);

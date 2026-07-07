@@ -27,8 +27,21 @@ mkdir -p backend/data
 echo ""
 echo "✅ Setup concluído!"
 echo ""
+
+# Pergunta se deseja popular com dados de exemplo
+echo -n "🌱 Deseja popular o banco com dados de exemplo? (s/N): "
+read -r resposta
+if [ "$resposta" = "s" ] || [ "$resposta" = "S" ]; then
+  echo ""
+  bash scripts/seed.sh
+fi
+
+echo ""
 echo "Para iniciar o backend:"
 echo "  cd backend && npm run dev"
 echo ""
 echo "Para iniciar com Docker:"
 echo "  docker compose up --build"
+echo ""
+echo "Para popular o banco com dados de exemplo (a qualquer momento):"
+echo "  cd backend && npm run seed"

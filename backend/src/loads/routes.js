@@ -11,6 +11,7 @@ const createLoadSchema = z.object({
   weightKg: z.number().positive(),
   volumeM3: z.number().positive().optional(),
   type: z.string().optional(),
+  status: z.enum(["pending", "available", "matched", "in_transit", "delivered", "cancelled"]).optional(),
   pickupDate: z.string(),
   deliveryDate: z.string(),
 });
@@ -73,6 +74,7 @@ export async function loadRoutes(app) {
     if (body.weightKg) { sets.push("weight_kg = ?"); params.push(body.weightKg); }
     if (body.volumeM3 !== undefined) { sets.push("volume_m3 = ?"); params.push(body.volumeM3); }
     if (body.type !== undefined) { sets.push("type = ?"); params.push(body.type); }
+    if (body.status) { sets.push("status = ?"); params.push(body.status); }
     if (body.pickupDate) { sets.push("pickup_date = ?"); params.push(body.pickupDate); }
     if (body.deliveryDate) { sets.push("delivery_date = ?"); params.push(body.deliveryDate); }
 

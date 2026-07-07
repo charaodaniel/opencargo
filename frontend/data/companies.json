@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "user_id": 2,
+    "name": "Transportadora ABC Ltda",
+    "document": "11.222.333/0001-81",
+    "address": "Av. Paulista, 1000",
+    "city": "São Paulo",
+    "state": "SP",
+    "phone": "(11) 99999-0001",
+    "active": true,
+    "loads_count": 15,
+    "created_at": "2026-02-01T08:30:00Z"
+  },
+  {
+    "id": 2,
+    "user_id": 4,
+    "name": "Maria Cargas Ltda",
+    "document": "44.555.666/0001-99",
+    "address": "Rua das Flores, 500",
+    "city": "Campinas",
+    "state": "SP",
+    "phone": "(19) 98888-0002",
+    "active": true,
+    "loads_count": 8,
+    "created_at": "2026-02-10T09:00:00Z"
+  },
+  {
+    "id": 3,
+    "user_id": null,
+    "name": "LogTech Soluções",
+    "document": "77.888.999/0001-11",
+    "address": "Av. Brasil, 2000",
+    "city": "Belo Horizonte",
+    "state": "MG",
+    "phone": "(31) 97777-0003",
+    "active": true,
+    "loads_count": 23,
+    "created_at": "2026-01-20T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "user_id": null,
+    "name": "Distribuidora Sul Ltda",
+    "document": "11.111.222/0001-33",
+    "address": "Rua dos Andradas, 300",
+    "city": "Porto Alegre",
+    "state": "RS",
+    "phone": "(51) 96666-0004",
+    "active": false,
+    "loads_count": 5,
+    "created_at": "2026-03-05T13:00:00Z"
+  },
+  {
+    "id": 5,
+    "user_id": null,
+    "name": "Norte Cargas Express",
+    "document": "22.333.444/0001-55",
+    "address": "Av. Getúlio Vargas, 1500",
+    "city": "Salvador",
+    "state": "BA",
+    "phone": "(71) 95555-0005",
+    "active": true,
+    "loads_count": 12,
+    "created_at": "2026-02-20T15:00:00Z"
+  }
+]
