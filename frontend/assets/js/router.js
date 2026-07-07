@@ -145,9 +145,19 @@ const Router = {
     };
 
     const globalName = globalMap[moduleName];
-    if (globalName && window[globalName]) {
-      this._pageInstances[moduleName] = window[globalName];
-      return window[globalName];
+    if (globalName) {
+      // Tenta encontrar a página: 1) window (explicit), 2) escopo global (const/let)
+      let pageModule = window[globalName];
+      if (!pageModule) {
+        try {
+          // Indirect eval busca no escopo global (funciona com const/let)
+          pageModule = (0, eval)(globalName);
+        } catch { /* not found */ }
+      }
+      if (pageModule) {
+        this._pageInstances[moduleName] = pageModule;
+        return pageModule;
+      }
     }
 
     throw new Error(`Página "${pageName}" não encontrada`);
