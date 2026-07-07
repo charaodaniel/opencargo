@@ -1,6 +1,6 @@
 # OpenCargo — Deploy
 
-> Guia de instalação local, Docker, Vercel e produção com PostgreSQL.
+> Guia de instalação local, Docker, Vercel, Render e produção com PostgreSQL.
 
 ---
 
@@ -11,126 +11,121 @@
 - Node.js >= 22
 - npm
 
-### 1.2 Backend
+### 1.2 Iniciar tudo
 
 ```bash
-cd opencargo/backend
+cd opencargo
 
 # Instalar dependências
-npm install
+npm run setup
 
-# Configurar variáveis de ambiente
-cp ../.env.example ../.env
-
-# Iniciar servidor de desenvolvimento
+# Iniciar backend + frontend simultaneamente
 npm run dev
 ```
 
-O servidor iniciará em `http://localhost:3000`.
+- **Backend**: `http://localhost:3000` — Documentação Swagger em `/docs`
+- **Frontend**: `http://localhost:5173`
 
-**Documentação Swagger:** `http://localhost:3000/docs`
-
-### 1.3 Frontend
-
-```bash
-cd opencargo/frontend
-npx serve .
-```
-
-> O frontend espera a API em `http://localhost:3000/api`.
-
-### 1.4 Seed de dados
+### 1.3 Seed de dados
 
 ```bash
-cd opencargo/backend
 npm run seed
-
 # Login: admin@opencargo.com / 123456
-
-# Para resetar e reinserir:
-npm run seed:reset
 ```
 
 ---
 
 ## 2. Docker
 
-### 2.1 Construir e Iniciar
-
 ```bash
 cd opencargo
 docker compose up --build
 ```
-
-### 2.2 Serviços
 
 | Serviço | Porta |
 |---------|-------|
 | Backend | 3000 |
 | Frontend | 5173 |
 
-### 2.3 Parar
-
-```bash
-docker compose down
-```
-
 ---
 
 ## 3. Vercel (Frontend)
 
-O frontend é uma SPA estática configurada para deploy na Vercel.
+Frontend SPA configurada para deploy na Vercel via `vercel.json` (na raiz).
 
-### 3.1 Pelo Dashboard (recomendado)
+**Dashboard:** [vercel.com/new](https://vercel.com/new) → Importe `charaodaniel/opencargo`
 
-1. Acesse [vercel.com/new](https://vercel.com/new)
-2. Importe o repositório `charaodaniel/opencargo`
-3. O `vercel.json` na raiz já configura:
-   - `rootDirectory: "frontend"` — aponta para a pasta do frontend
-   - SPA rewrites (`/*` → `/index.html`)
-   - Cache headers para assets (1 ano imutável) e dados (1 hora)
+> ⚠️ Configure **Root Directory** como `frontend` nas Settings do projeto.
 
-### 3.2 Pela CLI
+---
+
+## 4. Render (Backend + PostgreSQL)
+
+O [Render](https://render.com) oferece hospedagem managed para Node.js com suporte a WebSocket e PostgreSQL no free tier.
+
+### 4.1 Blueprint (recomendado)
+
+O `render.yaml` na raiz configura automaticamente:
+
+| Recurso | Plano | Região |
+|---------|-------|--------|
+| Web Service (Fastify) | Free | South Brazil (São Paulo) |
+| PostgreSQL | Free | South Brazil (São Paulo) |
+
+**Passo a passo:**
+
+1. Crie uma conta em [render.com](https://render.com)
+2. Conecte seu repositório GitHub
+3. Acesse o [Dashboard](https://dashboard.render.com) → **New** → **Blueprint**
+4. Selecione o repositório `charaodaniel/opencargo`
+5. O Render detecta o `render.yaml` automaticamente
+6. Configure as variáveis de ambiente que exigem input manual:
+
+| Variável | Valor | Obrigatório |
+|----------|-------|:-----------:|
+| `JWT_SECRET` | Gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` | **⚠️** |
+| `CORS_ORIGIN` | URL do frontend (ex: `https://opencargo.vercel.app`) | **⚠️** |
+
+7. Clique em **Apply** e aguarde o deploy (~5 min)
+
+### 4.2 Pós-deploy
+
+Após o deploy, o backend estará disponível em `https://opencargo-api.onrender.com`.
+
+**Atualize o frontend:**
+
+No arquivo `frontend/assets/js/utils/config.js`, altere `API_BASE_URL`:
+
+```js
+API_BASE_URL: "https://opencargo-api.onrender.com/api"
+```
+
+**Popule o banco com dados de exemplo:**
 
 ```bash
-npm install -g vercel
-cd opencargo
-vercel --prod
+# Conecte via Render Dashboard → Shell
+cd backend && npm run seed
 ```
 
 ---
 
-## 4. Produção (Manual)
+## 5. Produção (Manual)
 
-### 4.1 Backend
+### 5.1 Backend
 
 ```bash
 cd opencargo/backend
-
-# Instalar apenas dependências de produção
 npm ci --production
 
-# Configure as variáveis de ambiente
-export JWT_SECRET="seu-jwt-secret-forte-aqui"
+export JWT_SECRET="seu-jwt-secret-forte"
 export NODE_ENV=production
 export DATABASE_URL="postgresql://user:pass@host:5432/opencargo?sslmode=require"
 export CORS_ORIGIN="https://seudominio.com"
 
-# Inicie (sem watch)
 node src/index.js
 ```
 
-### 4.2 PostgreSQL (Aiven / Self-hosted)
-
-```bash
-# Exemplo: Aiven for PostgreSQL
-export DATABASE_URL="postgres://avnadmin:senha@pg-opencargo-opencargo.l.aivencloud.com:25827/defaultdb?sslmode=require"
-npm run seed
-```
-
-O backend detecta automaticamente o PostgreSQL pela URL (`postgres://` ou `postgresql://`).
-
-### 4.3 Nginx (Proxy Reverso)
+### 5.2 Nginx (Proxy Reverso)
 
 ```nginx
 server {
@@ -139,11 +134,6 @@ server {
 
     location /api/ {
         proxy_pass http://localhost:3000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-        # WebSocket
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -158,7 +148,7 @@ server {
 
 ---
 
-## 5. Variáveis de Ambiente
+## 6. Variáveis de Ambiente
 
 | Variável | Descrição | Default | Obrigatório |
 |----------|-----------|---------|:-----------:|
@@ -172,17 +162,18 @@ server {
 | `RATE_LIMIT_MAX` | Máx. requisições/ janela | `100` | ❌ |
 | `RATE_LIMIT_WINDOW_MS` | Janela rate limit (ms) | `60000` | ❌ |
 
-> **⚠️ Produção:** Altere `JWT_SECRET` e `CORS_ORIGIN`. Gere um secret forte com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
-
 ### Exemplos de DATABASE_URL
 
 ```bash
-# SQLite (desenvolvimento)
+# Desenvolvimento (SQLite)
 DATABASE_URL="file:./data/opencargo.db"
 
-# PostgreSQL local
+# Produção (PostgreSQL local)
 DATABASE_URL="postgres://opencargo:senha@localhost:5432/opencargo"
 
 # Aiven for PostgreSQL
 DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb?sslmode=require"
+
+# Render PostgreSQL (gerado automaticamente pelo Blueprint)
+DATABASE_URL="postgres://user:pass@us-east-1.render.com:5432/opencargo_db"
 ```

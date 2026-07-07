@@ -1,0 +1,40 @@
+# ── OpenCargo — Render Blueprint ───────────────────────
+# Deploy automático do backend + PostgreSQL
+# Veja: https://render.com/docs/blueprint-spec
+#
+# Uso:
+#   1. Faça fork do repositório
+#   2. Conecte no Render (https://render.com)
+#   3. O blueprint detecta automaticamente este arquivo
+#   4. Configure os env vars e faça deploy
+
+services:
+  - type: web
+    name: opencargo-api
+    env: node
+    region: south-brazil  # São Paulo (menor latência para Brasil)
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node src/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: HOST
+        value: 0.0.0.0
+      - key: JWT_SECRET
+        sync: false  # Preenchido manualmente no dashboard
+      - key: CORS_ORIGIN
+        sync: false  # URL do frontend (ex: https://opencargo.vercel.app)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: opencargo-db
+          property: connectionString
+
+  - type: postgresql
+    name: opencargo-db
+    plan: free
+    region: south-brazil
+    ipAllowList: []  # Apenas conexões internas
