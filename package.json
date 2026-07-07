@@ -1,0 +1,15 @@
+{
+  "name": "opencargo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenCargo — Plataforma open source para logística colaborativa",
+  "scripts": {
+    "dev": "npx concurrently -n backend,frontend -c blue,green \"cd backend && npm run dev\" \"cd frontend && npx serve -l 5173\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npx serve -l 5173",
+    "setup": "bash scripts/setup.sh",
+    "seed": "cd backend && npm run seed",
+    "test": "cd backend && npm test",
+    "docker": "docker compose up --build"
+  }
+}
