@@ -9,10 +9,12 @@ const CONFIG = {
   APP_VERSION: "0.1.0",
 
   // URLs da API
-  // Em produção, altere para a URL do backend (ex: https://api.opencargo.com.br)
+  // Deixe vazio para usar dados mockados (JSON local).
+  // Configure para a URL do backend em produção.
+  // Ex: "https://api.opencargo.com.br/api"
   API_BASE_URL: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? "http://localhost:3000/api"
-    : "https://api.opencargo.com.br/api",
+    : "",
 
   // Intervalos de atualização (ms)
   REFRESH_INTERVAL: 30000,
