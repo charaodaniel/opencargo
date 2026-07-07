@@ -1,4 +1,4 @@
-# OpenCargo — API Reference
+# OpenCargo — Documentação da API
 
 > Especificação dos endpoints REST e WebSocket da plataforma.
 
@@ -53,6 +53,8 @@ Registrar novo usuário.
 }
 ```
 
+**Roles:** `admin`, `company`, `driver`
+
 ### `POST /api/auth/login`
 
 Login do usuário.
@@ -78,7 +80,7 @@ Login do usuário.
 }
 ```
 
-### `GET /api/auth/me`
+### `GET /api/auth/me` 🔐
 
 Dados do usuário logado.
 
@@ -86,114 +88,142 @@ Dados do usuário logado.
 
 ## Users
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/users` | Listar usuários |
-| GET | `/api/users/:id` | Buscar usuário |
-| PATCH | `/api/users/:id` | Atualizar usuário |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/users` | Listar usuários | 🔐 |
+| GET | `/api/users/:id` | Buscar usuário | 🔐 |
+| PATCH | `/api/users/:id` | Atualizar usuário | 🔐 |
 
 ---
 
 ## Companies
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/companies` | Cadastrar empresa |
-| GET | `/api/companies` | Listar empresas |
-| GET | `/api/companies/:id` | Buscar empresa |
-| PATCH | `/api/companies/:id` | Atualizar empresa |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/companies` | Cadastrar empresa | 🔐 |
+| GET | `/api/companies` | Listar empresas | 🔐 |
+| GET | `/api/companies/:id` | Buscar empresa | 🔐 |
+| PATCH | `/api/companies/:id` | Atualizar empresa | 🔐 |
 
 ---
 
 ## Drivers
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/drivers` | Cadastrar motorista |
-| GET | `/api/drivers` | Listar motoristas |
-| GET | `/api/drivers/available` | Motoristas disponíveis |
-| GET | `/api/drivers/:id` | Buscar motorista |
-| PATCH | `/api/drivers/:id` | Atualizar motorista |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/drivers` | Cadastrar motorista | 🔐 |
+| GET | `/api/drivers` | Listar motoristas | 🔐 |
+| GET | `/api/drivers/available` | Motoristas disponíveis | 🔐 |
+| GET | `/api/drivers/:id` | Buscar motorista | 🔐 |
+| PATCH | `/api/drivers/:id` | Atualizar motorista | 🔐 |
 
 ---
 
 ## Vehicles
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/vehicles` | Cadastrar veículo |
-| GET | `/api/vehicles` | Listar veículos |
-| GET | `/api/vehicles/:id` | Buscar veículo |
-| PATCH | `/api/vehicles/:id` | Atualizar veículo |
-| DELETE | `/api/vehicles/:id` | Remover veículo |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/vehicles` | Cadastrar veículo | 🔐 |
+| GET | `/api/vehicles` | Listar veículos | 🔐 |
+| GET | `/api/vehicles/:id` | Buscar veículo | 🔐 |
+| PATCH | `/api/vehicles/:id` | Atualizar veículo | 🔐 |
+| DELETE | `/api/vehicles/:id` | Remover veículo | 🔐 |
 
 ---
 
 ## Routes
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/routes` | Cadastrar rota |
-| GET | `/api/routes` | Listar rotas |
-| GET | `/api/routes/active` | Rotas ativas |
-| GET | `/api/routes/return` | Rotas de retorno |
-| GET | `/api/routes/:id` | Buscar rota |
-| PATCH | `/api/routes/:id` | Atualizar rota |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/routes` | Cadastrar rota | 🔐 |
+| GET | `/api/routes` | Listar rotas | 🔐 |
+| GET | `/api/routes/active` | Rotas ativas | 🔐 |
+| GET | `/api/routes/return` | Rotas de retorno | 🔐 |
+| GET | `/api/routes/:id` | Buscar rota | 🔐 |
+| PATCH | `/api/routes/:id` | Atualizar rota | 🔐 |
 
 ---
 
 ## Loads
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/loads` | Cadastrar carga |
-| GET | `/api/loads` | Listar cargas |
-| GET | `/api/loads/available` | Cargas disponíveis |
-| GET | `/api/loads/:id` | Buscar carga |
-| PATCH | `/api/loads/:id` | Atualizar carga |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/loads` | Cadastrar carga | 🔐 |
+| GET | `/api/loads` | Listar cargas | 🔐 |
+| GET | `/api/loads/available` | Cargas disponíveis | 🔐 |
+| GET | `/api/loads/:id` | Buscar carga | 🔐 |
+| PATCH | `/api/loads/:id` | Atualizar carga | 🔐 |
 
 ---
 
 ## Matching
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/matching/loads-for-driver/:id` | Cargas compatíveis para motorista |
-| GET | `/api/matching/drivers-for-load/:id` | Motoristas compatíveis para carga |
-| POST | `/api/matching` | Criar match |
-| GET | `/api/matching` | Listar matches |
-| PATCH | `/api/matching/:id` | Atualizar status do match |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/matching/loads-for-driver/:id` | Cargas compatíveis para motorista | 🔐 |
+| GET | `/api/matching/drivers-for-load/:id` | Motoristas compatíveis para carga | 🔐 |
+| POST | `/api/matching` | Criar match | 🔐 |
+| GET | `/api/matching` | Listar matches | 🔐 |
+| PATCH | `/api/matching/:id` | Atualizar status do match | 🔐 |
 
 ---
 
 ## Maps
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/maps/geocode?city=&state=` | Geocoding via Nominatim |
-| GET | `/api/maps/route?origin=&destination=` | Rota via OSRM |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/maps/geocode?city=&state=` | Geocoding via Nominatim (OSM) | ❌ |
+| GET | `/api/maps/route?origin=&destination=` | Rota via OSRM | ❌ |
+
+**Exemplo Geocoding:**
+```
+GET /api/maps/geocode?city=São Paulo&state=SP
+```
+
+**Response:**
+```json
+{
+  "lat": -23.5505,
+  "lon": -46.6333,
+  "display": "São Paulo, Brazil"
+}
+```
+
+**Exemplo Route:**
+```
+GET /api/maps/route?origin=São Paulo,SP&destination=Campinas,SP
+```
+
+**Response:**
+```json
+{
+  "distance": 93000,
+  "duration": 3600,
+  "geometry": "..."
+}
+```
 
 ---
 
 ## Notifications
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/notifications` | Listar notificações |
-| PATCH | `/api/notifications/:id/read` | Marcar como lida |
-| POST | `/api/notifications/read-all` | Marcar todas como lidas |
-| WS | `/api/notifications/ws` | WebSocket |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/notifications` | Listar notificações | 🔐 |
+| PATCH | `/api/notifications/:id/read` | Marcar como lida | 🔐 |
+| POST | `/api/notifications/read-all` | Marcar todas como lidas | 🔐 |
+| WS | `/api/notifications/ws` | WebSocket para notificações | 🔐 |
 
 ---
 
 ## Chat
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/chat/messages` | Enviar mensagem |
-| GET | `/api/chat/messages/:matchId` | Listar mensagens |
-| POST | `/api/chat/messages/:matchId/read` | Marcar como lidas |
-| WS | `/api/chat/ws` | WebSocket para chat |
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/chat/messages` | Enviar mensagem | 🔐 |
+| GET | `/api/chat/messages/:matchId` | Listar mensagens | 🔐 |
+| POST | `/api/chat/messages/:matchId/read` | Marcar mensagens como lidas | 🔐 |
+| WS | `/api/chat/ws` | WebSocket para chat | 🔐 |
 
 ---
 
@@ -210,7 +240,7 @@ ws.onmessage = (event) => {
 };
 ```
 
-### Formato das Mensagens
+### Formato das Mensagens (Chat)
 
 **Enviar:**
 ```json

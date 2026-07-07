@@ -14,10 +14,12 @@
 - [Tecnologias](#-tecnologias)
 - [Quick Start](#-quick-start)
 - [API](#-api)
+- [Frontend](#-frontend)
+- [Mapas](#-mapas)
 - [Docker](#-docker)
+- [Deploy](#-deploy)
 - [Testes](#-testes)
 - [Estrutura](#-estrutura)
-- [Deploy](#-deploy)
 - [Variáveis de Ambiente](#-variáveis-de-ambiente)
 - [Documentação](#-documentação)
 - [Licença](#-licença)
@@ -62,17 +64,20 @@ São Paulo ──(carregado)──▶ Porto Alegre
 - 📦 **Cadastro de cargas** — Informe origem, destino, peso, volume e datas
 - 🔗 **Matching inteligente** — Encontre motoristas com rotas compatíveis para frete de retorno
 - 💬 **Chat em tempo real** — Comunique-se com motoristas após o match
+- 🗺️ **Visualização no mapa** — Veja cargas, rotas e cidades no mapa interativo
 
 ### Para Motoristas
 - 🛣️ **Cadastro de rotas** — Informe suas viagens programadas e capacidade ociosa
 - 🚛 **Gestão de veículos** — Cadastre seus veículos com capacidade em kg e m³
 - 🔍 **Oportunidades de carga** — Veja cargas compatíveis com suas rotas de retorno
+- 📍 **Busca de cidades** — Autocomplete com Nominatim nos formulários e mapa
 
 ### Gerais
 - 🔐 **Autenticação JWT** — Registro e login seguro
 - 📊 **Dashboard** — Visão geral de cargas, rotas e matches
 - 🔔 **Notificações** — Alertas sobre matches e mensagens
-- 📖 **Documentação Swagger** — API documentada em `/docs`
+- 🗺️ **Mapa interativo** — Leaflet + OpenStreetMap com clustering e dark mode
+- 📖 **Swagger** — Documentação interativa da API em `/docs`
 
 ---
 
@@ -81,11 +86,12 @@ São Paulo ──(carregado)──▶ Porto Alegre
 | Stack | Tecnologias |
 |-------|-------------|
 | **Backend** | [Node.js](https://nodejs.org) 22+ · [Fastify](https://fastify.dev) 5 · [Zod](https://zod.dev) |
-| **Frontend** | HTML5 · [Tailwind CSS](https://tailwindcss.com) · [Alpine.js](https://alpinejs.dev) |
-| **Database** | [SQLite](https://www.sqlite.org) (dev) · PostgreSQL (prod) |
+| **Frontend** | HTML5 · [Tailwind CSS](https://tailwindcss.com) · [Alpine.js](https://alpinejs.dev) · Vanilla JS |
+| **Database** | [SQLite](https://www.sqlite.org) (dev) · [PostgreSQL](https://www.postgresql.org) (prod, via Aiven) |
 | **Autenticação** | JWT + bcrypt |
-| **Mapas** | [OpenStreetMap](https://www.openstreetmap.org) + [Nominatim](https://nominatim.org) + [OSRM](http://project-osrm.org) |
-| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) |
+| **Mapas** | [Leaflet](https://leafletjs.com) + [OpenStreetMap](https://www.openstreetmap.org) + [Nominatim](https://nominatim.org) + [OSRM](http://project-osrm.org) |
+| **Clustering** | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) |
+| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) |
 
 ---
 
@@ -114,99 +120,101 @@ O servidor iniciará em `http://localhost:3000`.
 
 Acesse a documentação interativa da API: [`http://localhost:3000/docs`](http://localhost:3000/docs)
 
-### Frontend
-
-O frontend é uma aplicação HTML estática. Abra diretamente no navegador:
+### Popular com dados de exemplo
 
 ```bash
-# Navegue até a pasta do frontend
-cd frontend
+cd backend && npm run seed
+```
 
-# Sirva com um servidor HTTP simples
+> Login: `admin@opencargo.com` / `123456`
+
+### Frontend
+
+```bash
+cd frontend
 npx serve .
 ```
 
-Ou use a extensão [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) no VS Code.
-
-> **Nota:** O frontend espera a API em `http://localhost:3000/api`. Ajuste a URL no arquivo `frontend/src/js/app.js` se necessário.
+> O frontend espera a API em `http://localhost:3000/api`.
 
 ---
 
 ## 📡 API
 
-### Endpoints Principais
+### Health Check
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|:---:|
-| `GET` | `/api/health` | Health check da API | ❌ |
-| `POST` | `/api/auth/register` | Registrar novo usuário | ❌ |
-| `POST` | `/api/auth/login` | Login | ❌ |
-| `GET` | `/api/auth/me` | Dados do usuário logado | ✅ |
+```http
+GET /api/health
+```
 
-#### Empresas
+### Autenticação
+
+```http
+POST /api/auth/register     # Registrar (company, driver, admin)
+POST /api/auth/login        # Login → retorna JWT
+GET  /api/auth/me           # Dados do usuário logado (🔐)
+```
+
+### CRUDs
+
+| Entidade | Endpoints | Descrição |
+|----------|-----------|-----------|
+| 👥 **Users** | `GET /api/users` · `GET /api/users/:id` · `PATCH /api/users/:id` | Gerenciamento de usuários |
+| 🏢 **Companies** | `POST/GET /api/companies` · `GET/PATCH /api/companies/:id` | Empresas |
+| 🚚 **Drivers** | `POST/GET /api/drivers` · `GET /api/drivers/available` · `GET/PATCH /api/drivers/:id` | Motoristas |
+| 🚛 **Vehicles** | `POST/GET /api/vehicles` · `GET/PATCH/DELETE /api/vehicles/:id` | Veículos |
+| 🛣️ **Routes** | `POST/GET /api/routes` · `GET /api/routes/active` · `GET/PATCH /api/routes/:id` | Rotas |
+| 📦 **Loads** | `POST/GET /api/loads` · `GET /api/loads/available` · `GET/PATCH /api/loads/:id` | Cargas |
+
+### Matching
+
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `POST` | `/api/companies` | Cadastrar empresa |
-| `GET` | `/api/companies` | Listar empresas |
-| `GET` | `/api/companies/:id` | Buscar empresa |
-| `PATCH` | `/api/companies/:id` | Atualizar empresa |
-
-#### Motoristas
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/drivers` | Cadastrar motorista |
-| `GET` | `/api/drivers` | Listar motoristas |
-| `GET` | `/api/drivers/available` | Motoristas disponíveis |
-| `GET` | `/api/drivers/:id` | Buscar motorista |
-| `PATCH` | `/api/drivers/:id` | Atualizar motorista |
-
-#### Veículos
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/vehicles` | Cadastrar veículo |
-| `GET` | `/api/vehicles` | Listar veículos |
-| `GET` | `/api/vehicles/:id` | Buscar veículo |
-| `PATCH` | `/api/vehicles/:id` | Atualizar veículo |
-| `DELETE` | `/api/vehicles/:id` | Remover veículo |
-
-#### Cargas
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/loads` | Cadastrar carga |
-| `GET` | `/api/loads` | Listar cargas |
-| `GET` | `/api/loads/available` | Cargas disponíveis |
-| `GET` | `/api/loads/:id` | Buscar carga |
-| `PATCH` | `/api/loads/:id` | Atualizar carga |
-
-#### Rotas
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/routes` | Cadastrar rota |
-| `GET` | `/api/routes` | Listar rotas |
-| `GET` | `/api/routes/active` | Rotas ativas |
-| `GET` | `/api/routes/return` | Rotas de retorno |
-| `GET` | `/api/routes/:id` | Buscar rota |
-| `PATCH` | `/api/routes/:id` | Atualizar rota |
-
-#### Matching
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/matching/loads-for-driver/:id` | Cargas compatíveis p/ motorista |
-| `GET` | `/api/matching/drivers-for-load/:id` | Motoristas compatíveis p/ carga |
+| `GET` | `/api/matching/loads-for-driver/:id` | Cargas compatíveis para um motorista |
+| `GET` | `/api/matching/drivers-for-load/:id` | Motoristas compatíveis para uma carga |
 | `POST` | `/api/matching` | Criar match |
 | `GET` | `/api/matching` | Listar matches |
 | `PATCH` | `/api/matching/:id` | Atualizar status do match |
 
-#### Chat & Notificações
+### Mapas
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/maps/geocode?city=&state=` | Geocoding via Nominatim |
+| `GET` | `/api/maps/route?origin=&destination=` | Rota via OSRM |
+
+### Chat & Notificações
+
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | `POST` | `/api/chat/messages` | Enviar mensagem |
 | `GET` | `/api/chat/messages/:matchId` | Listar mensagens |
+| `POST` | `/api/chat/messages/:matchId/read` | Marcar como lidas |
+| `WS` | `/api/chat/ws` | WebSocket para chat |
 | `GET` | `/api/notifications` | Listar notificações |
 | `PATCH` | `/api/notifications/:id/read` | Marcar como lida |
 | `POST` | `/api/notifications/read-all` | Marcar todas como lidas |
+| `WS` | `/api/notifications/ws` | WebSocket |
 
-> 📖 Documentação completa disponível em [`docs/API.md`](docs/API.md) ou via Swagger em `/docs`.
+> 📖 Documentação completa: [`docs/API.md`](docs/API.md) ou Swagger em `/docs`.
+
+---
+
+## 🗺️ Mapas
+
+O OpenCargo utiliza tecnologias **100% open source** para mapas:
+
+- **Leaflet** — Renderização do mapa com tiles OpenStreetMap (dark mode)
+- **MarkerCluster** — Agrupamento inteligente de marcadores para muitas cargas/cidades
+- **Nominatim** — Geocoding e autocomplete de cidades nos formulários
+- **OSRM** — Cálculo de rotas reais entre cidades (geometria de estradas)
+
+Funcionalidades no frontend:
+- Barra de busca de cidades com autocomplete
+- Marcadores coloridos por tipo (origem, destino, cargas, cidades)
+- Polylines com cores por status (ativo, concluído, cancelado)
+- Filtros por tipo (rotas ativas, concluídas, cargas, cidades)
+- Clustering automático para performance com muitos dados
 
 ---
 
@@ -216,20 +224,64 @@ Ou use a extensão [Live Server](https://marketplace.visualstudio.com/items?item
 # Construir e iniciar todos os serviços
 docker compose up --build
 
-# Ou em background
+# Em background
 docker compose up --build -d
 
-# Parar serviços
+# Parar
 docker compose down
-
-# Ver logs
-docker compose logs -f
 ```
 
 | Serviço | Porta |
 |---------|-------|
-| Backend | `3000` |
-| Frontend | `5173` |
+| Backend | 3000 |
+| Frontend | 5173 |
+
+---
+
+## 🌐 Deploy
+
+### Vercel (Frontend)
+
+O frontend é uma SPA estática pronta para deploy na Vercel:
+
+```bash
+# Conecte o repositório no dashboard da Vercel
+# https://vercel.com/new
+
+# O vercel.json na raiz do projeto já configura:
+# - rootDirectory: "frontend"
+# - SPA rewrites (/* → /index.html)
+# - Cache headers para assets
+```
+
+### Docker (Backend + Frontend)
+
+```bash
+git clone https://github.com/charaodaniel/opencargo.git
+cd opencargo
+
+# Configure as variáveis de ambiente
+cat > .env << EOF
+JWT_SECRET=seu-jwt-secret-forte-aqui
+CORS_ORIGIN=https://seudominio.com
+NODE_ENV=production
+DATABASE_URL=postgres://usuario:senha@host:5432/opencargo?sslmode=require
+EOF
+
+docker compose up --build -d
+```
+
+### PostgreSQL (Produção)
+
+O backend suporta detecção automática: SQLite para desenvolvimento, PostgreSQL para produção.
+
+```bash
+# Exemplo: Aiven for PostgreSQL
+export DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb?sslmode=require"
+
+# O schema é criado automaticamente na primeira execução
+npm run seed  # Popula com dados de exemplo
+```
 
 ---
 
@@ -243,7 +295,7 @@ cd backend
 # Executar todos os testes
 npm test
 
-# Executar com verbose
+# Com filtro
 node --test --test-name-pattern="Auth"
 ```
 
@@ -251,7 +303,7 @@ node --test --test-name-pattern="Auth"
 
 | Suite | Testes | O que cobre |
 |-------|--------|-------------|
-| Health Check | 1 | GET /api/health |
+| Health Check | 1 | `GET /api/health` |
 | Auth | 7 | Register, Login, Me, duplicatas, 401 |
 | Companies CRUD | 5 | CRUD completo + 404 |
 | Drivers CRUD | 3 | CRUD + listar disponíveis |
@@ -262,7 +314,7 @@ node --test --test-name-pattern="Auth"
 | Notifications | 2 | Listar + marcar lidas |
 | Users | 2 | Listar + buscar por ID |
 
-**Total: 38 testes**
+**Total: 38 testes** — compatíveis com SQLite e PostgreSQL.
 
 ---
 
@@ -270,90 +322,56 @@ node --test --test-name-pattern="Auth"
 
 ```
 OpenCargo/
-├── backend/                 # API REST (Node.js + Fastify)
+├── backend/                  # API REST (Node.js + Fastify)
 │   ├── src/
-│   │   ├── auth/           # Autenticação (JWT + bcrypt)
-│   │   ├── users/          # Gerenciamento de usuários
-│   │   ├── companies/      # CRUD empresas
-│   │   ├── drivers/        # CRUD motoristas
-│   │   ├── vehicles/       # CRUD veículos
-│   │   ├── routes/         # CRUD rotas
-│   │   ├── loads/          # CRUD cargas
-│   │   ├── matching/       # Motor de matching
-│   │   ├── maps/           # Integração OpenStreetMap
-│   │   ├── notifications/  # Notificações + WebSocket
-│   │   ├── chat/           # Chat + WebSocket
-│   │   └── common/         # Config, Database, Types
-│   ├── tests/              # Testes unitários
-│   ├── package.json
-│   └── data/               # Banco SQLite (gitignored)
-├── frontend/                # Interface web
+│   │   ├── auth/            # Autenticação (JWT + bcrypt)
+│   │   ├── users/           # Gerenciamento de usuários
+│   │   ├── companies/       # CRUD empresas
+│   │   ├── drivers/         # CRUD motoristas
+│   │   ├── vehicles/        # CRUD veículos
+│   │   ├── routes/          # CRUD rotas
+│   │   ├── loads/           # CRUD cargas
+│   │   ├── matching/        # Motor de matching
+│   │   ├── maps/            # Geocoding + OSRM
+│   │   ├── notifications/   # Notificações + WebSocket
+│   │   ├── chat/            # Chat + WebSocket
+│   │   └── common/          # Config, Database, Types
+│   ├── tests/               # Testes (38 testes com node:test)
+│   ├── scripts/             # Seed de dados
+│   └── data/                # Banco SQLite (gitignored)
+├── frontend/                 # Interface web (SPA)
 │   ├── index.html
-│   └── src/
-│       ├── js/app.js       # Alpine.js application
-│       └── css/style.css   # Estilos customizados
-├── docs/                    # Documentação
-│   ├── API.md              # Referência completa da API
-│   ├── DATABASE.md         # Modelo de dados
-│   ├── BUSINESS_RULES.md   # Regras de negócio
-│   ├── SECURITY.md         # Segurança
-│   ├── DEPLOY.md           # Guia de deploy
-│   └── ROADMAP.md          # Roadmap do projeto
-├── docker/                  # Configuração Docker
+│   ├── vercel.json           # Conectado na raiz
+│   └── assets/
+│       ├── js/
+│       │   ├── utils/       # config, api, storage, utils, geocoding
+│       │   ├── components/  # Toast, Modal, Table, Card, Navbar, Sidebar
+│       │   └── pages/       # dashboard, companies, drivers, vehicles,
+│       │                      routes, loads, matching, chat, notifications,
+│       │                      maps, login
+│       └── css/style.css
+├── docs/                     # Documentação
+│   ├── API.md               # Referência completa da API
+│   ├── DATABASE.md          # Modelo de dados
+│   ├── BUSINESS_RULES.md    # Regras de negócio
+│   ├── SECURITY.md          # Segurança
+│   ├── DEPLOY.md            # Guia de deploy (Docker + Vercel)
+│   ├── ROADMAP.md           # Roadmap do projeto
+│   └── CONTRIBUTING.md      # Guia para contribuidores
+├── docker/                   # Configuração Docker
 │   ├── Dockerfile.backend
 │   ├── Dockerfile.frontend
 │   └── nginx.conf
-├── scripts/                 # Scripts utilitários
-│   ├── setup.sh            # Setup inicial
-│   └── seed.sh             # Dados de exemplo
-├── database/                # Migrations SQL
-│   └── init.sql
+├── scripts/                  # Scripts utilitários
+│   ├── setup.sh             # Setup inicial
+│   └── seed.sh              # Dados de exemplo
+├── database/
+│   └── init.sql             # Schema SQL inicial
+├── vercel.json               # Configuração Vercel (frontend/)
+├── .env.example
 ├── docker-compose.yml
-├── ARCHITECTURE.md
 └── README.md
 ```
-
----
-
-## 🌐 Deploy
-
-### Docker (Recomendado)
-
-```bash
-# Clone e configure
-git clone https://github.com/charaodaniel/opencargo.git
-cd opencargo
-
-# Crie arquivo .env
-cat > .env << EOF
-JWT_SECRET=seu-jwt-secret-muito-forte-aqui
-CORS_ORIGIN=https://seudominio.com
-NODE_ENV=production
-EOF
-
-# Inicie
-docker compose up --build -d
-```
-
-### Manual (Produção)
-
-```bash
-cd backend
-npm ci --production
-
-# Configure variáveis de ambiente
-export JWT_SECRET="seu-jwt-secret"
-export NODE_ENV=production
-export DATABASE_URL="postgresql://user:pass@localhost:5432/opencargo"
-export CORS_ORIGIN="https://seudominio.com"
-
-# Inicie
-node src/index.js
-```
-
-> ⚠️ Em produção, **altere o JWT_SECRET** para um valor forte e único.
-> Considere usar PostgreSQL em vez de SQLite para ambientes de produção.
-> Configure Nginx como proxy reverso (veja `docker/nginx.conf`).
 
 ---
 
@@ -365,11 +383,13 @@ node src/index.js
 | `HOST` | Host do servidor | `0.0.0.0` | ❌ |
 | `NODE_ENV` | Ambiente (`development`, `production`, `test`) | `development` | ❌ |
 | `JWT_SECRET` | Chave secreta JWT | `opencargo-dev-secret` | **⚠️** |
-| `JWT_EXPIRES_IN` | Tempo de expiração do token | `7d` | ❌ |
-| `DATABASE_URL` | URL do banco de dados | `file:./data/opencargo.db` | ❌ |
-| `CORS_ORIGIN` | Origem permitida para CORS | `http://localhost:5173` | **⚠️** |
-| `RATE_LIMIT_MAX` | Máximo de requisições por janela | `100` | ❌ |
+| `JWT_EXPIRES_IN` | Expiração do token | `7d` | ❌ |
+| `DATABASE_URL` | URL do banco (SQLite ou PostgreSQL) | `file:./data/opencargo.db` | ❌ |
+| `CORS_ORIGIN` | Origem permitida CORS | `http://localhost:5173` | **⚠️** |
+| `RATE_LIMIT_MAX` | Máx. requisições por janela | `100` | ❌ |
 | `RATE_LIMIT_WINDOW_MS` | Janela de rate limit (ms) | `60000` | ❌ |
+
+> **⚠️ Produção:** Altere `JWT_SECRET` para um valor forte (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
 
 ---
 
@@ -381,23 +401,16 @@ node src/index.js
 | [`docs/API.md`](docs/API.md) | Referência completa da API REST |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Modelo de dados e entidades |
 | [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md) | Regras de negócio detalhadas |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Autenticação, autorização e segurança |
-| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Guia de deploy em produção |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Autenticação e segurança |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Guia de deploy (Docker + Vercel + PostgreSQL) |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Roadmap e versões planejadas |
+| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Guia para contribuidores |
 
 ---
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Veja [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) para detalhes.
-
-### Como contribuir
-
-1. Faça um fork do projeto
-2. Crie uma branch: `git checkout -b feat/minha-feature`
-3. Commit suas mudanças: `git commit -m "feat: adiciona nova funcionalidade"`
-4. Push: `git push origin feat/minha-feature`
-5. Abra um Pull Request
+Contribuições são bem-vindas! Veja [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
 
 ---
 

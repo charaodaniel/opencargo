@@ -41,11 +41,11 @@ O projeto segue alguns princípios fundamentais.
 
 ### Open Source
 
-Todo o sistema será desenvolvido utilizando tecnologias abertas.
+Todo o sistema é desenvolvido utilizando tecnologias abertas.
 
 ### Self Hosted
 
-O usuário poderá instalar toda a plataforma em seu próprio servidor.
+O usuário pode instalar toda a plataforma em seu próprio servidor.
 
 ### Independência
 
@@ -57,17 +57,17 @@ Priorizar desempenho e baixo consumo de recursos.
 
 ### Modularidade
 
-Todos os módulos deverão ser independentes.
+Todos os módulos são independentes.
 
 ### API First
 
-Toda funcionalidade deverá estar disponível através da API.
+Toda funcionalidade está disponível através da API.
 
 ---
 
 ## Escopo Inicial
 
-O MVP terá foco exclusivamente em **frete de retorno (Backhaul)**.
+O MVP tem foco exclusivamente em **frete de retorno (Backhaul)**.
 
 Exemplo:
 
@@ -105,18 +105,22 @@ O sistema identifica cargas compatíveis.
 ## Arquitetura Geral
 
 ```text
-                Frontend
+              Frontend (SPA)
+              HTML + Tailwind + Alpine.js
                     │
          REST API / WebSocket
                     │
-               OpenCargo API
+              OpenCargo API (Fastify)
                     │
     ┌───────────────┼───────────────┐
  Auth          Matching          Chat
  Users          Routes      Notifications
  Vehicles       Loads            Maps
                     │
-              Banco de Dados
+     ┌──────────────┴──────────────┐
+     │                             │
+  SQLite (dev)          PostgreSQL (prod)
+  (file.db)              (Aiven / self-hosted)
 ```
 
 ---
@@ -125,57 +129,55 @@ O sistema identifica cargas compatíveis.
 
 ### Backend
 
-- Node.js
-- Fastify
-- TypeScript
-- JWT
-- Zod
+- Node.js 22+
+- Fastify 5
+- JavaScript (CommonJS modules)
+- JWT + bcrypt
+- Zod (validação)
 
-### Banco
+### Banco de Dados
 
 **Desenvolvimento**
 
-- SQLite
+- SQLite (via `node:sqlite`, nativo)
 
 **Produção**
 
-- PostgreSQL
+- PostgreSQL (via `pg` node-postgres)
 
-**ORM**
+**Camada de abstração**
 
-- Drizzle ORM
+- Adaptador próprio em `backend/src/common/database.js`
+- Detecta automaticamente SQLite ou PostgreSQL via `DATABASE_URL`
+- Placeholders `?` normalizados para `$1, $2, $3...` no PostgreSQL
 
 ### Frontend
 
 - HTML5
-- Tailwind CSS
-- Alpine.js (MVP)
-
-**Evolução**
-
-- Vue.js
+- Tailwind CSS (CDN)
+- Alpine.js (CDN)
+- Vanilla JavaScript modular
 
 ### Mapas
 
-Nunca depender de Google Maps.
+Nunca depende de Google Maps. Tecnologias utilizadas:
 
-Tecnologias previstas:
-
-- OpenStreetMap
-- Leaflet
-- Nominatim
-- Valhalla
+- **OpenStreetMap** — Tiles de mapa
+- **Leaflet** — Renderização de mapa interativo
+- **Leaflet.markercluster** — Agrupamento de marcadores
+- **Nominatim** — Geocoding e busca de cidades
+- **OSRM** — Cálculo de rotas entre cidades
 
 ### Comunicação
 
-- REST API
-- WebSocket
+- REST API (Fastify)
+- WebSocket (chat + notificações)
 
 ### Infraestrutura
 
-- Docker
-- Docker Compose
-- Nginx
+- Docker + Docker Compose
+- Nginx (proxy reverso)
+- Vercel (frontend deploy)
 
 ---
 
@@ -185,48 +187,58 @@ Tecnologias previstas:
 OpenCargo/
 ├── backend/
 │   ├── src/
-│   │   ├── auth/
-│   │   ├── users/
-│   │   ├── companies/
-│   │   ├── drivers/
-│   │   ├── vehicles/
-│   │   ├── routes/
-│   │   ├── loads/
-│   │   ├── matching/
-│   │   ├── maps/
-│   │   ├── notifications/
-│   │   ├── chat/
-│   │   └── common/
-│   ├── package.json
-│   └── tsconfig.json
+│   │   ├── auth/           # JWT, registro, login
+│   │   ├── users/          # CRUD usuários
+│   │   ├── companies/      # CRUD empresas
+│   │   ├── drivers/        # CRUD motoristas
+│   │   ├── vehicles/       # CRUD veículos
+│   │   ├── routes/         # CRUD rotas
+│   │   ├── loads/          # CRUD cargas
+│   │   ├── matching/       # Motor de matching inteligente
+│   │   ├── maps/           # Geocoding (Nominatim) + rotas (OSRM)
+│   │   ├── notifications/  # Notificações + WebSocket
+│   │   ├── chat/           # Chat + WebSocket
+│   │   └── common/         # Config, Database, Types
+│   ├── tests/              # 38 testes (node:test)
+│   ├── scripts/            # Seed de dados
+│   └── data/               # Banco SQLite (gitignored)
 ├── frontend/
-│   └── src/
-├── docs/
-├── database/
-├── docker/
-├── scripts/
-└── tests/
+│   └── assets/
+│       ├── js/
+│       │   ├── utils/      # config, api, storage, utils, geocoding
+│       │   ├── components/ # Toast, Modal, Table, Card, Navbar, Sidebar
+│       │   └── pages/      # dashboard, companies, drivers, vehicles,
+│       │                      routes, loads, matching, chat, notifications,
+│       │                      maps, login
+│       └── css/style.css
+├── docs/                    # Documentação
+├── docker/                  # Dockerfiles + nginx.conf
+├── scripts/                 # Setup + seed (shell)
+├── database/                # init.sql
+├── vercel.json              # Config Vercel (rootDirectory: frontend)
+├── .env.example
+└── docker-compose.yml
 ```
 
 ---
 
 ## Arquitetura em Camadas
 
-### Presentation
+### Presentation Layer (Frontend)
 
-Frontend. Responsável pela interface.
+Interface com o usuário. SPA com Alpine.js, Tailwind CSS, Leaflet.
 
-### API
+### API Layer (Backend)
 
-Recebe requisições. Validação. Autenticação.
+Recebe requisições Fastify, valida com Zod, autentica com JWT.
 
-### Business
+### Business Layer
 
-Regras de negócio. Matching. Disponibilidade. Capacidade.
+Regras de negócio. Matching por cidades. Disponibilidade. Capacidade.
 
-### Persistence
+### Persistence Layer
 
-Banco de dados.
+Adaptador de banco que suporta SQLite (dev) e PostgreSQL (prod).
 
 ---
 
@@ -240,30 +252,23 @@ Usuário → Empresa → Carga → Matching → Motorista → Veículo → Entre
 
 ## Motor de Matching
 
-O algoritmo será desenvolvido em fases.
+### MVP (implementado)
 
-### MVP
+Matching por cidades com score de compatibilidade.
 
-Matching por cidades.
+**Critérios:**
+- Origem da carga = Destino da rota do motorista
+- Destino da carga = Origem da rota do motorista
+- Peso da carga ≤ Capacidade disponível do veículo
+- Volume da carga ≤ Volume disponível do veículo
+- Datas compatíveis
 
-Exemplo:
-- Origem: Santa Maria
-- Destino: Alegrete
+### Evolução Planejada
 
-O sistema procura motoristas cuja rota contenha ambas as cidades na ordem correta.
-
-Também verifica:
-- peso disponível
-- volume disponível
-- datas compatíveis
-
-### Evolução
-
-Posteriormente:
-- distância máxima
-- desvios permitidos
-- cálculo automático
-- otimização
+- distância máxima e desvios permitidos
+- cálculo automático de frete
+- score de compatibilidade avançado
+- otimização com IA
 
 ---
 
@@ -280,7 +285,7 @@ Empresa → Cadastrar carga → Sistema procura caminhões
 
 ### Core
 
-Autenticação, Configuração, Permissões, Logs
+Autenticação, Configuração, Permissões
 
 ### Users
 
@@ -304,37 +309,24 @@ Motor responsável pela compatibilidade.
 
 ### Maps
 
-Integração com OpenStreetMap.
+Geocoding Nominatim + Rotas OSRM.
 
 ### Chat
 
-Comunicação entre empresa e motorista.
+Comunicação entre empresa e motorista via WebSocket.
 
 ### Notifications
 
-WebSocket, Push, E-mail
-
----
-
-## Integração com Nexus
-
-O OpenCargo foi projetado para funcionar de forma independente, mas também poderá ser executado como um módulo do Nexus.
-
-Nesse cenário:
-- O Nexus será responsável por autenticação centralizada, configuração e serviços compartilhados.
-- O OpenCargo consumirá APIs do Nexus para usuários, permissões, auditoria e monitoramento.
-- A lógica de logística permanecerá isolada no OpenCargo, permitindo implantação independente quando necessário.
+Notificações em tempo real via WebSocket.
 
 ---
 
 ## Objetivos de Longo Prazo
 
-- Aplicativo Android
-- Aplicativo iOS
+- Aplicativo Android / iOS
 - Rastreamento em tempo real
 - Inteligência Artificial para otimização de cargas
-- Integração com cooperativas
-- Integração com ERPs
+- Integração com cooperativas e ERPs
 - Marketplace de fretes
 - Plataforma internacional
 

@@ -6,10 +6,16 @@
 
 ## Tecnologia
 
-| Ambiente | Banco | ORM |
-|----------|-------|-----|
-| Desenvolvimento | SQLite | Drizzle ORM |
-| Produção | PostgreSQL | Drizzle ORM |
+| Ambiente | Banco | Driver | Observação |
+|----------|-------|--------|------------|
+| Desenvolvimento | SQLite | `node:sqlite` (nativo) | Arquivo `.db` em `backend/data/` |
+| Produção | PostgreSQL | `pg` (node-postgres) | SSL requerido (Aiven, Railway, etc.) |
+
+**Detecção automática:** O backend identifica o banco pela `DATABASE_URL`:
+- `file:./data/opencargo.db` → SQLite
+- `postgres://user:pass@host/db` → PostgreSQL
+
+**Placeholders:** O adaptador PostgreSQL normaliza `?` para `$1, $2, $3...` automaticamente.
 
 ---
 
@@ -73,141 +79,141 @@
 
 ### users
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| name | TEXT | Nome completo |
-| email | TEXT (unique) | E-mail de login |
-| password | TEXT | Hash bcrypt |
-| role | TEXT | admin, company, driver |
-| phone | TEXT | Telefone de contato |
-| active | BOOLEAN | Se o usuário está ativo |
-| created_at | TEXT | Data de criação |
-| updated_at | TEXT | Data de atualização |
+| Coluna | Tipo SQLite | Tipo PostgreSQL | Descrição |
+|--------|-------------|-----------------|-----------|
+| id | TEXT (UUID) | UUID DEFAULT uuid_generate_v4() | Identificador único |
+| name | TEXT | VARCHAR(255) | Nome completo |
+| email | TEXT (unique) | VARCHAR(255) UNIQUE | E-mail de login |
+| password | TEXT | VARCHAR(255) | Hash bcrypt |
+| role | TEXT | VARCHAR(20) CHECK | admin, company, driver |
+| phone | TEXT | VARCHAR(20) | Telefone |
+| active | INTEGER (1/0) | INTEGER DEFAULT 1 | Usuário ativo |
+| created_at | TEXT | TIMESTAMP DEFAULT NOW() | Data de criação |
+| updated_at | TEXT | TIMESTAMP DEFAULT NOW() | Data de atualização |
 
 ### companies
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| user_id | TEXT (FK) | Referência ao usuário |
-| name | TEXT | Nome da empresa |
-| document | TEXT (unique) | CNPJ |
+| id | UUID | Identificador único |
+| user_id | UUID (FK → users) | Referência ao usuário |
+| name | VARCHAR(255) | Nome da empresa |
+| document | VARCHAR(20) (unique) | CNPJ |
 | address | TEXT | Endereço |
-| city | TEXT | Cidade |
-| state | TEXT | Estado (UF) |
-| phone | TEXT | Telefone |
-| created_at | TEXT | Data de criação |
+| city | VARCHAR(100) | Cidade |
+| state | VARCHAR(2) | Estado (UF) |
+| phone | VARCHAR(20) | Telefone |
+| created_at | TIMESTAMP | Data de criação |
 
 ### drivers
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| user_id | TEXT (FK) | Referência ao usuário |
-| name | TEXT | Nome completo |
-| document | TEXT (unique) | CPF |
-| cnh | TEXT | Número da CNH |
-| phone | TEXT | Telefone |
-| city | TEXT | Cidade base |
-| state | TEXT | Estado (UF) |
-| available | BOOLEAN | Disponibilidade |
-| created_at | TEXT | Data de criação |
+| id | UUID | Identificador único |
+| user_id | UUID (FK → users) | Referência ao usuário |
+| name | VARCHAR(255) | Nome completo |
+| document | VARCHAR(20) (unique) | CPF |
+| cnh | VARCHAR(20) | Número da CNH |
+| phone | VARCHAR(20) | Telefone |
+| city | VARCHAR(100) | Cidade base |
+| state | VARCHAR(2) | Estado (UF) |
+| available | INTEGER (1/0) | Disponibilidade |
+| created_at | TIMESTAMP | Data de criação |
 
 ### vehicles
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| driver_id | TEXT (FK) | Referência ao motorista |
-| plate | TEXT (unique) | Placa do veículo |
-| model | TEXT | Modelo |
+| id | UUID | Identificador único |
+| driver_id | UUID (FK → drivers) | Referência ao motorista |
+| plate | VARCHAR(10) (unique) | Placa do veículo |
+| model | VARCHAR(100) | Modelo |
 | year | INTEGER | Ano |
-| capacity_kg | REAL | Capacidade em kg |
-| capacity_m3 | REAL | Capacidade em m³ |
-| type | TEXT | Tipo (truck, van, etc.) |
-| created_at | TEXT | Data de criação |
+| capacity_kg | REAL/DECIMAL | Capacidade em kg |
+| capacity_m3 | REAL/DECIMAL | Capacidade em m³ |
+| type | VARCHAR(50) | Tipo (truck, van, etc.) |
+| created_at | TIMESTAMP | Data de criação |
 
 ### routes
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| driver_id | TEXT (FK) | Referência ao motorista |
-| origin_city | TEXT | Cidade de origem |
-| origin_state | TEXT | Estado de origem |
-| destination_city | TEXT | Cidade de destino |
-| destination_state | TEXT | Estado de destino |
-| departure_date | TEXT | Data de partida |
-| arrival_date | TEXT | Data de chegada |
-| available_weight | REAL | Peso disponível (kg) |
-| available_volume | REAL | Volume disponível (m³) |
-| is_return | BOOLEAN | Se é rota de retorno |
-| status | TEXT | active, completed, cancelled |
-| created_at | TEXT | Data de criação |
+| id | UUID | Identificador único |
+| driver_id | UUID (FK → drivers) | Referência ao motorista |
+| origin_city | VARCHAR(100) | Cidade de origem |
+| origin_state | VARCHAR(2) | Estado de origem |
+| destination_city | VARCHAR(100) | Cidade de destino |
+| destination_state | VARCHAR(2) | Estado de destino |
+| departure_date | DATE | Data de partida |
+| arrival_date | DATE | Data de chegada |
+| available_weight | DECIMAL | Peso disponível (kg) |
+| available_volume | DECIMAL | Volume disponível (m³) |
+| is_return | INTEGER/BOOLEAN | Se é rota de retorno |
+| status | VARCHAR(20) | active, completed, cancelled |
+| created_at | TIMESTAMP | Data de criação |
 
 ### loads
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| company_id | TEXT (FK) | Referência à empresa |
-| title | TEXT | Título da carga |
+| id | UUID | Identificador único |
+| company_id | UUID (FK → companies) | Referência à empresa |
+| title | VARCHAR(255) | Título da carga |
 | description | TEXT | Descrição detalhada |
-| origin_city | TEXT | Cidade de origem |
-| origin_state | TEXT | Estado de origem |
-| destination_city | TEXT | Cidade de destino |
-| destination_state | TEXT | Estado de destino |
-| weight_kg | REAL | Peso em kg |
-| volume_m3 | REAL | Volume em m³ |
-| type | TEXT | Tipo de carga |
-| pickup_date | TEXT | Data de coleta |
-| delivery_date | TEXT | Data de entrega |
-| status | TEXT | pending, available, matched, in_transit, delivered, cancelled |
-| created_at | TEXT | Data de criação |
-| updated_at | TEXT | Data de atualização |
+| origin_city | VARCHAR(100) | Cidade de origem |
+| origin_state | VARCHAR(2) | Estado de origem |
+| destination_city | VARCHAR(100) | Cidade de destino |
+| destination_state | VARCHAR(2) | Estado de destino |
+| weight_kg | DECIMAL | Peso em kg |
+| volume_m3 | DECIMAL | Volume em m³ |
+| type | VARCHAR(50) | Tipo de carga |
+| pickup_date | DATE | Data de coleta |
+| delivery_date | DATE | Data de entrega |
+| status | VARCHAR(20) | pending, available, matched, in_transit, delivered, cancelled |
+| created_at | TIMESTAMP | Data de criação |
+| updated_at | TIMESTAMP | Data de atualização |
 
 ### matches
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| load_id | TEXT (FK) | Referência à carga |
-| driver_id | TEXT (FK) | Referência ao motorista |
-| route_id | TEXT (FK) | Referência à rota |
-| score | REAL | Pontuação do match |
-| status | TEXT | pending, accepted, rejected, cancelled |
-| created_at | TEXT | Data de criação |
+| id | UUID | Identificador único |
+| load_id | UUID (FK → loads) | Referência à carga |
+| driver_id | UUID (FK → drivers) | Referência ao motorista |
+| route_id | UUID (FK → routes) | Referência à rota |
+| score | DECIMAL | Pontuação do match (0-100) |
+| status | VARCHAR(20) | pending, accepted, rejected, cancelled |
+| created_at | TIMESTAMP | Data de criação |
 
 ### messages
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| match_id | TEXT (FK) | Referência ao match |
-| sender_id | TEXT (FK) | Referência ao remetente |
+| id | UUID | Identificador único |
+| match_id | UUID (FK → matches) | Referência ao match |
+| sender_id | UUID (FK → users) | Referência ao remetente |
 | content | TEXT | Conteúdo da mensagem |
-| read | BOOLEAN | Se foi lida |
-| created_at | TEXT | Data de envio |
+| read | INTEGER/BOOLEAN | Se foi lida |
+| created_at | TIMESTAMP | Data de envio |
 
 ### notifications
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | TEXT (UUID) | Identificador único |
-| user_id | TEXT (FK) | Referência ao usuário |
-| type | TEXT | Tipo da notificação |
-| title | TEXT | Título |
+| id | UUID | Identificador único |
+| user_id | UUID (FK → users) | Referência ao usuário |
+| type | VARCHAR(50) | Tipo da notificação |
+| title | VARCHAR(255) | Título |
 | message | TEXT | Mensagem |
-| read | BOOLEAN | Se foi lida |
-| created_at | TEXT | Data de criação |
+| read | INTEGER/BOOLEAN | Se foi lida |
+| created_at | TIMESTAMP | Data de criação |
 
 ---
 
-## Índices Planejados
+## Índices
 
 ```sql
--- Matching: busca por cidade e status
+-- Matching: busca por origem/destino e status
 CREATE INDEX idx_loads_origin_dest ON loads(origin_city, destination_city);
 CREATE INDEX idx_loads_status ON loads(status);
 CREATE INDEX idx_routes_origin_dest ON routes(origin_city, destination_city);
@@ -217,4 +223,8 @@ CREATE INDEX idx_matches_status ON matches(status);
 -- Usuários
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
+
+-- Relacionamentos
+CREATE INDEX idx_messages_match ON messages(match_id);
+CREATE INDEX idx_notifications_user ON notifications(user_id);
 ```

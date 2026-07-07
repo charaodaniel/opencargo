@@ -95,7 +95,7 @@ Capacidade Disponível = Capacidade Total - Carga Atual
 |--------|-----------|
 | pending | Aguardando aprovação |
 | available | Disponível para matching |
-| matched | Compatível encontrado |
+| matched | Match encontrado |
 | in_transit | Em transporte |
 | delivered | Entregue |
 | cancelled | Cancelada |
@@ -110,19 +110,21 @@ Capacidade Disponível = Capacidade Total - Carga Atual
 
 ## 7. Matching
 
-### 7.1 Algoritmo MVP
+### 7.1 Algoritmo (MVP)
 
-O matching inicial é baseado em correspondência de cidades:
+O matching é baseado em correspondência de cidades com score de compatibilidade:
 
 ```text
 Motorista informa:
-  Rota: Santa Maria → Alegrete (retorno vazio)
+  Rota: São Paulo → Porto Alegre (retorno vazio)
+  Capacidade: 10.000 kg
 
 Sistema busca cargas:
-  Origem: Alegrete
-  Destino: Santa Maria
+  Origem: Porto Alegre  ← Destino do motorista
+  Destino: São Paulo    ← Origem do motorista
+  Peso: 5.000 kg        ← Dentro da capacidade
 
-Match encontrado!
+Match encontrado com score 100!
 ```
 
 ### 7.2 Critérios de Compatibilidade
@@ -133,7 +135,14 @@ Match encontrado!
 - Volume da carga ≤ Volume disponível do veículo
 - Data da carga compatível com a data da rota
 
-### 7.3 Status do Match
+### 7.3 Score
+
+| Situação | Score |
+|----------|-------|
+| Todos os critérios atendidos | 100 |
+| Compatibilidade parcial | A definir |
+
+### 7.4 Status do Match
 
 | Status | Descrição |
 |--------|-----------|
@@ -146,7 +155,7 @@ Match encontrado!
 
 ## 8. Chat
 
-- O chat só pode existir entre empresa e motorista após um match.
+- O chat só pode existir entre empresa e motorista **após um match**.
 - Mensagens são persistidas no banco.
 - Chat em tempo real via WebSocket.
 
@@ -154,10 +163,10 @@ Match encontrado!
 
 ## 9. Notificações
 
-- Notificações são geradas para:
+- Notificações são geradas automaticamente para:
   - Novo match encontrado
   - Match aceito/rejeitado
-  - Mensagem recebida
+  - Mensagem recebida no chat
   - Carga entregue
 
 ---
@@ -169,8 +178,10 @@ Match encontrado!
 | Gerenciar usuários | ✅ | ❌ | ❌ |
 | Cadastrar empresa | ❌ | ✅ | ❌ |
 | Cadastrar motorista | ❌ | ❌ | ✅ |
+| Cadastrar veículo | ❌ | ❌ | ✅ |
 | Cadastrar carga | ❌ | ✅ | ❌ |
 | Cadastrar rota | ❌ | ❌ | ✅ |
 | Ver matching | ✅ | ✅ | ✅ |
-| Aceitar proposta | ❌ | ✅ | ✅ |
+| Aceitar/rejeitar proposta | ❌ | ✅ | ✅ |
 | Enviar mensagem | ❌ | ✅ | ✅ |
+| Visualizar mapa | ✅ | ✅ | ✅ |

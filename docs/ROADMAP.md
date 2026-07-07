@@ -4,54 +4,51 @@
 
 ---
 
-## MVP — Versão 0.1
+## ✅ Versão 0.1 — MVP: Frete de Retorno
 
-**Foco: Frete de Retorno (Backhaul)**
+**Foco: Estrutura e funcionalidades básicas**
 
 - [x] Estrutura do projeto definida
 - [x] Arquitetura documentada
-- [x] Modelo de dados definido
-- [ ] Autenticação (registro e login)
-- [ ] CRUD de Empresas
-- [ ] CRUD de Motoristas
-- [ ] CRUD de Veículos
-- [ ] CRUD de Rotas
-- [ ] CRUD de Cargas
-- [ ] Motor de Matching (cidades)
-- [ ] Dashboard básico
-- [ ] Docker setup
-- [ ] Documentação inicial
+- [x] Modelo de dados definido (SQLite + PostgreSQL)
+- [x] Autenticação (registro e login com JWT + bcrypt)
+- [x] CRUD de Empresas
+- [x] CRUD de Motoristas
+- [x] CRUD de Veículos
+- [x] CRUD de Rotas
+- [x] CRUD de Cargas
+- [x] Motor de Matching (por cidades com score)
+- [x] Dashboard básico
+- [x] Docker setup
+- [x] Documentação inicial
 
 ---
 
-## Versão 0.2
+## ✅ Versão 0.2 — Comunicação e Visualização
 
-**Foco: Comunicação e Visualização**
-
-- [ ] Chat entre empresa e motorista
-- [ ] Mapa com Leaflet + OpenStreetMap
-- [ ] Avaliações entre as partes
-- [ ] Histórico de fretes
-- [ ] Notificações em tempo real
-- [ ] Melhorias no dashboard
+- [x] Chat entre empresa e motorista (WebSocket)
+- [x] Mapa com Leaflet + OpenStreetMap (dark mode)
+- [x] Notificações em tempo real (WebSocket)
+- [x] Clustering de marcadores (Leaflet.markercluster)
+- [x] Geocoding com Nominatim (autocomplete de cidades)
+- [x] Rotas no mapa com OSRM
+- [x] Melhorias no dashboard
 
 ---
 
-## Versão 0.3
-
-**Foco: Experiência do Usuário**
+## 🔄 Versão 0.3 — Experiência do Usuário
 
 - [ ] Notificações push
 - [ ] PWA (Progressive Web App)
 - [ ] Upload de documentos
 - [ ] Filtros avançados no matching
 - [ ] Suporte a múltiplos idiomas (pt-BR, en)
+- [ ] Avaliações entre as partes
+- [ ] Histórico de fretes
 
 ---
 
-## Versão 0.4
-
-**Foco: Inteligência e Otimização**
+## ⏳ Versão 0.4 — Inteligência e Otimização
 
 - [ ] Matching com distância máxima
 - [ ] Desvios permitidos no trajeto
@@ -61,31 +58,25 @@
 
 ---
 
-## Versão 1.0
-
-**Foco: Plataforma Completa**
+## ⏳ Versão 1.0 — Plataforma Completa
 
 - [ ] Otimização de rotas com Valhalla
 - [ ] API pública para integração
 - [ ] Integração com ERPs
 - [ ] Cooperativas e grupos
 - [ ] Marketplace de fretes
-- [ ] Migração completa para PostgreSQL
 - [ ] Testes de carga e performance
 
 ---
 
-## Versão 2.0
-
-**Foco: Expansão**
+## ⏳ Versão 2.0 — Expansão
 
 - [ ] Aplicativo Android (React Native / Kotlin)
 - [ ] Aplicativo iOS (React Native / Swift)
 - [ ] Rastreamento em tempo real
 - [ ] IA para otimização de cargas
-- [ ] Integração com Nexus
-- [ ] Plataforma internacional
 - [ ] Painel administrativo avançado
+- [ ] Plataforma internacional
 
 ---
 
@@ -94,4 +85,3 @@
 - ✅ Concluído
 - 🔄 Em andamento
 - ⏳ Planejado
-- 📝 Em pesquisa
