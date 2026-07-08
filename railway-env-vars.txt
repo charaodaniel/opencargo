@@ -1,0 +1,28 @@
+╔══════════════════════════════════════════════════════════╗
+║  OpenCargo — Railway Environment Variables              ║
+║                                                        ║
+║  Instruções:                                            ║
+║  1. Acesse https://railway.app/dashboard                ║
+║  2. Selecione o projeto OpenCargo                       ║
+║  3. Vá em Variables                                     ║
+║  4. Adicione cada linha abaixo como variável individual ║
+║  5. Faça o deploy (ou Deploy Now)                       ║
+╚══════════════════════════════════════════════════════════╝
+
+# ── JÁ EXISTENTES (não precisa adicionar de novo) ──────
+# CORS_ORIGIN
+# DATABASE_URL
+# HOST
+# JWT_EXPIRES_IN
+# JWT_SECRET
+# NODE_ENV
+# RATE_LIMIT_MAX
+# RATE_LIMIT_WINDOW_MS
+
+# ── SUPABASE AUTH (ADICIONAR ESTAS 3) ───────────────────
+
+SUPABASE_URL=https://irznvnpaetvkuvmdrgoo.supabase.co
+
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlyem52bnBhZXR2a3V2bWRyZ29vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzUxNjkzNywiZXhwIjoyMDk5MDkyOTM3fQ.jW1UU-u_25sCDxxIUlgy0I7pUeZC3XXqpObVZAAFrUU
+
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlyem52bnBhZXR2a3V2bWRyZ29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTY5MzcsImV4cCI6MjA5OTA5MjkzN30.bbbSfpALbXjZ8gonxo3gogpHohsrpHgM6UFH594qx30
