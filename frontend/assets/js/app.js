@@ -90,13 +90,18 @@ const App = {
     // Inicializa o roteador
     Router.init("main-content");
 
+    // Inicializa barra de progresso de scroll
+    this._initScrollProgress();
+
     // Atualiza badge de notificações
     Navbar.updateNotificationBadge();
 
-    // Registra callback para atualizar sidebar/navbar ao navegar
+    // Registra callbacks para navegação entre páginas
     Router.onNavigate((page) => {
       Sidebar.updateActive(page);
       Navbar.updateNotificationBadge();
+      // Atualiza a barra de progresso após o novo conteúdo ser renderizado
+      setTimeout(() => App._updateScrollProgress(), 50);
     });
 
     Toast.success(__("message.welcome"));
@@ -113,6 +118,42 @@ const App = {
     // já leia "#landing" em vez de assumir "dashboard" por padrão.
     window.location.hash = "#landing";
     Router.init("main-content");
+  },
+
+  /**
+   * Inicializa a barra de progresso de scroll
+   * A barra fica abaixo da navbar e preenche conforme o usuário rola a página
+   */
+  /**
+   * Atualiza a largura da barra de progresso com base no scroll
+   */
+  _updateScrollProgress() {
+    const bar = document.getElementById("scroll-progress");
+    if (!bar) return;
+
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+
+    if (docHeight <= 0) {
+      bar.style.width = "0%";
+      return;
+    }
+
+    const progress = Math.min((scrollTop / docHeight) * 100, 100);
+    bar.style.width = `${progress}%`;
+  },
+
+  /**
+   * Inicializa a barra de progresso de scroll
+   * A barra fica abaixo da navbar e preenche conforme o usuário rola a página
+   */
+  _initScrollProgress() {
+    // Atualiza ao rolar
+    window.addEventListener("scroll", () => this._updateScrollProgress(), { passive: true });
+
+    // Primeira atualização após um pequeno delay para garantir que o
+    // DOM da página foi renderizado
+    setTimeout(updateProgress, 100);
   },
 
   /**

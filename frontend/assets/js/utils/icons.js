@@ -2,6 +2,11 @@
  * ── OpenCargo — SVG Icons ─────────────────────────────
  * Ícones no estilo Heroicons (outline, 24x24, stroke)
  * Uso: Icons.iconName({ class: 'w-5 h-5', color: '...' })
+ *
+ * Opções:
+ *   class   - Classes CSS (padrão: 'w-5 h-5')
+ *   color   - Cor do stroke (padrão: 'currentColor')
+ *   noHover - true desabilita a classe 'icon-hover' (padrão: false)
  */
 
 const Icons = {
@@ -9,9 +14,12 @@ const Icons = {
    * Gera um SVG inline com atributos padrão
    */
   _s(path, opts = {}) {
-    const cls = opts.class || "w-5 h-5";
+    const userClass = opts.class || "w-5 h-5";
     const stroke = opts.color || "currentColor";
-    return `<svg class="${cls}" fill="none" stroke="${stroke}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${path}</svg>`;
+    // Adiciona icon-hover automaticamente se não foi desabilitado explicitamente
+    const noHover = opts.noHover === true;
+    const finalClass = noHover ? userClass : `${userClass} icon-hover`;
+    return `<svg class="${finalClass}" fill="none" stroke="${stroke}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${path}</svg>`;
   },
 
   // ── Navegação / Ações ───────────────────────────────

@@ -14,7 +14,7 @@ const Navbar = {
     const currentTheme = Storage.getTheme();
 
     return `
-      <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+      <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 relative">
         <div class="flex items-center justify-between h-16 px-4 lg:px-6">
           <!-- Left side -->
           <div class="flex items-center space-x-4">
@@ -92,6 +92,8 @@ const Navbar = {
             </div>
           </div>
         </div>
+        <!-- Scroll Progress Bar -->
+        <div id="scroll-progress" class="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-150 ease-out" style="width:0%"></div>
       </nav>
     `;
   },
