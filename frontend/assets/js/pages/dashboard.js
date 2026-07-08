@@ -71,7 +71,7 @@ const DashboardPage = {
     ];
 
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card rounded-xl p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ações Rápidas</h3>
         <div class="space-y-3">
           ${actions
@@ -105,7 +105,7 @@ const DashboardPage = {
 
     if (recentItems.length === 0) {
       return `
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="glass-card rounded-xl p-6">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Atividade Recente</h3>
           <div class="text-center py-12 text-gray-400">
             <p class="text-lg font-medium">Nenhuma atividade ainda</p>
@@ -116,7 +116,7 @@ const DashboardPage = {
     }
 
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div class="glass-card rounded-xl p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Atividade Recente</h3>
         <div class="space-y-3">
           ${recentItems

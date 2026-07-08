@@ -98,7 +98,7 @@ const MatchingPage = {
         </div>
 
         <!-- ═══ Filtros ═══ -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+        <div class="glass-card rounded-xl p-4 sm:p-6 mb-6">
           <!-- Toggle tipo de busca -->
           <div class="flex items-center space-x-2 mb-5">
             <button onclick="MatchingPage.setFilter('type', 'loads')"
@@ -323,7 +323,7 @@ const MatchingPage = {
     const { load, route, score, match_reasons } = item;
 
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
+      <div class="glass-card rounded-xl p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <!-- Info principal -->
           <div class="flex-1 min-w-0">
@@ -399,7 +399,7 @@ const MatchingPage = {
     const { load, driver, vehicle, route, score, match_reasons } = item;
 
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
+      <div class="glass-card rounded-xl p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div class="flex-1 min-w-0">
             <div class="flex items-start space-x-3">
@@ -465,7 +465,7 @@ const MatchingPage = {
     const hasFilters = Object.values(this._filters).some((v) => v !== "" && v !== "loads" && v !== "desc" && v !== 0);
 
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+      <div class="glass-card rounded-xl p-12 text-center">
         <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
           <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>

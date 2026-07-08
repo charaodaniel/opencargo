@@ -27,7 +27,7 @@ const Card = {
     };
 
     const card = `
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 card-hover ${href ? "cursor-pointer" : ""}">
+      <div class="glass-card rounded-xl p-6 card-hover ${href ? "cursor-pointer" : ""}">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 ${colors[color] || colors.blue} rounded-lg flex items-center justify-center">
             ${icon || ""}
@@ -51,7 +51,7 @@ const Card = {
    */
   info({ title, children, headerRight, className = "" } = {}) {
     return `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${className}">
+      <div class="glass-card rounded-xl overflow-hidden ${className}">
         ${title ? `
           <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${Utils.escapeHtml(title)}</h3>
@@ -105,7 +105,7 @@ const Card = {
       .fill(0)
       .map(
         () => `
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
+      <div class="glass-card rounded-xl p-6 animate-pulse">
         <div class="flex items-center justify-between mb-3">
           <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
