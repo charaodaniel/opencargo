@@ -146,14 +146,14 @@ const LoginPage = {
                   <label class="relative flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                     <input type="radio" name="auth-role" value="company" checked class="sr-only peer" />
                     <div class="text-center">
-                      <span class="text-2xl block mb-1">🏢</span>
+                      ${Icons.building({ class: 'w-6 h-6 block mb-1 mx-auto' })}
                       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 peer-checked:text-blue-600">Empresa</span>
                     </div>
                   </label>
                   <label class="relative flex items-center justify-center px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                     <input type="radio" name="auth-role" value="driver" class="sr-only peer" />
                     <div class="text-center">
-                      <span class="text-2xl block mb-1">🚚</span>
+                      ${Icons.truck({ class: 'w-6 h-6 block mb-1 mx-auto' })}
                       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 peer-checked:text-blue-600">Motorista</span>
                     </div>
                   </label>

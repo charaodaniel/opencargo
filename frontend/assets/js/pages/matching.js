@@ -107,7 +107,7 @@ const MatchingPage = {
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
               }">
-              📦 ${__("match.loadsForDrivers")}
+              ${Icons.package({ class: 'w-4 h-4 shrink-0' })} ${__("match.loadsForDrivers")}
             </button>
             <button onclick="MatchingPage.setFilter('type', 'drivers')"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -115,7 +115,7 @@ const MatchingPage = {
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
               }">
-              🚛 ${__("match.driversForLoads")}
+              ${Icons.truck({ class: 'w-4 h-4 shrink-0' })} ${__("match.driversForLoads")}
             </button>
           </div>
 
@@ -351,12 +351,11 @@ const MatchingPage = {
             </span>
             ${load.volume_m3 ? `
               <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
-                📦 ${Utils.formatNumber(load.volume_m3)} m³
+                ${Icons.cube({ class: 'w-3.5 h-3.5' })} ${Utils.formatNumber(load.volume_m3)} m³
               </span>
-            ` : ""}
-            <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
-              📅 ${Utils.formatDate(load.pickup_date)}
-            </span>
+            ` : ""}              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                ${Icons.calendar({ class: 'w-3.5 h-3.5' })} ${Utils.formatDate(load.pickup_date)}
+              </span>
             ${load.type ? `
               <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
                 ${load.type}
@@ -421,15 +420,14 @@ const MatchingPage = {
           <div class="flex flex-wrap gap-2 sm:shrink-0">
             ${vehicle ? `
               <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
-                🚛 ${vehicle.model || vehicle.type || "Veículo"}
+                ${Icons.truck({ class: 'w-3.5 h-3.5' })} ${vehicle.model || vehicle.type || "Veículo"}
               </span>
               <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
-                ⚖️ ${Utils.formatNumber(vehicle.capacity_kg)} kg
+                ${Icons.weight({ class: 'w-3.5 h-3.5' })} ${Utils.formatNumber(vehicle.capacity_kg)} kg
               </span>
-            ` : ""}
-            <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
-              📅 ${Utils.formatDate(route.departure_date)}
-            </span>
+            ` : ""}              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                ${Icons.calendar({ class: 'w-3.5 h-3.5' })} ${Utils.formatDate(route.departure_date)}
+              </span>
           </div>
         </div>
 

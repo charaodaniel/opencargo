@@ -168,13 +168,13 @@ const LandingPage = {
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                   <div class="grid grid-cols-3 gap-4 mb-4">
                     <div class="h-20 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg flex items-center justify-center">
-                      <span class="text-2xl">📦</span>
+                      ${Icons.package({ class: 'w-8 h-8 text-blue-500' })}
                     </div>
                     <div class="h-20 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 rounded-lg flex items-center justify-center">
-                      <span class="text-2xl">🚛</span>
+                      ${Icons.truck({ class: 'w-8 h-8 text-green-500' })}
                     </div>
                     <div class="h-20 bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-purple-800/20 rounded-lg flex items-center justify-center">
-                      <span class="text-2xl">🗺️</span>
+                      ${Icons.map({ class: 'w-8 h-8 text-purple-500' })}
                     </div>
                   </div>
                   <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
@@ -224,32 +224,32 @@ const LandingPage = {
   _features() {
     const features = [
       {
-        icon: "🔗",
+        icon: Icons.link({ class: 'w-8 h-8 text-blue-600' }),
         title: "Matching Inteligente",
         desc: "Algoritmo que conecta automaticamente cargas a motoristas com rotas compatíveis, priorizando fretes de retorno.",
       },
       {
-        icon: "💬",
+        icon: Icons.chat({ class: 'w-8 h-8 text-blue-600' }),
         title: "Chat em Tempo Real",
         desc: "Comunicação direta entre empresa e motorista via WebSocket após o match, sem sair da plataforma.",
       },
       {
-        icon: "🗺️",
+        icon: Icons.map({ class: 'w-8 h-8 text-blue-600' }),
         title: "Mapa Interativo",
         desc: "Visualize rotas, cargas e cidades no mapa com Leaflet + OpenStreetMap. Clustering automático para grandes volumes.",
       },
       {
-        icon: "🔐",
+        icon: Icons.shield({ class: 'w-8 h-8 text-blue-600' }),
         title: "Autenticação Segura",
         desc: "JWT + bcrypt para proteger seus dados. Controle de acesso por papel (admin, empresa, motorista).",
       },
       {
-        icon: "📊",
+        icon: Icons.chart({ class: 'w-8 h-8 text-blue-600' }),
         title: "Dashboard Completo",
         desc: "Visão geral do sistema com estatísticas, gráficos e ações rápidas para o dia a dia.",
       },
       {
-        icon: "🐳",
+        icon: Icons.server({ class: 'w-8 h-8 text-blue-600' }),
         title: "100% Self-Hosted",
         desc: "Instale no seu próprio servidor com Docker. Sem dependência de serviços pagos ou terceiros.",
       },
@@ -272,7 +272,7 @@ const LandingPage = {
               .map(
                 (f, i) => `
               <div data-reveal="up" data-reveal-delay="${(i * 0.08).toFixed(2)}" class="group bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-700 transition-all hover:shadow-xl hover:-translate-y-1 card-hover">
-                <div class="text-4xl mb-4">${f.icon}</div>
+                <div class="mb-4">${f.icon}</div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">${f.title}</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">${f.desc}</p>
               </div>
@@ -294,25 +294,25 @@ const LandingPage = {
         number: "01",
         title: "Empresa cadastra carga",
         desc: "A empresa informa origem, destino, peso, volume e datas da carga que precisa transportar.",
-        icon: "📦",
+        icon: Icons.package({ class: 'w-8 h-8 text-white' }),
       },
       {
         number: "02",
         title: "Motorista cadastra rota",
         desc: "O motorista informa sua rota programada e a capacidade ociosa disponível no veículo.",
-        icon: "🛣️",
+        icon: Icons.route({ class: 'w-8 h-8 text-white' }),
       },
       {
         number: "03",
         title: "Sistema faz o match",
         desc: "O algoritmo encontra combinações perfeitas: carga + rota de retorno com capacidade disponível.",
-        icon: "🔗",
+        icon: Icons.link({ class: 'w-8 h-8 text-white' }),
       },
       {
         number: "04",
         title: "Negociação e entrega",
         desc: "Empresa e motorista conversam pelo chat, aceitam a proposta e realizam o transporte.",
-        icon: "✅",
+        icon: Icons.check({ class: 'w-8 h-8 text-white' }),
       },
     ];
 
@@ -337,7 +337,7 @@ const LandingPage = {
                 (s, i) => `
               <div data-reveal="up" data-reveal-delay="${(i * 0.12).toFixed(2)}" class="relative text-center">
                 <div class="relative z-10 w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                  <span class="text-3xl">${s.icon}</span>
+                  ${s.icon}
                   <div class="absolute -top-2 -right-2 w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center border-2 border-blue-500">
                     <span class="text-xs font-bold text-blue-600">${s.number}</span>
                   </div>
@@ -439,7 +439,7 @@ const LandingPage = {
           </div>
           <div class="border-t border-gray-200 dark:border-gray-700 pt-8 text-center">
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              © ${new Date().getFullYear()} OpenCargo. MIT License. Feito com ❤️ para reduzir viagens vazias.
+              © ${new Date().getFullYear()} OpenCargo. MIT License. Feito com ${Icons.heart({ class: 'w-4 h-4 inline -mt-0.5 text-red-500' })} para reduzir viagens vazias.
             </p>
           </div>
         </div>

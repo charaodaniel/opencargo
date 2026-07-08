@@ -101,16 +101,16 @@ const DocumentsPage = {
 
   _renderList(files) {
     const typeIcons = {
-      pdf: "📄",
-      jpg: "🖼️",
-      jpeg: "🖼️",
-      png: "🖼️",
-      webp: "🖼️",
-      doc: "📝",
-      docx: "📝",
-      xls: "📊",
-      xlsx: "📊",
-      txt: "📃",
+      pdf: Icons.document({ class: 'w-6 h-6 text-red-500' }),
+      jpg: Icons.image({ class: 'w-6 h-6 text-green-500' }),
+      jpeg: Icons.image({ class: 'w-6 h-6 text-green-500' }),
+      png: Icons.image({ class: 'w-6 h-6 text-green-500' }),
+      webp: Icons.image({ class: 'w-6 h-6 text-green-500' }),
+      doc: Icons.edit({ class: 'w-6 h-6 text-blue-500' }),
+      docx: Icons.edit({ class: 'w-6 h-6 text-blue-500' }),
+      xls: Icons.chart({ class: 'w-6 h-6 text-emerald-500' }),
+      xlsx: Icons.chart({ class: 'w-6 h-6 text-emerald-500' }),
+      txt: Icons.fileText({ class: 'w-6 h-6 text-gray-500' }),
     };
 
     const typeLabels = {
@@ -131,12 +131,12 @@ const DocumentsPage = {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         ${files.map((f) => {
           const ext = f.original_name.split(".").pop()?.toLowerCase() || "";
-          const icon = typeIcons[ext] || "📎";
+          const icon = typeIcons[ext] || Icons.paperclip({ class: 'w-6 h-6 text-gray-400' });
 
           return `
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group">
               <div class="flex items-start space-x-3">
-                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center text-xl shrink-0">
+                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center shrink-0">
                   ${icon}
                 </div>
                 <div class="flex-1 min-w-0">
@@ -208,11 +208,10 @@ const DocumentsPage = {
             <span class="text-blue-600 dark:text-blue-400">Clique para selecionar</span> ou arraste o arquivo aqui
           </p>
           <p class="text-xs text-gray-400 mt-1">PDF, imagens, DOC, XLS, TXT — até 10MB</p>
-          <div id="upload-file-info" class="mt-3 hidden">
-            <div class="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <span id="upload-file-icon" class="text-lg">📄</span>
-              <span id="upload-file-name" class="text-sm font-medium text-gray-900 dark:text-white"></span>
-            </div>
+          <div id="upload-file-info" class="mt-3 hidden">              <div class="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                ${Icons.document({ class: 'w-5 h-5 text-blue-500' })}
+                <span id="upload-file-name" class="text-sm font-medium text-gray-900 dark:text-white"></span>
+              </div>
           </div>
         </div>
       </div>

@@ -56,10 +56,10 @@ const ProfilePage = {
                 <p class="text-blue-100 text-sm mt-0.5">${Utils.escapeHtml(user.email)}</p>
                 <div class="flex items-center gap-2 mt-2">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                    ${user.role === "admin" ? "👑 Administrador" : user.role === "company" ? "🏢 Empresa" : "🚚 Motorista"}
+                    ${user.role === "administrador" ? Icons.star({ class: 'w-4 h-4 inline -mt-0.5' }) + ' Administrador' : user.role === "empresa" ? Icons.building({ class: 'w-4 h-4 inline -mt-0.5' }) + ' Empresa' : user.role === "motorista" ? Icons.truck({ class: 'w-4 h-4 inline -mt-0.5' }) + ' Motorista' : user.role === "gestor" ? Icons.shield({ class: 'w-4 h-4 inline -mt-0.5' }) + ' Gestor' : Utils.escapeHtml(user.role) || '—'}
                   </span>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-100">
-                    ${user.phone ? "📱 " + user.phone : "⏳ Telefone não informado"}
+                    ${user.phone ? Icons.phone({ class: 'w-4 h-4 inline -mt-0.5' }) + ' ' + user.phone : Icons.clock({ class: 'w-4 h-4 inline -mt-0.5' }) + ' Telefone não informado'}
                   </span>
                 </div>
               </div>

@@ -110,7 +110,7 @@ const MapsPage = {
       <div class="fade-in">
         <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🗺️ Mapa de Rotas</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${Icons.map({ class: 'w-6 h-6 inline -mt-1 mr-1' })} Mapa de Rotas</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">Visualize rotas, cargas e cidades no mapa</p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
@@ -183,7 +183,10 @@ const MapsPage = {
 
             <!-- Estatísticas -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">📊 Estatísticas</h3>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                ${Icons.chart({ class: 'w-4 h-4 mr-1.5' })}
+                Estatísticas
+              </h3>
               <div class="space-y-2 text-sm" id="map-stats">
                 <div class="flex justify-between">
                   <span class="text-gray-500">Total Rotas</span>
@@ -214,7 +217,10 @@ const MapsPage = {
 
             <!-- Rotas listadas -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 max-h-48 overflow-y-auto" id="map-route-list">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">🛣️ Rotas</h3>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                ${Icons.route({ class: 'w-4 h-4 mr-1.5' })}
+                Rotas
+              </h3>
               <div class="space-y-2">
                 ${routes
                   .map(
@@ -224,7 +230,7 @@ const MapsPage = {
                       <span class="w-2 h-2 rounded-full shrink-0 mr-2 ${r.status === 'active' ? 'bg-blue-500' : r.status === 'completed' ? 'bg-gray-400' : 'bg-red-400'}"></span>
                       <span class="text-xs truncate">${r.origin_city} → ${r.destination_city}</span>
                     </div>
-                    <span class="text-xs text-gray-400 shrink-0 ml-2">${r.is_return ? '🔄' : ''}</span>
+                    <span class="text-xs text-gray-400 shrink-0 ml-2">${r.is_return ? Icons.refresh({ class: 'w-3.5 h-3.5 text-blue-500' }) : ''}</span>
                   </div>
                 `
                   )
@@ -617,8 +623,8 @@ const MapsPage = {
         className: "",
         html: `
           <div style="position:relative;">
-            <div style="width:20px;height:20px;border-radius:50%;background:#F59E0B;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:bold;">
-              📦
+            <div style="width:20px;height:20px;border-radius:50%;background:#F59E0B;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">
+              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             </div>
           </div>`,
         iconSize: [20, 20],
@@ -817,7 +823,9 @@ const MapsPage = {
     // Adiciona marcador temporário
     const icon = L.divIcon({
       className: "",
-      html: `<div style="width:24px;height:24px;border-radius:50%;background:#3B82F6;border:3px solid white;box-shadow:0 2px 12px rgba(59,130,246,0.5);display:flex;align-items:center;justify-content:center;font-size:12px;">📍</div>`,
+      html: `<div style="width:24px;height:24px;border-radius:50%;background:#3B82F6;border:3px solid white;box-shadow:0 2px 12px rgba(59,130,246,0.5);display:flex;align-items:center;justify-content:center;">
+        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>`,
       iconSize: [24, 24],
       iconAnchor: [12, 12],
     });

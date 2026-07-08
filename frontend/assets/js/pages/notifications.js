@@ -70,7 +70,7 @@ const NotificationsPage = {
                   (n) => `
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-start justify-between transition-colors ${!n.read ? "border-l-4 border-l-blue-500 dark:border-l-blue-400 bg-blue-50/50 dark:bg-blue-900/10" : ""}">
               <div class="flex items-start space-x-3 flex-1">
-                <span class="text-xl">${n.type === "match" ? "🔗" : n.type === "message" ? "💬" : "ℹ️"}</span>
+                <span class="text-gray-500">${n.type === 'match' ? Icons.link({ class: 'w-5 h-5' }) : n.type === 'message' ? Icons.chat({ class: 'w-5 h-5' }) : Icons.info({ class: 'w-5 h-5' })}</span>
                 <div>
                   <div class="flex items-center space-x-2">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">${Utils.escapeHtml(n.title)}</p>

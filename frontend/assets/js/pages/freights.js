@@ -274,9 +274,9 @@ const FreightsPage = {
 
           <!-- Dates -->
           <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <span>📅 ${__("freight.pickup")}: ${Utils.formatDate(load.pickup_date)}</span>
-            <span>📍 ${__("freight.delivery")}: ${Utils.formatDate(load.delivery_date)}</span>
-            ${route?.departure_date ? `<span>🚛 ${__("freight.departure")}: ${Utils.formatDate(route.departure_date)}</span>` : ""}
+            <span class="inline-flex items-center space-x-1">${Icons.calendar({ class: 'w-3.5 h-3.5' })} <span>${__("freight.pickup")}: ${Utils.formatDate(load.pickup_date)}</span></span>
+            <span class="inline-flex items-center space-x-1">${Icons.pin({ class: 'w-3.5 h-3.5' })} <span>${__("freight.delivery")}: ${Utils.formatDate(load.delivery_date)}</span></span>
+            ${route?.departure_date ? `<span class="inline-flex items-center space-x-1">${Icons.truck({ class: 'w-3.5 h-3.5' })} <span>${__("freight.departure")}: ${Utils.formatDate(route.departure_date)}</span></span>` : ""}
           </div>
         </div>
       </div>

@@ -64,10 +64,10 @@ const DashboardPage = {
    */
   _quickActions() {
     const actions = [
-      { icon: "📦", title: __("dashboard.newLoad"), desc: __("dashboard.newLoad.desc"), page: "loads" },
-      { icon: "🛣️", title: __("dashboard.newRoute"), desc: __("dashboard.newRoute.desc"), page: "routes" },
-      { icon: "🔗", title: __("dashboard.viewMatching"), desc: __("dashboard.viewMatching.desc"), page: "matching" },
-      { icon: "💬", title: __("nav.chat"), desc: __("dashboard.chat.desc"), page: "chat" },
+      { icon: Icons.package({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.newLoad"), desc: __("dashboard.newLoad.desc"), page: "loads" },
+      { icon: Icons.route({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.newRoute"), desc: __("dashboard.newRoute.desc"), page: "routes" },
+      { icon: Icons.link({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.viewMatching"), desc: __("dashboard.viewMatching.desc"), page: "matching" },
+      { icon: Icons.chat({ class: 'w-5 h-5 shrink-0' }), title: __("nav.chat"), desc: __("dashboard.chat.desc"), page: "chat" },
     ];
 
     return `
@@ -78,7 +78,7 @@ const DashboardPage = {
             .map(
               (a) => `
             <button onclick="Router.go('${a.page}')" class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
-              <p class="font-medium text-gray-900 dark:text-white">${a.icon} ${a.title}</p>
+              <p class="font-medium text-gray-900 dark:text-white flex items-center space-x-2">${a.icon}<span>${a.title}</span></p>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">${a.desc}</p>
             </button>
           `

@@ -49,7 +49,7 @@ const RoutesPage = {
             {
               label: "Retorno",
               render: (r) => r.is_return
-                ? '<span class="text-green-600 dark:text-green-400 font-medium">✅ Sim</span>'
+                ? '<span class="text-green-600 dark:text-green-400 font-medium flex items-center space-x-1">' + Icons.check({ class: 'w-4 h-4' }) + '<span>Sim</span></span>'
                 : '<span class="text-gray-400">Não</span>',
             },
             {
