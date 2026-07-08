@@ -49,6 +49,7 @@ const CONFIG = {
     pending: "Pendente",
     accepted: "Aceito",
     rejected: "Rejeitado",
+    completed: "Concluído",
     cancelled: "Cancelado",
   },
 

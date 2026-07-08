@@ -11,6 +11,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:5173,http://127.0.0.1:5173"),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+  UPLOAD_DIR: z.string().default("./uploads"),
+  MAX_FILE_SIZE: z.coerce.number().default(10 * 1024 * 1024), // 10MB
 });
 
 export const config = envSchema.parse(process.env);

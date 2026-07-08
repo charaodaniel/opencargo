@@ -7,6 +7,10 @@ import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 
 import { config } from "./common/config.js";
+import fastifyStatic from "@fastify/static";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
 import { authRoutes } from "./auth/routes.js";
 import { userRoutes } from "./users/routes.js";
 import { companyRoutes } from "./companies/routes.js";
@@ -17,6 +21,9 @@ import { loadRoutes } from "./loads/routes.js";
 import { matchingRoutes } from "./matching/routes.js";
 import { mapRoutes } from "./maps/routes.js";
 import { notificationRoutes } from "./notifications/routes.js";
+import { documentRoutes } from "./documents/routes.js";
+import { reviewRoutes } from "./reviews/routes.js";
+import { freightRoutes } from "./freights/routes.js";
 import { chatRoutes } from "./chat/routes.js";
 
 export async function buildApp() {
@@ -79,7 +86,20 @@ export async function buildApp() {
   await app.register(matchingRoutes, { prefix: "/api/matching" });
   await app.register(mapRoutes, { prefix: "/api/maps" });
   await app.register(notificationRoutes, { prefix: "/api/notifications" });
+  await app.register(documentRoutes, { prefix: "/api/documents" });
+  await app.register(reviewRoutes, { prefix: "/api/reviews" });
+  await app.register(freightRoutes, { prefix: "/api/freights" });
   await app.register(chatRoutes, { prefix: "/api/chat" });
+
+  // ── Static Files (Uploads) ─────────────────────────────────
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const uploadsPath = join(__dirname, "..", config.UPLOAD_DIR);
+  await app.register(fastifyStatic, {
+    root: uploadsPath,
+    prefix: "/uploads/",
+    decorateReply: true,
+  });
 
   // ── Health Check ───────────────────────────────────────────
   app.get("/api/health", async () => {

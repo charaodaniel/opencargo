@@ -11,6 +11,9 @@ const ProfilePage = {
   /** Loading state */
   _loading: false,
 
+  /** Dados de avaliação do usuário */
+  _ratings: null,
+
   /**
    * Renderiza a página de perfil
    */
@@ -24,6 +27,9 @@ const ProfilePage = {
         </div>
       `;
     }
+
+    // Carrega avaliações do usuário
+    await this._fetchRatings(user);
 
     const initials = Utils.getInitials(user.name);
     const avatarColor = Utils.getAvatarColor(user.name);
@@ -94,9 +100,44 @@ const ProfilePage = {
           </div>
         </div>
 
+        <!-- Card: Rating Breakdown (se houver avaliações) -->
+        ${this._ratings && this._ratings.total_reviews > 0 ? `
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${__("review.ratingOnProfile")}</h3>
+            <button onclick="Router.go('reviews')" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+              ${__("page.reviews")} →
+            </button>
+          </div>
+          <div class="flex flex-col sm:flex-row items-center gap-4">
+            <div class="text-center shrink-0">
+              <div class="text-3xl font-bold text-gray-900 dark:text-white">${this._ratings.average_score.toFixed(1)}</div>
+              <div class="text-yellow-500 text-sm mt-0.5">${Utils.renderStars ? Utils.renderStars(this._ratings.average_score) : "★".repeat(Math.round(this._ratings.average_score))}</div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${this._ratings.total_reviews} ${this._ratings.total_reviews === 1 ? __("review.review") : __("review.reviews")}</p>
+            </div>
+            <div class="flex-1 w-full space-y-1">
+              ${[5, 4, 3, 2, 1].map((star) => {
+                const key = star === 5 ? "five" : star === 4 ? "four" : star === 3 ? "three" : star === 2 ? "two" : "one";
+                const count = this._ratings[`${key}_stars`] || 0;
+                const pct = this._ratings.total_reviews > 0 ? (count / this._ratings.total_reviews) * 100 : 0;
+                return `
+                  <div class="flex items-center space-x-2 text-xs">
+                    <span class="w-6 text-right text-gray-500 dark:text-gray-400">${star}★</span>
+                    <div class="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div class="h-full bg-yellow-400 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                    <span class="w-8 text-right text-gray-400 dark:text-gray-500">${count}</span>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </div>
+        ` : ""}
+
         <!-- Card: Preferências -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preferências</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${__("page.settings")}</h3>
           <div class="space-y-4">
             <div class="flex items-center justify-between py-2">
               <div>
@@ -113,7 +154,7 @@ const ProfilePage = {
 
         <!-- Card: Ações -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ações da Conta</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${__("action.logout")}</h3>
           <div class="space-y-3">
             <button onclick="Modal.confirm('Tem certeza que deseja sair?', () => { Storage.logout(); location.reload(); }, 'Sair')" 
               class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group">
@@ -249,6 +290,24 @@ const ProfilePage = {
     } finally {
       this._loading = false;
     }
+  },
+
+  /**
+   * Busca avaliações do usuário
+   */
+  async _fetchRatings(user) {
+    try {
+      if (CONFIG.API_BASE_URL && Storage.getToken()) {
+        const res = await fetch(`${CONFIG.API_BASE_URL}/reviews/stats/${user.id}`, {
+          headers: { Authorization: `Bearer ${Storage.getToken()}` },
+        });
+        if (res.ok) {
+          this._ratings = await res.json();
+          return;
+        }
+      }
+    } catch { /* fallback */ }
+    this._ratings = null;
   },
 
   /**

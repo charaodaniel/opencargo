@@ -202,7 +202,17 @@ export async function initDatabase() {
         driver_id UUID NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
         route_id UUID NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
         score REAL NOT NULL DEFAULT 0,
-        status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+        status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'rejected', 'cancelled', 'completed')),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS reviews (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+        reviewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        reviewee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        score INTEGER NOT NULL CHECK(score >= 1 AND score <= 5),
+        comment TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
 
@@ -224,6 +234,18 @@ export async function initDatabase() {
         read INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS documents (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        entity_type VARCHAR(20) NOT NULL CHECK(entity_type IN ('company', 'driver', 'vehicle', 'load', 'general')),
+        entity_id UUID,
+        original_name VARCHAR(255) NOT NULL,
+        stored_name VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        size_bytes INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
     `);
 
     // Índices
@@ -236,7 +258,11 @@ export async function initDatabase() {
       "CREATE INDEX IF NOT EXISTS idx_routes_status ON routes(status);",
       "CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);",
       "CREATE INDEX IF NOT EXISTS idx_messages_match ON messages(match_id);",
+      "CREATE INDEX IF NOT EXISTS idx_reviews_match ON reviews(match_id);",
+      "CREATE INDEX IF NOT EXISTS idx_reviews_reviewee ON reviews(reviewee_id);",
       "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);",
+      "CREATE INDEX IF NOT EXISTS idx_documents_entity ON documents(entity_type, entity_id);",
+      "CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);",
     ];
 
     for (const idx of indexes) {

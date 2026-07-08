@@ -66,13 +66,16 @@ const App = {
     const root = document.getElementById("app");
     const currentPage = window.location.hash.slice(1) || "dashboard";
 
+    const isCollapsed = Storage.get("sidebar_collapsed", false);
+    const sidebarWidth = isCollapsed ? "4rem" : "16rem";
+
     root.innerHTML = `
-      <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div class="min-h-screen bg-background">
         <!-- Sidebar -->
         ${Sidebar.render(currentPage)}
 
         <!-- Main wrapper -->
-        <div class="lg:ml-64 flex flex-col min-h-screen transition-all duration-300">
+        <div class="sidebar-content-wrapper flex flex-col min-h-screen transition-all duration-300" style="--sidebar-width: ${sidebarWidth}">
           <!-- Navbar -->
           ${Navbar.render()}
 
@@ -96,7 +99,7 @@ const App = {
       Navbar.updateNotificationBadge();
     });
 
-    Toast.success("Bem-vindo ao OpenCargo!");
+    Toast.success(__("message.welcome"));
   },
 
   /**
@@ -145,7 +148,7 @@ function registerServiceWorker() {
                 navigator.serviceWorker.controller
               ) {
                 // Nova versão disponível
-                Toast.info("Nova versão disponível! Atualize a página.");
+                Toast.info(__("message.newVersion"));
               }
             });
           }
