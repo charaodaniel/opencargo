@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const createLoadSchema = z.object({
   title: z.string().min(3),
@@ -40,12 +41,26 @@ export async function loadRoutes(app) {
     return reply.status(201).send(load);
   });
 
-  app.get("/", async () => {
-    return await query(`SELECT * FROM loads`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM loads ORDER BY created_at DESC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM loads`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
-  app.get("/available", async () => {
-    return await query(`SELECT * FROM loads WHERE status = 'available'`);
+  app.get("/available", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM loads WHERE status = 'available' ORDER BY pickup_date ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM loads WHERE status = 'available'`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/:id", async (request) => {
@@ -82,7 +97,7 @@ export async function loadRoutes(app) {
       throw { statusCode: 400, message: "Nenhum campo para atualizar" };
     }
 
-    sets.push("updated_at = datetime('now')");
+    sets.push("updated_at = CURRENT_TIMESTAMP");
     params.push(id);
 
     await query(`UPDATE loads SET ${sets.join(", ")} WHERE id = ?`, params);

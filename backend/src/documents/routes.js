@@ -1,5 +1,6 @@
 import { query, queryOne, uuid } from "../common/database.js";
 import { config } from "../common/config.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 import { existsSync, mkdirSync, unlinkSync } from "fs";
 import { writeFile } from "fs/promises";
 import { join, extname } from "path";
@@ -95,22 +96,26 @@ export async function documentRoutes(app) {
   app.get("/", async (request) => {
     const user = request.user;
     const { entityType, entityId } = request.query;
+    const { page, limit, offset } = getPagination(request.query);
 
-    let sql = "SELECT * FROM documents WHERE user_id = ?";
+    let whereSql = "WHERE user_id = ?";
     const params = [user.id];
 
     if (entityType) {
-      sql += " AND entity_type = ?";
+      whereSql += " AND entity_type = ?";
       params.push(entityType);
     }
     if (entityId) {
-      sql += " AND entity_id = ?";
+      whereSql += " AND entity_id = ?";
       params.push(entityId);
     }
 
-    sql += " ORDER BY created_at DESC";
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM documents ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]),
+      query(`SELECT COUNT(*) as total FROM documents ${whereSql}`, params),
+    ]);
 
-    return await query(sql, params);
+    return paginatedResponse(rows, total, page, limit);
   });
 
   /**

@@ -106,7 +106,7 @@ export async function createTestData(app) {
     name: "Empresa Teste Ltda",
     email: "empresa@teste.com",
     password: "123456",
-    role: "company",
+    role: "empresa",
   });
 
   // 2. Criar perfil empresa
@@ -128,7 +128,7 @@ export async function createTestData(app) {
     name: "Motorista Teste",
     email: "motorista@teste.com",
     password: "123456",
-    role: "driver",
+    role: "motorista",
   });
 
   // 4. Criar perfil motorista

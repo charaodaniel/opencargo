@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const createDriverSchema = z.object({
   name: z.string().min(3),
@@ -28,8 +29,15 @@ export async function driverRoutes(app) {
     return reply.status(201).send(driver);
   });
 
-  app.get("/", async () => {
-    return await query(`SELECT * FROM drivers`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM drivers ORDER BY name ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM drivers`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/me", async (request) => {
@@ -41,8 +49,15 @@ export async function driverRoutes(app) {
     return driver;
   });
 
-  app.get("/available", async () => {
-    return await query(`SELECT * FROM drivers WHERE available = 1`);
+  app.get("/available", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM drivers WHERE available = 1 ORDER BY name ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM drivers WHERE available = 1`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/:id", async (request) => {

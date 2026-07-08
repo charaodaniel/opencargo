@@ -28,7 +28,15 @@ const Api = {
         headers: this._getHeaders(),
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
-      return res.json();
+      const json = await res.json();
+
+      // Auto-unwrap respostas paginadas { data, total, page, limit, totalPages } → array
+      // As páginas do frontend esperam um array, não o envelope paginado
+      if (json && typeof json === "object" && Array.isArray(json.data)) {
+        return json.data;
+      }
+
+      return json;
     } catch (error) {
       console.error(`API GET ${endpoint} failed:`, error);
       throw error;

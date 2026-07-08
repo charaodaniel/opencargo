@@ -87,12 +87,12 @@ const MatchingPage = {
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Matching</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Encontre cargas e motoristas compatíveis com filtros avançados</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${__("page.matching")}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${__("page.matching.desc")}</p>
           </div>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500 dark:text-gray-400">
-              ${total} resultado${total !== 1 ? "s" : ""}
+              ${total} ${total === 1 ? __("match.result") : __("match.results")}
             </span>
           </div>
         </div>
@@ -107,7 +107,7 @@ const MatchingPage = {
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
               }">
-              📦 Cargas para Motoristas
+              📦 ${__("match.loadsForDrivers")}
             </button>
             <button onclick="MatchingPage.setFilter('type', 'drivers')"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -115,7 +115,7 @@ const MatchingPage = {
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
               }">
-              🚛 Motoristas para Cargas
+              🚛 ${__("match.driversForLoads")}
             </button>
           </div>
 
@@ -123,21 +123,21 @@ const MatchingPage = {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <!-- Search -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Buscar</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.search")}</label>
               <div class="relative">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text" value="${Utils.escapeHtml(this._filters.q)}"
                   oninput="MatchingPage.setFilter('q', this.value)"
-                  placeholder="Cidade ou título..."
+                  placeholder="${__("match.search.placeholder")}"
                   class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
             </div>
 
             <!-- Estado Origem -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">UF Origem</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.ufOrigin")}</label>
               <select onchange="MatchingPage.setFilter('originState', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Todas</option>
@@ -149,7 +149,7 @@ const MatchingPage = {
 
             <!-- Estado Destino -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">UF Destino</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.ufDest")}</label>
               <select onchange="MatchingPage.setFilter('destinationState', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Todas</option>
@@ -161,10 +161,10 @@ const MatchingPage = {
 
             <!-- Tipo de Carga -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo de Carga</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.loadType")}</label>
               <select onchange="MatchingPage.setFilter('loadType', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">Todos</option>
+                <option value="">${__("label.all")}</option>
                 ${this._filterOptions.loadTypes.map((t) => `
                   <option value="${t}" ${this._filters.loadType === t ? "selected" : ""}>${t}</option>
                 `).join("")}
@@ -173,7 +173,7 @@ const MatchingPage = {
 
             <!-- Peso Mín -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Peso Mín (kg)</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.weightMin")}</label>
               <input type="number" value="${this._filters.weightMin}"
                 oninput="MatchingPage.setFilter('weightMin', this.value)"
                 placeholder="0"
@@ -183,7 +183,7 @@ const MatchingPage = {
 
             <!-- Peso Máx -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Peso Máx (kg)</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.weightMax")}</label>
               <input type="number" value="${this._filters.weightMax}"
                 oninput="MatchingPage.setFilter('weightMax', this.value)"
                 placeholder="99999"
@@ -193,7 +193,7 @@ const MatchingPage = {
 
             <!-- Data Início -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data Início</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.dateFrom")}</label>
               <input type="date" value="${this._filters.dateFrom}"
                 onchange="MatchingPage.setFilter('dateFrom', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -201,7 +201,7 @@ const MatchingPage = {
 
             <!-- Data Fim -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data Fim</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.dateTo")}</label>
               <input type="date" value="${this._filters.dateTo}"
                 onchange="MatchingPage.setFilter('dateTo', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -209,10 +209,10 @@ const MatchingPage = {
 
             <!-- Score Mín -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Score Mínimo</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.minScore")}</label>
               <select onchange="MatchingPage.setFilter('minScore', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="0" ${this._filters.minScore == 0 ? "selected" : ""}>Qualquer</option>
+                <option value="0" ${this._filters.minScore == 0 ? "selected" : ""}>${__("match.any")}</option>
                 <option value="25" ${this._filters.minScore == 25 ? "selected" : ""}>≥ 25</option>
                 <option value="50" ${this._filters.minScore == 50 ? "selected" : ""}>≥ 50</option>
                 <option value="75" ${this._filters.minScore == 75 ? "selected" : ""}>≥ 75</option>
@@ -222,22 +222,22 @@ const MatchingPage = {
 
             <!-- Ordenar por -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordenar por</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.sortBy")}</label>
               <select onchange="MatchingPage.setFilter('sortBy', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="score" ${this._filters.sortBy === "score" ? "selected" : ""}>Score</option>
-                <option value="date" ${this._filters.sortBy === "date" ? "selected" : ""}>Data</option>
-                <option value="weight" ${this._filters.sortBy === "weight" ? "selected" : ""}>Peso</option>
+                <option value="score" ${this._filters.sortBy === "score" ? "selected" : ""}>${__("match.sort.score")}</option>
+                <option value="date" ${this._filters.sortBy === "date" ? "selected" : ""}>${__("match.sort.date")}</option>
+                <option value="weight" ${this._filters.sortBy === "weight" ? "selected" : ""}>${__("match.sort.weight")}</option>
               </select>
             </div>
 
             <!-- Ordenar ordem -->
             <div>
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.sortOrder")}</label>
               <select onchange="MatchingPage.setFilter('sortOrder', this.value)"
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="desc" ${this._filters.sortOrder === "desc" ? "selected" : ""}>Decrescente</option>
-                <option value="asc" ${this._filters.sortOrder === "asc" ? "selected" : ""}>Crescente</option>
+                <option value="desc" ${this._filters.sortOrder === "desc" ? "selected" : ""}>${__("match.order.desc")}</option>
+                <option value="asc" ${this._filters.sortOrder === "asc" ? "selected" : ""}>${__("match.order.asc")}</option>
               </select>
             </div>
           </div>
@@ -249,7 +249,7 @@ const MatchingPage = {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
-              <span>Limpar filtros</span>
+              <span>${__("action.clearFilters")}</span>
             </button>
           </div>
         </div>
@@ -369,13 +369,13 @@ const MatchingPage = {
         ${route ? `
           <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
             <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-              <span class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rota Compatível</span>
+              <span class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">${__("match.compatibleRoute")}</span>
               <span class="text-gray-300 dark:text-gray-600">•</span>
               <span>${Utils.escapeHtml(route.driver_name || "Motorista")}</span>
               <span class="text-gray-300 dark:text-gray-600">•</span>
               <span>${Utils.escapeHtml(route.origin_city)}/${route.origin_state} → ${Utils.escapeHtml(route.destination_city)}/${route.destination_state}</span>
               <span class="text-gray-300 dark:text-gray-600">•</span>
-              <span>${route.vehicle_model || route.vehicle_type || "Veículo"}</span>
+              <span>${route.vehicle_model || route.vehicle_type || __("label.vehicle")}</span>
             </div>
           </div>
         ` : ""}
@@ -410,7 +410,7 @@ const MatchingPage = {
                   ${driver.city ? `<span class="text-sm text-gray-500">${Utils.escapeHtml(driver.city)}/${driver.state || ""}</span>` : ""}
                 </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Carga: ${Utils.escapeHtml(load.title)}
+                  ${__("match.loadLabel")}: ${Utils.escapeHtml(load.title)}
                   <span class="mx-1.5 text-gray-300">·</span>
                   ${Utils.escapeHtml(load.origin_city)}/${load.origin_state} → ${Utils.escapeHtml(load.destination_city)}/${load.destination_state}
                 </p>
@@ -472,16 +472,16 @@ const MatchingPage = {
           </svg>
         </div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          ${hasFilters ? "Nenhum resultado encontrado" : "Nenhum match disponível"}
+          ${hasFilters ? __("match.empty.withFilters") : __("match.empty.title")}
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
           ${hasFilters
-            ? "Tente ajustar os filtros ou ampliar a busca para encontrar mais resultados."
-            : "Cadastre cargas e rotas para encontrar combinações. Use os filtros acima para refinar a busca."}
+            ? __("match.empty.withFilters.desc")
+            : __("match.empty.desc")}
         </p>
         ${hasFilters ? `
           <button onclick="MatchingPage.clearFilters()" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-            Limpar filtros
+            ${__("action.clearFilters")}
           </button>
         ` : ""}
       </div>

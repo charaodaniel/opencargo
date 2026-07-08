@@ -6,7 +6,10 @@ dist/
 *.db-shm
 *.db-wal
 backend/data/
+backend/supabase.txt
 .DS_Store
 *.log
 coverage/
 .vite/
+opencargo.zip
+backend/starter-for-js/

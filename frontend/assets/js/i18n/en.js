@@ -286,6 +286,9 @@ const I18nEn = {
   "freight.empty.desc": "Complete matches to see freight history here.",
 
   // ── Matching ──────────────────────────────────────
+  "match.compatibleRoute": "Compatible Route",
+  "match.loadLabel": "Load",
+  "label.vehicle": "Vehicle",
   "match.loadsForDrivers": "📦 Loads for Drivers",
   "match.driversForLoads": "🚛 Drivers for Loads",
   "match.search": "Search",
@@ -343,7 +346,29 @@ const I18nEn = {
   "review.completedMatch": "Match completed — rate the other party",
   "review.ratingOnProfile": "Rating",
 
+  // ── Dashboard ────────────────────────────────────
+  "dashboard.activeCompanies": "Active Companies",
+  "dashboard.availableDrivers": "Available Drivers",
+  "dashboard.availableLoads": "Available Loads",
+  "dashboard.activeRoutes": "Active Routes",
+  "dashboard.pendingMatches": "Pending Matches",
+  "dashboard.deliveredLoads": "Completed Deliveries",
+  "dashboard.quickActions": "Quick Actions",
+  "dashboard.recentActivity": "Recent Activity",
+  "dashboard.noActivity": "No activity yet",
+  "dashboard.startActivity": "Start by registering loads or routes",
+  "dashboard.newLoad": "New Load",
+  "dashboard.newLoad.desc": "Register a load for transport",
+  "dashboard.newRoute": "New Route",
+  "dashboard.newRoute.desc": "Set your travel route",
+  "dashboard.viewMatching": "View Matching",
+  "dashboard.viewMatching.desc": "Find loads or drivers",
+  "dashboard.chat.desc": "Chat with active matches",
+
   // ── Notifications ─────────────────────────────────
+  "notif.matches": "Matches",
+  "notif.messages": "Messages",
+  "notif.system": "System",
   "notif.empty.title": "No notifications",
   "notif.empty.desc": "You'll be notified when there are matches or messages.",
   "notif.read": "Read",

@@ -1,4 +1,5 @@
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 export async function notificationRoutes(app) {
   app.addHook("onRequest", app.authenticate);
@@ -8,11 +9,17 @@ export async function notificationRoutes(app) {
    */
   app.get("/", async (request) => {
     const user = request.user;
+    const { page, limit, offset } = getPagination(request.query);
 
-    return await query(
-      `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
-      [user.id]
-    );
+    const [rows, [{ total }]] = await Promise.all([
+      query(
+        `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        [user.id, limit, offset]
+      ),
+      query(`SELECT COUNT(*) as total FROM notifications WHERE user_id = ?`, [user.id]),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   /**

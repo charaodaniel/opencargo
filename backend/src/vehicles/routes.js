@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const createVehicleSchema = z.object({
   plate: z.string().min(7).max(8),
@@ -17,7 +18,6 @@ export async function vehicleRoutes(app) {
     const body = createVehicleSchema.parse(request.body);
     const user = request.user;
 
-    // Busca o motorista associado ao usuário logado
     const driver = await queryOne(`SELECT id FROM drivers WHERE user_id = ?`, [user.id]);
 
     if (!driver) {
@@ -35,8 +35,15 @@ export async function vehicleRoutes(app) {
     return reply.status(201).send(vehicle);
   });
 
-  app.get("/", async () => {
-    return await query(`SELECT * FROM vehicles`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM vehicles ORDER BY model ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM vehicles`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/:id", async (request) => {

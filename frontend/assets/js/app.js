@@ -109,8 +109,10 @@ const App = {
     const root = document.getElementById("app");
     window.LandingPage = LandingPage;
     root.innerHTML = `<div id="main-content"></div>`;
+    // Define a hash ANTES de inicializar o Router para que _handleRoute()
+    // já leia "#landing" em vez de assumir "dashboard" por padrão.
+    window.location.hash = "#landing";
     Router.init("main-content");
-    Router.go("landing");
   },
 
   /**

@@ -31,12 +31,12 @@ const DocumentsPage = {
     });
 
     const categories = [
-      { key: "", label: "Todos", count: files.length },
-      { key: "general", label: "Gerais", count: categoryCounts.general || 0 },
-      { key: "company", label: "Empresas", count: categoryCounts.company || 0 },
-      { key: "driver", label: "Motoristas", count: categoryCounts.driver || 0 },
-      { key: "vehicle", label: "Veículos", count: categoryCounts.vehicle || 0 },
-      { key: "load", label: "Cargas", count: categoryCounts.load || 0 },
+      { key: "", label: __("label.all"), count: files.length },
+      { key: "general", label: __("doc.category.general"), count: categoryCounts.general || 0 },
+      { key: "company", label: __("doc.category.company"), count: categoryCounts.company || 0 },
+      { key: "driver", label: __("doc.category.driver"), count: categoryCounts.driver || 0 },
+      { key: "vehicle", label: __("doc.category.vehicle"), count: categoryCounts.vehicle || 0 },
+      { key: "load", label: __("doc.category.load"), count: categoryCounts.load || 0 },
     ];
 
     return `
@@ -44,15 +44,15 @@ const DocumentsPage = {
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Documentos</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie seus documentos e arquivos</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${__("page.documents")}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${__("page.documents.desc")}</p>
           </div>
           <button onclick="DocumentsPage.openUploadModal()"
             class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
             </svg>
-            <span class="hidden sm:inline">Upload</span>
+            <span class="hidden sm:inline">${__("action.upload")}</span>
           </button>
         </div>
 
@@ -84,16 +84,16 @@ const DocumentsPage = {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
           </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Nenhum documento</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${__("doc.empty.title")}</h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-          Faça upload de documentos como CNH, comprovantes, notas fiscais e outros arquivos.
+          ${__("doc.empty.desc")}
         </p>
         <button onclick="DocumentsPage.openUploadModal()"
           class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center space-x-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
           </svg>
-          <span>Fazer Upload</span>
+          <span>${__("action.upload")}</span>
         </button>
       </div>
     `;

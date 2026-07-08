@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const createCompanySchema = z.object({
   name: z.string().min(3),
@@ -28,8 +29,15 @@ export async function companyRoutes(app) {
     return reply.status(201).send(company);
   });
 
-  app.get("/", async () => {
-    return await query(`SELECT * FROM companies`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM companies ORDER BY name ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM companies`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/me", async (request) => {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const updateUserSchema = z.object({
   name: z.string().min(3).optional(),
@@ -9,8 +10,15 @@ const updateUserSchema = z.object({
 export async function userRoutes(app) {
   app.addHook("onRequest", app.authenticate);
 
-  app.get("/", async () => {
-    return await query(`SELECT id, name, email, role, active FROM users`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT id, name, email, role, active FROM users ORDER BY name ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM users`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/:id", async (request) => {
@@ -37,7 +45,7 @@ export async function userRoutes(app) {
       throw { statusCode: 400, message: "Nenhum campo para atualizar" };
     }
 
-    sets.push("updated_at = datetime('now')");
+    sets.push("updated_at = CURRENT_TIMESTAMP");
     params.push(id);
 
     await query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);

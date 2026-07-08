@@ -64,6 +64,14 @@ const Router = {
 
       // Carrega o módulo da página
       const pageModule = await this._loadPage(page);
+
+      // ═══ Guard: se a hash mudou durante o carregamento, ignora esta navegação ═══
+      const currentHash = window.location.hash.slice(1) || "";
+      if (currentHash !== page && !(currentHash === "" && page === "dashboard")) {
+        console.warn(`[Router] Navegação obsoleta: "${page}" ignorada (hash atual: "${currentHash}")`);
+        return;
+      }
+
       const html = await pageModule.render(params);
       this._mainContent.innerHTML = html;
 
@@ -75,6 +83,12 @@ const Router = {
       // Notifica callbacks de navegação
       this._onNavigate.forEach((cb) => cb(page, params));
     } catch (error) {
+      // ═══ Guard contra navegação obsoleta no catch também ═══
+      const currentHash = window.location.hash.slice(1) || "";
+      if (currentHash !== page && !(currentHash === "" && page === "dashboard")) {
+        console.warn(`[Router] Erro ignorado — navegação obsoleta: "${page}"`);
+        return;
+      }
       console.error(`Erro ao carregar página "${page}":`, error);
       this._mainContent.innerHTML = this._errorState(page);
     }

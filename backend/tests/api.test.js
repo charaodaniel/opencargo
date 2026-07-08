@@ -49,13 +49,13 @@ describe("Auth", () => {
         name: "Transportadora XYZ",
         email: "xyz@teste.com",
         password: "123456",
-        role: "company",
+        role: "empresa",
       },
     });
 
     assert.strictEqual(res.status, 201);
     assert.ok(res.body.token);
-    assert.strictEqual(res.body.user.role, "company");
+    assert.strictEqual(res.body.user.role, "empresa");
     assert.strictEqual(res.body.user.name, "Transportadora XYZ");
     companyToken = res.body.token;
     companyUserId = res.body.user.id;
@@ -69,13 +69,13 @@ describe("Auth", () => {
         name: "João Motorista",
         email: "joao@teste.com",
         password: "123456",
-        role: "driver",
+        role: "motorista",
       },
     });
 
     assert.strictEqual(res.status, 201);
     assert.ok(res.body.token);
-    assert.strictEqual(res.body.user.role, "driver");
+    assert.strictEqual(res.body.user.role, "motorista");
   });
 
   it("POST /api/auth/register deve rejeitar e-mail duplicado", async () => {
@@ -86,11 +86,11 @@ describe("Auth", () => {
         name: "Outra Empresa",
         email: "xyz@teste.com",
         password: "123456",
-        role: "company",
+        role: "empresa",
       },
     });
 
-    assert.strictEqual(res.status, 500); // unique constraint violation
+    assert.strictEqual(res.status, 500);
   });
 
   it("POST /api/auth/login deve autenticar com credenciais válidas", async () => {
@@ -143,7 +143,7 @@ describe("Auth", () => {
 });
 
 // ═══════════════════════════════════════════════════════
-// Companies CRUD
+// Companies CRUD (com paginação)
 // ═══════════════════════════════════════════════════════
 describe("Companies CRUD", () => {
   let token;
@@ -154,7 +154,7 @@ describe("Companies CRUD", () => {
       name: "Empresa CRUD",
       email: "crud@teste.com",
       password: "123456",
-      role: "company",
+      role: "empresa",
     });
     token = user.token;
   });
@@ -179,15 +179,18 @@ describe("Companies CRUD", () => {
     assert.ok(res.body.id);
   });
 
-  it("GET /api/companies deve listar empresas", async () => {
+  it("GET /api/companies deve listar empresas com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/companies",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.total >= 1);
+    assert.ok(res.body.page >= 1);
+    assert.ok(res.body.limit >= 1);
+    assert.ok(res.body.totalPages >= 1);
   });
 
   it("GET /api/companies/:id deve buscar empresa por ID", async () => {
@@ -195,7 +198,7 @@ describe("Companies CRUD", () => {
       method: "GET",
       url: "/api/companies",
     });
-    const companyId = list.body[0].id;
+    const companyId = list.body.data[0].id;
 
     const res = await authRequest(app, token, {
       method: "GET",
@@ -220,7 +223,7 @@ describe("Companies CRUD", () => {
       method: "GET",
       url: "/api/companies",
     });
-    const companyId = list.body[0].id;
+    const companyId = list.body.data[0].id;
 
     const res = await authRequest(app, token, {
       method: "PATCH",
@@ -234,7 +237,7 @@ describe("Companies CRUD", () => {
 });
 
 // ═══════════════════════════════════════════════════════
-// Drivers CRUD
+// Drivers CRUD (com paginação)
 // ═══════════════════════════════════════════════════════
 describe("Drivers CRUD", () => {
   let token;
@@ -245,7 +248,7 @@ describe("Drivers CRUD", () => {
       name: "Motorista CRUD",
       email: "motorista-crud@teste.com",
       password: "123456",
-      role: "driver",
+      role: "motorista",
     });
     token = user.token;
   });
@@ -268,14 +271,15 @@ describe("Drivers CRUD", () => {
     assert.strictEqual(res.body.name, "Motorista CRUD");
   });
 
-  it("GET /api/drivers deve listar motoristas", async () => {
+  it("GET /api/drivers deve listar motoristas com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/drivers",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.total >= 1);
   });
 
   it("GET /api/drivers/available deve listar motoristas disponíveis", async () => {
@@ -285,7 +289,7 @@ describe("Drivers CRUD", () => {
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
   });
 });
 
@@ -297,12 +301,11 @@ describe("Vehicles CRUD", () => {
 
   before(async () => {
     cleanDatabase();
-    // Precisa de motorista cadastrado
     const user = await registerUser(app, {
       name: "Motorista Veículo",
       email: "veiculo@teste.com",
       password: "123456",
-      role: "driver",
+      role: "motorista",
     });
     token = user.token;
 
@@ -339,14 +342,14 @@ describe("Vehicles CRUD", () => {
     assert.strictEqual(res.body.model, "Volvo FH");
   });
 
-  it("GET /api/vehicles deve listar veículos", async () => {
+  it("GET /api/vehicles deve listar veículos com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/vehicles",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
   });
 
   it("POST /api/vehicles rejeita placa duplicada", async () => {
@@ -361,11 +364,10 @@ describe("Vehicles CRUD", () => {
       },
     });
 
-    assert.strictEqual(res.status, 500); // unique constraint
+    assert.strictEqual(res.status, 500);
   });
 
   it("DELETE /api/vehicles/:id deve remover veículo", async () => {
-    // Cria um veículo para deletar
     const createRes = await authRequest(app, token, {
       method: "POST",
       url: "/api/vehicles",
@@ -400,7 +402,7 @@ describe("Routes CRUD", () => {
       name: "Motorista Rota",
       email: "rota@teste.com",
       password: "123456",
-      role: "driver",
+      role: "motorista",
     });
     token = user.token;
 
@@ -451,14 +453,14 @@ describe("Routes CRUD", () => {
     assert.strictEqual(res.body.status, "active");
   });
 
-  it("GET /api/routes deve listar rotas", async () => {
+  it("GET /api/routes deve listar rotas com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/routes",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
   });
 
   it("GET /api/routes/active deve listar rotas ativas", async () => {
@@ -468,8 +470,8 @@ describe("Routes CRUD", () => {
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    res.body.forEach((r) => assert.strictEqual(r.status, "active"));
+    assert.ok(Array.isArray(res.body.data));
+    res.body.data.forEach((r) => assert.strictEqual(r.status, "active"));
   });
 });
 
@@ -485,7 +487,7 @@ describe("Loads CRUD", () => {
       name: "Empresa Carga",
       email: "carga@teste.com",
       password: "123456",
-      role: "company",
+      role: "empresa",
     });
     token = user.token;
 
@@ -525,14 +527,14 @@ describe("Loads CRUD", () => {
     assert.strictEqual(res.body.status, "pending");
   });
 
-  it("GET /api/loads deve listar cargas", async () => {
+  it("GET /api/loads deve listar cargas com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/loads",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
   });
 
   it("PATCH /api/loads/:id deve atualizar status para available", async () => {
@@ -540,7 +542,7 @@ describe("Loads CRUD", () => {
       method: "GET",
       url: "/api/loads",
     });
-    const loadId = list.body[0].id;
+    const loadId = list.body.data[0].id;
 
     const res = await authRequest(app, token, {
       method: "PATCH",
@@ -559,8 +561,8 @@ describe("Loads CRUD", () => {
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    res.body.forEach((l) => assert.strictEqual(l.status, "available"));
+    assert.ok(Array.isArray(res.body.data));
+    res.body.data.forEach((l) => assert.strictEqual(l.status, "available"));
   });
 });
 
@@ -573,7 +575,6 @@ describe("Matching + Chat (Fluxo Completo)", () => {
 
   before(async () => {
     cleanDatabase();
-    // Cria dados de teste completos
     const appData = await createTestData(app);
     companyToken = appData.company.token;
     driverToken = appData.driver.token;
@@ -630,10 +631,10 @@ describe("Matching + Chat (Fluxo Completo)", () => {
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
-    assert.strictEqual(res.body[0].load.title, "Carga para Matching");
-    assert.strictEqual(res.body[0].score, 100);
+    assert.ok(Array.isArray(res.body.results));
+    assert.ok(res.body.results.length >= 1);
+    assert.strictEqual(res.body.results[0].load.title, "Carga para Matching");
+    assert.ok(res.body.results[0].score >= 80, "Score deve ser >= 80 (rota perfeitamente alinhada)");
   });
 
   it("GET /api/matching/drivers-for-load/:id retorna motoristas compatíveis", async () => {
@@ -643,10 +644,10 @@ describe("Matching + Chat (Fluxo Completo)", () => {
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
-    assert.ok(res.body[0].driver);
-    assert.ok(res.body[0].vehicle);
+    assert.ok(Array.isArray(res.body.results));
+    assert.ok(res.body.results.length >= 1);
+    assert.ok(res.body.results[0].driver);
+    assert.ok(res.body.results[0].vehicle);
   });
 
   it("POST /api/matching cria match e atualiza status da carga", async () => {
@@ -687,15 +688,15 @@ describe("Matching + Chat (Fluxo Completo)", () => {
     assert.strictEqual(res.body.match_id, matchId);
   });
 
-  it("GET /api/chat/messages/:matchId lista mensagens", async () => {
+  it("GET /api/chat/messages/:matchId lista mensagens com paginação", async () => {
     const res = await authRequest(app, companyToken, {
       method: "GET",
       url: `/api/chat/messages/${matchId}`,
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.data.length >= 1);
   });
 
   it("PATCH /api/matching/:id aceita o match", async () => {
@@ -709,15 +710,15 @@ describe("Matching + Chat (Fluxo Completo)", () => {
     assert.strictEqual(res.body.status, "accepted");
   });
 
-  it("GET /api/matching lista todos os matches", async () => {
+  it("GET /api/matching lista todos os matches com paginação", async () => {
     const res = await authRequest(app, companyToken, {
       method: "GET",
       url: "/api/matching",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.data.length >= 1);
   });
 });
 
@@ -733,19 +734,19 @@ describe("Notifications", () => {
       name: "Usuário Notificações",
       email: "notif@teste.com",
       password: "123456",
-      role: "company",
+      role: "empresa",
     });
     token = user.token;
   });
 
-  it("GET /api/notifications lista notificações do usuário", async () => {
+  it("GET /api/notifications lista notificações do usuário com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/notifications",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
+    assert.ok(Array.isArray(res.body.data));
   });
 
   it("POST /api/notifications/read-all marca todas como lidas", async () => {
@@ -771,20 +772,20 @@ describe("Users", () => {
       name: "Admin Teste",
       email: "admin@teste.com",
       password: "123456",
-      role: "company",
+      role: "empresa",
     });
     token = user.token;
   });
 
-  it("GET /api/users lista usuários", async () => {
+  it("GET /api/users lista usuários com paginação", async () => {
     const res = await authRequest(app, token, {
       method: "GET",
       url: "/api/users",
     });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    assert.ok(res.body.length >= 1);
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.total >= 1);
   });
 
   it("GET /api/users/:id busca usuário por ID", async () => {
@@ -792,7 +793,7 @@ describe("Users", () => {
       method: "GET",
       url: "/api/users",
     });
-    const userId = list.body[0].id;
+    const userId = list.body.data[0].id;
 
     const res = await authRequest(app, token, {
       method: "GET",

@@ -12,11 +12,11 @@ const NotificationsPage = {
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     const categories = [
-      { key: "all", label: "Todas", count: notifications.length },
-      { key: "unread", label: "Não Lidas", count: unreadCount },
-      { key: "match", label: "Matches", count: notifications.filter((n) => n.type === "match").length },
-      { key: "message", label: "Mensagens", count: notifications.filter((n) => n.type === "message").length },
-      { key: "system", label: "Sistema", count: notifications.filter((n) => n.type === "system").length },
+      { key: "all", label: __("label.all"), count: notifications.length },
+      { key: "unread", label: __("label.unread"), count: unreadCount },
+      { key: "match", label: __("notif.matches"), count: notifications.filter((n) => n.type === "match").length },
+      { key: "message", label: __("notif.messages"), count: notifications.filter((n) => n.type === "message").length },
+      { key: "system", label: __("notif.system"), count: notifications.filter((n) => n.type === "system").length },
     ];
 
     const filtered = this._filter === "all"
@@ -29,10 +29,10 @@ const NotificationsPage = {
       <div class="fade-in">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Notificações</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Suas notificações e alertas</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${__("page.notifications")}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${__("page.notifications.desc")}</p>
           </div>
-          ${unreadCount > 0 ? `<button onclick="NotificationsPage.markAllRead()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Marcar todas como lidas</button>` : ""}
+          ${unreadCount > 0 ? `<button onclick="NotificationsPage.markAllRead()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">${__("action.markAllRead")}</button>` : ""}
         </div>
 
         <!-- Categorias -->
@@ -61,8 +61,8 @@ const NotificationsPage = {
               <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
               </svg>
-              <p class="text-lg font-medium">Nenhuma notificação</p>
-              <p class="text-sm">Você será notificado quando houver matches ou mensagens.</p>
+              <p class="text-lg font-medium">${__("notif.empty.title")}</p>
+              <p class="text-sm">${__("notif.empty.desc")}</p>
             </div>
           `
             : filtered
@@ -80,7 +80,7 @@ const NotificationsPage = {
                   <p class="text-xs text-gray-400 mt-1">${Utils.formatDate(n.created_at, true)}</p>
                 </div>
               </div>
-              ${!n.read ? `<button onclick="NotificationsPage.markRead(${n.id})" class="text-xs text-blue-600 hover:text-blue-800 font-medium ml-4 shrink-0">Ler</button>` : ""}
+              ${!n.read ? `<button onclick="NotificationsPage.markRead('${n.id}')" class="text-xs text-blue-600 hover:text-blue-800 font-medium ml-4 shrink-0">${__("notif.read")}</button>` : ""}
             </div>
           `
                 )
@@ -102,7 +102,7 @@ const NotificationsPage = {
    * Marca notificação como lida
    */
   markRead(id) {
-    Toast.info("Notificação marcada como lida");
+    Toast.info(__("notif.marked"));
     Router.refresh();
   },
 
@@ -110,7 +110,7 @@ const NotificationsPage = {
    * Marca todas como lidas
    */
   markAllRead() {
-    Toast.success("Todas as notificações marcadas como lidas");
+    Toast.success(__("notif.allRead"));
     Router.refresh();
   },
 };

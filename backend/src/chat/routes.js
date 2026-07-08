@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const sendMessageSchema = z.object({
   matchId: z.string(),
@@ -31,11 +32,17 @@ export async function chatRoutes(app) {
    */
   app.get("/messages/:matchId", async (request) => {
     const { matchId } = request.params;
+    const { page, limit, offset } = getPagination(request.query);
 
-    return await query(
-      `SELECT * FROM messages WHERE match_id = ? ORDER BY created_at ASC LIMIT 100`,
-      [matchId]
-    );
+    const [rows, [{ total }]] = await Promise.all([
+      query(
+        `SELECT * FROM messages WHERE match_id = ? ORDER BY created_at ASC LIMIT ? OFFSET ?`,
+        [matchId, limit, offset]
+      ),
+      query(`SELECT COUNT(*) as total FROM messages WHERE match_id = ?`, [matchId]),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   /**

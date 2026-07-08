@@ -22,7 +22,9 @@ function getPool() {
   pool = new Pool({
     connectionString: url,
     ssl:
-      process.env.NODE_ENV === "production" || url.includes("aivencloud")
+      process.env.NODE_ENV === "production" ||
+      url.includes("aivencloud") ||
+      url.includes("supabase")
         ? { rejectUnauthorized: false }
         : false,
     max: 10,
@@ -117,7 +119,7 @@ export async function initDatabase() {
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) NOT NULL DEFAULT 'driver' CHECK(role IN ('admin', 'company', 'driver')),
+        role VARCHAR(20) NOT NULL DEFAULT 'motorista' CHECK(role IN ('administrador', 'gestor', 'empresa', 'motorista')),
         phone VARCHAR(20),
         active INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),

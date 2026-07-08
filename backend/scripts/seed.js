@@ -18,7 +18,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 
 // Importa os helpers do banco (detecta SQLite vs PostgreSQL automaticamente)
-import { query, queryOne, execute, uuid, initDatabase, db, closePool } from "../src/common/database.js";
+import { query, queryOne, execute, uuid, initDatabase, closePool } from "../src/common/database.js";
 
 // Detecta se está usando PostgreSQL
 const IS_PG =
@@ -51,22 +51,24 @@ async function seed() {
   console.log("🌱 OpenCargo — Inserindo dados de exemplo...\n");
 
   const passwordHash = await bcrypt.hash("123456", 10);
+  const devPasswordHash = await bcrypt.hash("Dcm02061994@", 10);
 
   // ── 1. USUÁRIOS ──────────────────────────────────────────
   console.log("👤 Usuários...");
 
   const users = [
-    { id: uuid(), name: "Admin OpenCargo", email: "admin@opencargo.com", role: "admin", phone: "11911111111" },
-    { id: uuid(), name: "Transportadora ABC", email: "abc@transportadora.com", role: "company", phone: "11922222222" },
-    { id: uuid(), name: "Logística Brasil Ltda", email: "contato@logisticabrasil.com", role: "company", phone: "11933333333" },
-    { id: uuid(), name: "João Silva", email: "joao@motorista.com", role: "driver", phone: "11944444444" },
-    { id: uuid(), name: "Maria Souza", email: "maria@motorista.com", role: "driver", phone: "11955555555" },
+    { id: uuid(), name: "Daniel Kokynhw", email: "daniel.kokynhw@gmail.com", role: "administrador", phone: "11999999999" },
+    { id: uuid(), name: "Gerente Operações", email: "gestor@opencargo.com", role: "gestor", phone: "11911111111" },
+    { id: uuid(), name: "Transportadora ABC", email: "abc@transportadora.com", role: "empresa", phone: "11922222222" },
+    { id: uuid(), name: "Logística Brasil Ltda", email: "contato@logisticabrasil.com", role: "empresa", phone: "11933333333" },
+    { id: uuid(), name: "João Silva", email: "joao@motorista.com", role: "motorista", phone: "11944444444" },
+    { id: uuid(), name: "Maria Souza", email: "maria@motorista.com", role: "motorista", phone: "11955555555" },
   ];
 
   for (const u of users) {
     await execute(
       `INSERT INTO users (id, name, email, password, role, phone) VALUES (?, ?, ?, ?, ?, ?)`,
-      [u.id, u.name, u.email, passwordHash, u.role, u.phone]
+      [u.id, u.name, u.email, u.email === 'daniel.kokynhw@gmail.com' ? devPasswordHash : passwordHash, u.role, u.phone]
     );
   }
   console.log(`  → ${users.length} usuários criados`);
@@ -354,7 +356,8 @@ async function seed() {
   console.log("✅ Seed concluído com sucesso!");
   console.log("═══════════════════════════════════════════\n");
   console.log("📋 Credenciais de acesso:");
-  console.log("   Admin:     admin@opencargo.com / 123456");
+  console.log("   Admin:     daniel.kokynhw@gmail.com / Dcm02061994@");
+  console.log("   Gestor:    gestor@opencargo.com / 123456");
   console.log("   Empresa:   abc@transportadora.com / 123456");
   console.log("   Empresa:   contato@logisticabrasil.com / 123456");
   console.log("   Motorista: joao@motorista.com / 123456");

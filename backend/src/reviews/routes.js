@@ -7,6 +7,7 @@
 //   DELETE /api/reviews/:id      → Excluir própria avaliação
 
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 export async function reviewRoutes(app) {
   app.addHook("onRequest", app.authenticate);
@@ -34,8 +35,6 @@ export async function reviewRoutes(app) {
     }
 
     // Verifica se o usuário é parte do match
-    // Nota: match.driver_id referencia a tabela drivers (entity), NÃO users
-    //       Precisamos buscar os user_ids correspondentes
     const load = await queryOne(`SELECT company_id FROM loads WHERE id = ?`, [match.load_id]);
     const matchDriver = await queryOne(`SELECT user_id FROM drivers WHERE id = ?`, [match.driver_id]);
     const matchCompany = load ? await queryOne(`SELECT user_id FROM companies WHERE id = ?`, [load.company_id]) : null;
@@ -50,10 +49,8 @@ export async function reviewRoutes(app) {
     // Determina quem está sendo avaliado (reviewee_id)
     let revieweeId;
     if (isDriver) {
-      // Motorista avaliando a empresa
       revieweeId = matchCompany?.user_id;
     } else {
-      // Empresa avaliando o motorista
       revieweeId = matchDriver?.user_id;
     }
 
@@ -83,10 +80,12 @@ export async function reviewRoutes(app) {
   // ═══════════════════════════════════════════════════════
   app.get("/", async (request) => {
     const { match_id, user_id, role } = request.query;
-    let sql = `SELECT r.*, u.name as reviewer_name, rev.name as reviewee_name
-               FROM reviews r
-               LEFT JOIN users u ON r.reviewer_id = u.id
-               LEFT JOIN users rev ON r.reviewee_id = rev.id`;
+    const { page, limit, offset } = getPagination(request.query);
+
+    let selectSql = `SELECT r.*, u.name as reviewer_name, rev.name as reviewee_name
+                     FROM reviews r
+                     LEFT JOIN users u ON r.reviewer_id = u.id
+                     LEFT JOIN users rev ON r.reviewee_id = rev.id`;
     const conditions = [];
     const params = [];
 
@@ -98,23 +97,24 @@ export async function reviewRoutes(app) {
     if (user_id) {
       if (role === "given") {
         conditions.push("r.reviewer_id = ?");
+        params.push(user_id);
       } else if (role === "received") {
         conditions.push("r.reviewee_id = ?");
+        params.push(user_id);
       } else {
-        // Ambos: quem deu ou recebeu
         conditions.push("(r.reviewer_id = ? OR r.reviewee_id = ?)");
         params.push(user_id, user_id);
       }
-      if (role) params.push(user_id);
     }
 
-    if (conditions.length > 0) {
-      sql += " WHERE " + conditions.join(" AND ");
-    }
+    const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
 
-    sql += " ORDER BY r.created_at DESC";
+    const [rows, [{ total }]] = await Promise.all([
+      query(`${selectSql}${whereClause} ORDER BY r.created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]),
+      query(`SELECT COUNT(*) as total FROM reviews r${whereClause}`, params),
+    ]);
 
-    return await query(sql, params);
+    return paginatedResponse(rows, total, page, limit);
   });
 
   // ═══════════════════════════════════════════════════════

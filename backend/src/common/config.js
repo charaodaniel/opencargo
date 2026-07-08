@@ -15,4 +15,37 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.coerce.number().default(10 * 1024 * 1024), // 10MB
 });
 
-export const config = envSchema.parse(process.env);
+const parsed = envSchema.parse(process.env);
+
+// ── Validação de segurança ──────────────────────────────
+const DEV_JWT_SECRET = "opencargo-dev-secret";
+
+if (parsed.NODE_ENV === "production" && parsed.JWT_SECRET === DEV_JWT_SECRET) {
+  const msg = [
+    "╔══════════════════════════════════════════════════════════╗",
+    "║  ⚠️  JWT_SECRET NÃO ALTERADO EM PRODUÇÃO!              ║",
+    "╠══════════════════════════════════════════════════════════╣",
+    "║  Por segurança, defina JWT_SECRET com um valor único.   ║",
+    "║                                                         ║",
+    "║  Gere um com:                                           ║",
+    "║    node -e \"console.log(require('crypto')               ║",
+    "║      .randomBytes(32).toString('hex'))\"                 ║",
+    "╚══════════════════════════════════════════════════════════╝",
+  ].join("\n");
+
+  console.error(msg);
+}
+
+// ── Verificação de CORS_ORIGIN ─────────────────────────
+if (parsed.NODE_ENV === "production") {
+  const origins = parsed.CORS_ORIGIN.split(",").map((s) => s.trim());
+  const hasLocalhost = origins.some((o) => o.includes("localhost"));
+  if (hasLocalhost) {
+    console.warn(
+      "⚠️  CORS_ORIGIN contém localhost em produção. " +
+      "Remova origens locais se não forem necessárias."
+    );
+  }
+}
+
+export const config = parsed;

@@ -1,12 +1,27 @@
 # ── OpenCargo — Render Blueprint ───────────────────────
-# Deploy automático do backend + PostgreSQL
+# Deploy do backend no Render + Supabase PostgreSQL externo
 # Veja: https://render.com/docs/blueprint-spec
 #
-# Uso:
-#   1. Faça fork do repositório
-#   2. Conecte no Render (https://render.com)
-#   3. O blueprint detecta automaticamente este arquivo
-#   4. Configure os env vars e faça deploy
+# ═══ PRÉ-REQUISITOS ═══
+# Antes de fazer o deploy, você precisa:
+#
+#   1. Um projeto Supabase (já configurado)
+#   2. Gerar um JWT_SECRET seguro:
+#        node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+#   3. Ter a URL do frontend na Vercel (após deploy)
+#
+# ═══ CONFIGURAÇÃO NO DASHBOARD DO RENDER ═══
+# Após conectar o repositório no Render:
+#   1. Vá em Dashboard → Environment
+#   2. Preencha as env vars marcadas como sync:false:
+#      - DATABASE_URL: string de conexão do Supabase
+#      - JWT_SECRET: chave secreta gerada no passo 2
+#      - CORS_ORIGIN: URL do frontend na Vercel
+#
+# ═══ DEPLOY AUTOMÁTICO ═══
+# O Render faz deploy automático a cada push no branch
+# conectado. Para deploy manual, clique em "Deploy"
+# no dashboard do Render.
 
 services:
   - type: web
@@ -23,18 +38,30 @@ services:
       - key: PORT
         value: "3000"
       - key: HOST
-        value: 0.0.0.0
-      - key: JWT_SECRET
-        sync: false  # Preenchido manualmente no dashboard
-      - key: CORS_ORIGIN
-        sync: false  # URL do frontend (ex: https://opencargo.vercel.app)
-      - key: DATABASE_URL
-        fromDatabase:
-          name: opencargo-db
-          property: connectionString
+        value: "0.0.0.0"
 
-  - type: postgresql
-    name: opencargo-db
-    plan: free
-    region: south-brazil
-    ipAllowList: []  # Apenas conexões internas
+      # ═══ SUPABASE (banco de dados externo) ═══
+      # String de conexão do Supabase PostgreSQL.
+      # Ex: postgresql://postgres:SENHA@db.PROJECT.supabase.co:5432/postgres
+      # A senha está em backend/supabase.txt (NÃO versionar!)
+      - key: DATABASE_URL
+        sync: false
+
+      # ═══ JWT (segurança) ═══
+      # Gere uma chave única para produção:
+      #   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      - key: JWT_SECRET
+        sync: false
+
+      # ═══ CORS ═══
+      # URL do frontend na Vercel. Para múltiplas origens,
+      # separe por vírgula (sem espaços).
+      # Ex: https://opencargo.vercel.app,https://meudominio.com.br
+      - key: CORS_ORIGIN
+        sync: false
+
+      # ═══ UPLOAD ═══
+      - key: UPLOAD_DIR
+        value: "./uploads"
+      - key: MAX_FILE_SIZE
+        value: "10485760"

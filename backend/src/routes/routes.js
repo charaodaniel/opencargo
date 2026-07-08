@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
+import { getPagination, paginatedResponse } from "../common/pagination.js";
 
 const createRouteSchema = z.object({
   originCity: z.string().min(2),
@@ -37,16 +38,37 @@ export async function routeRoutes(app) {
     return reply.status(201).send(route);
   });
 
-  app.get("/", async () => {
-    return await query(`SELECT * FROM routes`);
+  app.get("/", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM routes ORDER BY created_at DESC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM routes`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
-  app.get("/active", async () => {
-    return await query(`SELECT * FROM routes WHERE status = 'active'`);
+  app.get("/active", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM routes WHERE status = 'active' ORDER BY departure_date ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM routes WHERE status = 'active'`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
-  app.get("/return", async () => {
-    return await query(`SELECT * FROM routes WHERE is_return = 1`);
+  app.get("/return", async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    const [rows, [{ total }]] = await Promise.all([
+      query(`SELECT * FROM routes WHERE is_return = 1 ORDER BY departure_date ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT COUNT(*) as total FROM routes WHERE is_return = 1`),
+    ]);
+
+    return paginatedResponse(rows, total, page, limit);
   });
 
   app.get("/:id", async (request) => {

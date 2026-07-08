@@ -283,6 +283,9 @@ const I18nPtBr = {
   "freight.empty.desc": "Complete matches para ver o histórico de fretes aqui.",
 
   // ── Matching ──────────────────────────────────────
+  "match.compatibleRoute": "Rota Compatível",
+  "match.loadLabel": "Carga",
+  "label.vehicle": "Veículo",
   "match.loadsForDrivers": "📦 Cargas para Motoristas",
   "match.driversForLoads": "🚛 Motoristas para Cargas",
   "match.search": "Buscar",
@@ -340,7 +343,29 @@ const I18nPtBr = {
   "review.completedMatch": "Match concluído — avalie a outra parte",
   "review.ratingOnProfile": "Avaliação",
 
+  // ── Dashboard ────────────────────────────────────
+  "dashboard.activeCompanies": "Empresas Ativas",
+  "dashboard.availableDrivers": "Motoristas Disponíveis",
+  "dashboard.availableLoads": "Cargas Disponíveis",
+  "dashboard.activeRoutes": "Rotas Ativas",
+  "dashboard.pendingMatches": "Matches Pendentes",
+  "dashboard.deliveredLoads": "Entregas Realizadas",
+  "dashboard.quickActions": "Ações Rápidas",
+  "dashboard.recentActivity": "Atividade Recente",
+  "dashboard.noActivity": "Nenhuma atividade ainda",
+  "dashboard.startActivity": "Comece cadastrando cargas ou rotas",
+  "dashboard.newLoad": "Nova Carga",
+  "dashboard.newLoad.desc": "Cadastre uma carga para transporte",
+  "dashboard.newRoute": "Nova Rota",
+  "dashboard.newRoute.desc": "Informe sua rota de viagem",
+  "dashboard.viewMatching": "Ver Matching",
+  "dashboard.viewMatching.desc": "Encontre cargas ou motoristas",
+  "dashboard.chat.desc": "Conversas com matches ativos",
+
   // ── Notificações ──────────────────────────────────
+  "notif.matches": "Matches",
+  "notif.messages": "Mensagens",
+  "notif.system": "Sistema",
   "notif.empty.title": "Nenhuma notificação",
   "notif.empty.desc": "Você será notificado quando houver matches ou mensagens.",
   "notif.read": "Ler",

@@ -27,20 +27,20 @@ const DashboardPage = {
     const deliveredLoads = loads.filter((l) => l.status === "delivered").length;
 
     const stats = [
-      { title: "Empresas Ativas", value: totalCompanies, icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' },
-      { title: "Motoristas Disponíveis", value: availableDrivers, color: "green", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' },
-      { title: "Cargas Disponíveis", value: activeLoads, color: "purple", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
-      { title: "Rotas Ativas", value: activeRoutes, color: "amber", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' },
-      { title: "Matches Pendentes", value: pendingMatches, color: "red", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
-      { title: "Entregas Realizadas", value: deliveredLoads, color: "green", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
+      { title: __("dashboard.activeCompanies"), value: totalCompanies, icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' },
+      { title: __("dashboard.availableDrivers"), value: availableDrivers, color: "green", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' },
+      { title: __("dashboard.availableLoads"), value: activeLoads, color: "purple", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
+      { title: __("dashboard.activeRoutes"), value: activeRoutes, color: "amber", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' },
+      { title: __("dashboard.pendingMatches"), value: pendingMatches, color: "red", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+      { title: __("dashboard.deliveredLoads"), value: deliveredLoads, color: "green", icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
     ];
 
     return `
       <div class="fade-in">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Visão geral do sistema OpenCargo</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${__("page.dashboard")}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${__("page.dashboard.desc")}</p>
           </div>
           <span class="text-sm text-gray-400">${Utils.formatDate(new Date().toISOString(), true)}</span>
         </div>
@@ -64,15 +64,15 @@ const DashboardPage = {
    */
   _quickActions() {
     const actions = [
-      { icon: "📦", title: "Nova Carga", desc: "Cadastre uma carga para transporte", page: "loads" },
-      { icon: "🛣️", title: "Nova Rota", desc: "Informe sua rota de viagem", page: "routes" },
-      { icon: "🔗", title: "Ver Matching", desc: "Encontre cargas ou motoristas", page: "matching" },
-      { icon: "💬", title: "Chat", desc: "Conversas com matches ativos", page: "chat" },
+      { icon: "📦", title: __("dashboard.newLoad"), desc: __("dashboard.newLoad.desc"), page: "loads" },
+      { icon: "🛣️", title: __("dashboard.newRoute"), desc: __("dashboard.newRoute.desc"), page: "routes" },
+      { icon: "🔗", title: __("dashboard.viewMatching"), desc: __("dashboard.viewMatching.desc"), page: "matching" },
+      { icon: "💬", title: __("nav.chat"), desc: __("dashboard.chat.desc"), page: "chat" },
     ];
 
     return `
       <div class="glass-card rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ações Rápidas</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${__("dashboard.quickActions")}</h3>
         <div class="space-y-3">
           ${actions
             .map(
@@ -106,10 +106,10 @@ const DashboardPage = {
     if (recentItems.length === 0) {
       return `
         <div class="glass-card rounded-xl p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Atividade Recente</h3>
-          <div class="text-center py-12 text-gray-400">
-            <p class="text-lg font-medium">Nenhuma atividade ainda</p>
-            <p class="text-sm">Comece cadastrando cargas ou rotas</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${__("dashboard.recentActivity")}</h3>
+        <div class="text-center py-12 text-gray-400">
+            <p class="text-lg font-medium">${__("dashboard.noActivity")}</p>
+            <p class="text-sm">${__("dashboard.startActivity")}</p>
           </div>
         </div>
       `;
@@ -117,7 +117,7 @@ const DashboardPage = {
 
     return `
       <div class="glass-card rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Atividade Recente</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${__("dashboard.recentActivity")}</h3>
         <div class="space-y-3">
           ${recentItems
             .map(
