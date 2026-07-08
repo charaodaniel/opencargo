@@ -6,7 +6,8 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 
-import { config } from "./common/config.js";
+import { config, isSupabaseAuth } from "./common/config.js";
+import { AuthService } from "./auth/service.js";
 import fastifyStatic from "@fastify/static";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -66,14 +67,31 @@ export async function buildApp() {
     routePrefix: "/docs",
   });
 
+  // ── Cria instância do AuthService ─────────────────────────
+  const authService = new AuthService(app);
+
   // ── Autenticação decorator ─────────────────────────────────
   app.decorate("authenticate", async function (request, reply) {
     try {
-      await request.jwtVerify();
+      if (isSupabaseAuth) {
+        // Modo Supabase Auth: verifica o JWT via API do Supabase
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          throw new Error("Token não fornecido");
+        }
+        const token = authHeader.replace("Bearer ", "");
+        request.user = await authService.verifyToken(token);
+      } else {
+        // Modo local: verifica o JWT próprio do Fastify
+        await request.jwtVerify();
+      }
     } catch (err) {
       reply.status(401).send({ error: "Não autorizado" });
     }
   });
+
+  // Expõe authService para as rotas (algumas rotas usam app.authService)
+  app.decorate("authService", authService);
 
   // ── Rotas ──────────────────────────────────────────────────
   await app.register(authRoutes, { prefix: "/api/auth" });

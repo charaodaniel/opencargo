@@ -13,9 +13,17 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   UPLOAD_DIR: z.string().default("./uploads"),
   MAX_FILE_SIZE: z.coerce.number().default(10 * 1024 * 1024), // 10MB
+
+  // Supabase Auth (opcional — usado apenas em produção com PostgreSQL)
+  SUPABASE_URL: z.string().default(""),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().default(""),
+  SUPABASE_ANON_KEY: z.string().default(""),
 });
 
 const parsed = envSchema.parse(process.env);
+
+// ── Helper: está usando Supabase Auth? ────────────────
+export const isSupabaseAuth = !!parsed.SUPABASE_URL;
 
 // ── Validação de segurança ──────────────────────────────
 const DEV_JWT_SECRET = "opencargo-dev-secret";

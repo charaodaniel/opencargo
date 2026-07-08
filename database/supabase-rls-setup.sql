@@ -2,16 +2,16 @@
 -- OpenCargo — RLS + Trigger + Admin UID Sync (Supabase)
 -- ═══════════════════════════════════════════════════════════
 --
--- ⚠️ As tabelas já existem (criadas pelo seed via backend).
+-- ⚠️  As tabelas já existem (criadas pelo seed ou pelo setup).
 -- Este script APENAS adiciona:
 --   1. Row Level Security (RLS) + políticas por role
---   2. Trigger para sincronizar auth.users → public.users
+--   2. Trigger handle_new_user() para sync auth.users → public.users
 --   3. Sincroniza seu UID do auth.users como administrador
 --
 -- ═══════════════════════════════════════════════════════════
 
 -- ═══════════════════════════════════════════════════════════
--- 1. ROW LEVEL SECURITY (RLS)
+-- 1. HELPER FUNCTIONS + RLS
 -- ═══════════════════════════════════════════════════════════
 
 -- Helper: retorna o role do usuário logado via JWT
@@ -20,12 +20,13 @@ RETURNS VARCHAR(20)
 LANGUAGE SQL STABLE
 AS $$
   SELECT COALESCE(
-    current_setting('request.jwt.claims', true)::json->>'role',
+    current_setting('request.jwt.claims', true)::jsonb
+      -> 'user_metadata' ->> 'role',
     (SELECT role FROM public.users WHERE id = auth.uid())
   );
 $$;
 
--- Helper: verifica se o usuário é administrador
+-- Helper: verifica se é administrador
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL STABLE
@@ -33,7 +34,7 @@ AS $$
   SELECT public.current_user_role() = 'administrador';
 $$;
 
--- Helper: verifica se o usuário é gestor ou adm
+-- Helper: verifica se é gestor ou admin
 CREATE OR REPLACE FUNCTION public.is_gestor_or_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL STABLE
@@ -263,7 +264,7 @@ BEGIN
   INSERT INTO public.users (id, name, email, password, role, phone, active)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data ->> 'name', NEW.email),
+    COALESCE(NEW.raw_user_meta_data ->> 'name', split_part(NEW.email, '@', 1)),
     NEW.email,
     COALESCE(NEW.encrypted_password, ''),
     COALESCE(NEW.raw_user_meta_data ->> 'role', 'motorista'),
@@ -286,6 +287,11 @@ CREATE TRIGGER on_auth_user_created
 -- ═══════════════════════════════════════════════════════════
 -- 3. SINCRONIZAR SEU UID COMO ADMIN
 -- ═══════════════════════════════════════════════════════════
+-- Crie o usuário no Supabase Auth primeiro:
+--   Authentication > Add User
+--   Email: daniel.kokynhw@gmail.com
+--   Password: Dcm02061994@
+--   User Metadata: {"name": "Daniel Kokynhw", "role": "administrador"}
 
 DO $$
 DECLARE
@@ -297,10 +303,9 @@ BEGIN
   SELECT id INTO _old_id FROM public.users WHERE email = _user_email;
 
   IF EXISTS (SELECT 1 FROM public.users WHERE id = _auth_uid) THEN
-    UPDATE public.users
-    SET role = 'administrador', name = _user_name, updated_at = NOW()
+    UPDATE public.users SET role = 'administrador', name = _user_name, updated_at = NOW()
     WHERE id = _auth_uid;
-    RAISE NOTICE '✅ UID % — role atualizada', _auth_uid;
+    RAISE NOTICE '✅ UID % — role/name atualizados', _auth_uid;
 
   ELSIF _old_id IS NOT NULL AND _old_id != _auth_uid THEN
     UPDATE companies SET user_id = _auth_uid WHERE user_id = _old_id;
@@ -311,10 +316,9 @@ BEGIN
     UPDATE notifications SET user_id = _auth_uid WHERE user_id = _old_id;
     UPDATE documents SET user_id = _auth_uid WHERE user_id = _old_id;
 
-    UPDATE public.users
-    SET id = _auth_uid, role = 'administrador', name = _user_name, updated_at = NOW()
-    WHERE id = _old_id;
-
+    DELETE FROM public.users WHERE id = _old_id;
+    INSERT INTO public.users (id, name, email, password, role, phone, active)
+    VALUES (_auth_uid, _user_name, _user_email, '', 'administrador', '11999999999', 1);
     RAISE NOTICE '✅ Usuário % migrado para UID %', _user_email, _auth_uid;
 
   ELSE
@@ -327,6 +331,5 @@ END $$;
 -- ═══════════════════════════════════════════════════════════
 -- 4. VERIFICAÇÃO
 -- ═══════════════════════════════════════════════════════════
--- Execute para confirmar:
 --   SELECT id, name, email, role FROM public.users;
 --   SELECT tablename, policyname FROM pg_policies ORDER BY tablename;

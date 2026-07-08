@@ -1,21 +1,16 @@
 -- ═══════════════════════════════════════════════════════════
--- OpenCargo — Supabase Setup
+-- OpenCargo — Supabase Setup (Auth-Compatible)
 -- ═══════════════════════════════════════════════════════════
 --
 -- Execute este script no SQL Editor do Supabase Dashboard
 -- (https://supabase.com/dashboard/project/irznvnpaetvkuvmdrgoo/sql/new)
 --
--- O que este script faz:
---   1. Cria as tabelas do OpenCargo (se não existirem)
---   2. Configura referência ao auth.users do Supabase
---   3. Ativa Row Level Security (RLS) em todas as tabelas
---   4. Cria políticas de acesso para cada nível:
---      - administrador: acesso total (SELECT/INSERT/UPDATE/DELETE em tudo)
---      - gestor:     acesso administrativo limitado
---      - empresa:    gerencia próprias cargas, empresas, documentos
---      - motorista:  gerencia próprias rotas, veículos, perfil
---   5. Cria trigger para sincronizar usuários do auth.users
---   6. Insere dados de exemplo
+-- Este script:
+--   1. Cria as tabelas do OpenCargo com FK para auth.users
+--   2. Ativa Row Level Security (RLS) em todas as tabelas
+--   3. Cria políticas de acesso por role
+--   4. Cria trigger handle_new_user() para sync automático
+--   5. Insere dados de exemplo
 --
 -- ═══════════════════════════════════════════════════════════
 
@@ -28,9 +23,13 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ═══════════════════════════════════════════════════════════
 -- 2. TABELAS
 -- ═══════════════════════════════════════════════════════════
+--
+-- ⚠️  users.id NÃO usa uuid_generate_v4() — ele usa o UUID
+--     do auth.users do Supabase via REFERENCES.
+--     O trigger handle_new_user() (seção 4) cria o registro
+--     automaticamente quando alguém se cadastra.
 
--- Remove role CHECK antigo e recria com os novos níveis
--- Nota: se a tabela já existe, altera o CONSTRAINT
+-- Remove role CHECK antigo se existir
 DO $$
 BEGIN
   IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
@@ -39,10 +38,10 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
+  password VARCHAR(255),
   role VARCHAR(20) NOT NULL DEFAULT 'motorista'
     CHECK(role IN ('administrador', 'gestor', 'empresa', 'motorista')),
   phone VARCHAR(20),
@@ -199,20 +198,20 @@ CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);
 -- 4. ROW LEVEL SECURITY (RLS)
 -- ═══════════════════════════════════════════════════════════
 
--- Helper: retorna o role do usuário logado via JWT
--- O JWT do Supabase Auth inclui user_metadata no raw_app_meta_data
--- e raw_user_meta_data. Vamos usar raw_user_meta_data->>'role'
+-- Helper: retorna o role do usuário logado
+-- Lê do JWT (raw_user_meta_data) ou faz fallback na tabela users
 CREATE OR REPLACE FUNCTION public.current_user_role()
 RETURNS VARCHAR(20)
 LANGUAGE SQL STABLE
 AS $$
   SELECT COALESCE(
-    current_setting('request.jwt.claims', true)::json->>'role',
+    current_setting('request.jwt.claims', true)::jsonb
+      -> 'user_metadata' ->> 'role',
     (SELECT role FROM public.users WHERE id = auth.uid())
   );
 $$;
 
--- Helper: verifica se o usuário é administrador
+-- Helper: verifica se é administrador
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL STABLE
@@ -220,7 +219,7 @@ AS $$
   SELECT public.current_user_role() = 'administrador';
 $$;
 
--- Helper: verifica se o usuário é gestor ou adm
+-- Helper: verifica se é gestor ou admin
 CREATE OR REPLACE FUNCTION public.is_gestor_or_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL STABLE
@@ -231,23 +230,13 @@ $$;
 -- ─── 4.1 RLS: USERS ─────────────────────────────────────
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Administrador vê tudo
+DROP POLICY IF EXISTS users_admin_all ON users;
 CREATE POLICY users_admin_all ON users
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
--- Gestor vê todos os usuários, mas só edita dados não-sensíveis
-CREATE POLICY users_gestor_select ON users
-  FOR SELECT
-  USING (public.is_gestor_or_admin());
-
-CREATE POLICY users_gestor_update ON users
-  FOR UPDATE
-  USING (public.is_gestor_or_admin())
-  WITH CHECK (public.is_gestor_or_admin());
-
--- Usuário comum vê e edita apenas o próprio perfil
+DROP POLICY IF EXISTS users_self ON users;
 CREATE POLICY users_self ON users
   FOR ALL
   USING (id = auth.uid())
@@ -256,23 +245,25 @@ CREATE POLICY users_self ON users
 -- ─── 4.2 RLS: COMPANIES ─────────────────────────────────
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS companies_admin_all ON companies;
 CREATE POLICY companies_admin_all ON companies
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS companies_gestor_all ON companies;
 CREATE POLICY companies_gestor_all ON companies
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Empresa vê/edita apenas suas próprias empresas
+DROP POLICY IF EXISTS companies_self ON companies;
 CREATE POLICY companies_self ON companies
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- Motorista pode ver empresas (para saber com quem está negociando)
+DROP POLICY IF EXISTS companies_driver_select ON companies;
 CREATE POLICY companies_driver_select ON companies
   FOR SELECT
   USING (EXISTS (
@@ -282,22 +273,25 @@ CREATE POLICY companies_driver_select ON companies
 -- ─── 4.3 RLS: DRIVERS ───────────────────────────────────
 ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS drivers_admin_all ON drivers;
 CREATE POLICY drivers_admin_all ON drivers
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS drivers_gestor_all ON drivers;
 CREATE POLICY drivers_gestor_all ON drivers
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
+DROP POLICY IF EXISTS drivers_self ON drivers;
 CREATE POLICY drivers_self ON drivers
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- Empresa pode ver motoristas (para matching)
+DROP POLICY IF EXISTS drivers_company_select ON drivers;
 CREATE POLICY drivers_company_select ON drivers
   FOR SELECT
   USING (EXISTS (
@@ -307,17 +301,19 @@ CREATE POLICY drivers_company_select ON drivers
 -- ─── 4.4 RLS: VEHICLES ──────────────────────────────────
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS vehicles_admin_all ON vehicles;
 CREATE POLICY vehicles_admin_all ON vehicles
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS vehicles_gestor_all ON vehicles;
 CREATE POLICY vehicles_gestor_all ON vehicles
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Motorista gerencia próprios veículos (via driver_id → user_id)
+DROP POLICY IF EXISTS vehicles_self ON vehicles;
 CREATE POLICY vehicles_self ON vehicles
   FOR ALL
   USING (EXISTS (
@@ -327,7 +323,7 @@ CREATE POLICY vehicles_self ON vehicles
     SELECT 1 FROM drivers WHERE id = vehicles.driver_id AND user_id = auth.uid()
   ));
 
--- Empresa pode ver veículos (para matching)
+DROP POLICY IF EXISTS vehicles_company_select ON vehicles;
 CREATE POLICY vehicles_company_select ON vehicles
   FOR SELECT
   USING (EXISTS (
@@ -337,17 +333,19 @@ CREATE POLICY vehicles_company_select ON vehicles
 -- ─── 4.5 RLS: ROUTES ────────────────────────────────────
 ALTER TABLE routes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS routes_admin_all ON routes;
 CREATE POLICY routes_admin_all ON routes
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS routes_gestor_all ON routes;
 CREATE POLICY routes_gestor_all ON routes
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Motorista gerencia próprias rotas
+DROP POLICY IF EXISTS routes_self ON routes;
 CREATE POLICY routes_self ON routes
   FOR ALL
   USING (EXISTS (
@@ -357,7 +355,7 @@ CREATE POLICY routes_self ON routes
     SELECT 1 FROM drivers WHERE id = routes.driver_id AND user_id = auth.uid()
   ));
 
--- Empresa pode ver rotas (para matching)
+DROP POLICY IF EXISTS routes_company_select ON routes;
 CREATE POLICY routes_company_select ON routes
   FOR SELECT
   USING (EXISTS (
@@ -367,17 +365,19 @@ CREATE POLICY routes_company_select ON routes
 -- ─── 4.6 RLS: LOADS ─────────────────────────────────────
 ALTER TABLE loads ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS loads_admin_all ON loads;
 CREATE POLICY loads_admin_all ON loads
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS loads_gestor_all ON loads;
 CREATE POLICY loads_gestor_all ON loads
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Empresa gerencia próprias cargas
+DROP POLICY IF EXISTS loads_self ON loads;
 CREATE POLICY loads_self ON loads
   FOR ALL
   USING (EXISTS (
@@ -387,7 +387,7 @@ CREATE POLICY loads_self ON loads
     SELECT 1 FROM companies WHERE id = loads.company_id AND user_id = auth.uid()
   ));
 
--- Motorista pode ver cargas disponíveis (para matching)
+DROP POLICY IF EXISTS loads_driver_select ON loads;
 CREATE POLICY loads_driver_select ON loads
   FOR SELECT
   USING (status = 'available' AND EXISTS (
@@ -397,17 +397,19 @@ CREATE POLICY loads_driver_select ON loads
 -- ─── 4.7 RLS: MATCHES ───────────────────────────────────
 ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS matches_admin_all ON matches;
 CREATE POLICY matches_admin_all ON matches
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS matches_gestor_all ON matches;
 CREATE POLICY matches_gestor_all ON matches
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Envolvidos no match podem ver
+DROP POLICY IF EXISTS matches_involved ON matches;
 CREATE POLICY matches_involved ON matches
   FOR ALL
   USING (
@@ -422,16 +424,19 @@ CREATE POLICY matches_involved ON matches
 -- ─── 4.8 RLS: REVIEWS ───────────────────────────────────
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS reviews_admin_all ON reviews;
 CREATE POLICY reviews_admin_all ON reviews
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS reviews_gestor_all ON reviews;
 CREATE POLICY reviews_gestor_all ON reviews
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
+DROP POLICY IF EXISTS reviews_self ON reviews;
 CREATE POLICY reviews_self ON reviews
   FOR ALL
   USING (reviewer_id = auth.uid() OR reviewee_id = auth.uid())
@@ -440,17 +445,19 @@ CREATE POLICY reviews_self ON reviews
 -- ─── 4.9 RLS: MESSAGES ──────────────────────────────────
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS messages_admin_all ON messages;
 CREATE POLICY messages_admin_all ON messages
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS messages_gestor_all ON messages;
 CREATE POLICY messages_gestor_all ON messages
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
--- Envolvidos no match do chat podem ver as mensagens
+DROP POLICY IF EXISTS messages_involved ON messages;
 CREATE POLICY messages_involved ON messages
   FOR ALL
   USING (EXISTS (
@@ -464,11 +471,13 @@ CREATE POLICY messages_involved ON messages
 -- ─── 4.10 RLS: NOTIFICATIONS ────────────────────────────
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS notifications_admin_all ON notifications;
 CREATE POLICY notifications_admin_all ON notifications
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS notifications_self ON notifications;
 CREATE POLICY notifications_self ON notifications
   FOR ALL
   USING (user_id = auth.uid())
@@ -477,16 +486,19 @@ CREATE POLICY notifications_self ON notifications
 -- ─── 4.11 RLS: DOCUMENTS ────────────────────────────────
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS documents_admin_all ON documents;
 CREATE POLICY documents_admin_all ON documents
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS documents_gestor_all ON documents;
 CREATE POLICY documents_gestor_all ON documents
   FOR ALL
   USING (public.is_gestor_or_admin())
   WITH CHECK (public.is_gestor_or_admin());
 
+DROP POLICY IF EXISTS documents_self ON documents;
 CREATE POLICY documents_self ON documents
   FOR ALL
   USING (user_id = auth.uid())
@@ -508,7 +520,7 @@ BEGIN
   INSERT INTO public.users (id, name, email, password, role, phone, active)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data ->> 'name', NEW.email),
+    COALESCE(NEW.raw_user_meta_data ->> 'name', split_part(NEW.email, '@', 1)),
     NEW.email,
     COALESCE(NEW.encrypted_password, ''),
     COALESCE(NEW.raw_user_meta_data ->> 'role', 'motorista'),
@@ -522,28 +534,24 @@ BEGIN
 END;
 $$;
 
--- Remove o trigger se já existir e recria
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ═══════════════════════════════════════════════════════════
--- 6. SINCRONIZAR UID DO AUTH → PUBLIC.USERS COMO ADMIN
+-- 6. SINCRONIZAR ADMIN EXISTENTE
 -- ═══════════════════════════════════════════════════════════
 --
--- ⚠️ IMPORTANTE:
---   Antes de executar este bloco, crie o usuário no Supabase Auth:
---   Authentication → Users → Add User
+-- ⚠️  Crie o usuário no Supabase Auth primeiro:
+--   Authentication > Users > Add User
 --   Email: daniel.kokynhw@gmail.com
 --   Password: Dcm02061994@
 --   User Metadata: {"name": "Daniel Kokynhw", "role": "administrador"}
 --
---   Este bloco então sincroniza o UUID gerado pelo Supabase Auth
---   com o registro em public.users, atualizando todas as FKs.
--- ═══════════════════════════════════════════════════════════
+--   O trigger on_auth_user_created vai criar o registro
+--   automaticamente em public.users com o UID correto.
 
 DO $$
 DECLARE
@@ -552,19 +560,16 @@ DECLARE
   _user_name TEXT := 'Daniel Kokynhw';
   _old_id UUID;
 BEGIN
-  -- Descobre o ID antigo (se existir)
   SELECT id INTO _old_id FROM public.users WHERE email = _user_email;
 
-  -- Se o auth_uid já existe em public.users → só atualiza a role
   IF EXISTS (SELECT 1 FROM public.users WHERE id = _auth_uid) THEN
     UPDATE public.users
     SET role = 'administrador', name = _user_name, updated_at = NOW()
     WHERE id = _auth_uid;
-    RAISE NOTICE '✅ UID % já existia — role atualizada', _auth_uid;
+    RAISE NOTICE '✅ UID % já existia — role/name atualizados', _auth_uid;
 
-  -- Se existe um registro com email mas ID diferente → migra
   ELSIF _old_id IS NOT NULL AND _old_id != _auth_uid THEN
-    -- Antes de trocar o ID, atualiza todas as FKs que apontam para o ID antigo
+    -- Migra FKs do ID antigo para o auth UID
     UPDATE companies SET user_id = _auth_uid WHERE user_id = _old_id;
     UPDATE drivers   SET user_id = _auth_uid WHERE user_id = _old_id;
     UPDATE reviews   SET reviewer_id = _auth_uid WHERE reviewer_id = _old_id;
@@ -573,14 +578,14 @@ BEGIN
     UPDATE notifications SET user_id = _auth_uid WHERE user_id = _old_id;
     UPDATE documents SET user_id = _auth_uid WHERE user_id = _old_id;
 
-    -- Agora troca o ID do usuário
-    UPDATE public.users
-    SET id = _auth_uid, role = 'administrador', name = _user_name, updated_at = NOW()
-    WHERE id = _old_id;
+    -- Remove o registro antigo e insere com o novo ID
+    DELETE FROM public.users WHERE id = _old_id;
 
-    RAISE NOTICE '✅ Usuário % migrado de % para % como administrador', _user_email, _old_id, _auth_uid;
+    INSERT INTO public.users (id, name, email, password, role, phone, active)
+    VALUES (_auth_uid, _user_name, _user_email, '', 'administrador', '11999999999', 1);
 
-  -- Não existe → cria
+    RAISE NOTICE '✅ Usuário % migrado de % para %', _user_email, _old_id, _auth_uid;
+
   ELSE
     INSERT INTO public.users (id, name, email, password, role, phone, active)
     VALUES (_auth_uid, _user_name, _user_email, '', 'administrador', '11999999999', 1);
@@ -591,14 +596,6 @@ END $$;
 -- ═══════════════════════════════════════════════════════════
 -- 7. VERIFICAÇÃO
 -- ═══════════════════════════════════════════════════════════
--- Execute estas queries para confirmar:
---
---   SELECT id, name, email, role FROM public.users
---   WHERE email = 'daniel.kokynhw@gmail.com';
---
---   SELECT tablename, rowsecurity FROM pg_tables
---   WHERE schemaname = 'public' ORDER BY tablename;
---
---   SELECT schemaname, tablename, policyname
---   FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename;
--- ═══════════════════════════════════════════════════════════
+-- Execute para confirmar:
+--   SELECT id, name, email, role FROM public.users;
+--   SELECT tablename, policyname FROM pg_policies ORDER BY tablename;
