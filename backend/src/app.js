@@ -25,8 +25,13 @@ export async function buildApp() {
   });
 
   // ── Plugins ────────────────────────────────────────────────
+  // CORS: aceita uma ou mais origens separadas por vírgula
+  const corsOrigins = config.CORS_ORIGIN.split(",").map((s) => s.trim());
   await app.register(cors, {
-    origin: config.CORS_ORIGIN,
+    origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
   await app.register(jwt, {

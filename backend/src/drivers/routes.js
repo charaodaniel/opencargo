@@ -18,23 +18,23 @@ export async function driverRoutes(app) {
     const user = request.user;
     const id = uuid();
 
-    query(
+    await query(
       `INSERT INTO drivers (id, user_id, name, document, cnh, phone, city, state)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, user.id, body.name, body.document, body.cnh || null, body.phone || null, body.city || null, body.state || null]
     );
 
-    const driver = queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
+    const driver = await queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
     return reply.status(201).send(driver);
   });
 
   app.get("/", async () => {
-    return query(`SELECT * FROM drivers`);
+    return await query(`SELECT * FROM drivers`);
   });
 
   app.get("/me", async (request) => {
     const user = request.user;
-    const driver = queryOne(`SELECT * FROM drivers WHERE user_id = ?`, [user.id]);
+    const driver = await queryOne(`SELECT * FROM drivers WHERE user_id = ?`, [user.id]);
     if (!driver) {
       throw { statusCode: 404, message: "Motorista não encontrado" };
     }
@@ -42,12 +42,12 @@ export async function driverRoutes(app) {
   });
 
   app.get("/available", async () => {
-    return query(`SELECT * FROM drivers WHERE available = 1`);
+    return await query(`SELECT * FROM drivers WHERE available = 1`);
   });
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const driver = queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
+    const driver = await queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
 
     if (!driver) {
       throw { statusCode: 404, message: "Motorista não encontrado" };
@@ -74,8 +74,8 @@ export async function driverRoutes(app) {
     }
 
     params.push(id);
-    query(`UPDATE drivers SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE drivers SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM drivers WHERE id = ?`, [id]);
   });
 }

@@ -11,12 +11,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(input.password, 10);
     const id = uuid();
 
-    query(
+    await query(
       `INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)`,
       [id, input.name, input.email, hashedPassword, input.role]
     );
 
-    const user = queryOne(`SELECT id, name, email, role FROM users WHERE id = ?`, [id]);
+    const user = await queryOne(`SELECT id, name, email, role FROM users WHERE id = ?`, [id]);
 
     const token = this.app.jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -30,7 +30,7 @@ export class AuthService {
   }
 
   async login(input) {
-    const user = queryOne(`SELECT * FROM users WHERE email = ?`, [input.email]);
+    const user = await queryOne(`SELECT * FROM users WHERE email = ?`, [input.email]);
 
     if (!user) {
       throw { statusCode: 401, message: "Credenciais inválidas" };
@@ -53,7 +53,7 @@ export class AuthService {
   }
 
   async me(userId) {
-    const user = queryOne(
+    const user = await queryOne(
       `SELECT id, name, email, role, phone, created_at FROM users WHERE id = ?`,
       [userId]
     );

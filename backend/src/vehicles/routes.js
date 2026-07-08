@@ -18,30 +18,30 @@ export async function vehicleRoutes(app) {
     const user = request.user;
 
     // Busca o motorista associado ao usuário logado
-    const driver = queryOne(`SELECT id FROM drivers WHERE user_id = ?`, [user.id]);
+    const driver = await queryOne(`SELECT id FROM drivers WHERE user_id = ?`, [user.id]);
 
     if (!driver) {
       throw { statusCode: 400, message: "Usuário não possui motorista cadastrado" };
     }
 
     const id = uuid();
-    query(
+    await query(
       `INSERT INTO vehicles (id, driver_id, plate, model, year, capacity_kg, capacity_m3, type)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, driver.id, body.plate, body.model, body.year || null, body.capacityKg, body.capacityM3, body.type || null]
     );
 
-    const vehicle = queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
+    const vehicle = await queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
     return reply.status(201).send(vehicle);
   });
 
   app.get("/", async () => {
-    return query(`SELECT * FROM vehicles`);
+    return await query(`SELECT * FROM vehicles`);
   });
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const vehicle = queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
+    const vehicle = await queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
 
     if (!vehicle) {
       throw { statusCode: 404, message: "Veículo não encontrado" };
@@ -68,14 +68,14 @@ export async function vehicleRoutes(app) {
     }
 
     params.push(id);
-    query(`UPDATE vehicles SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE vehicles SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
   });
 
   app.delete("/:id", async (request, reply) => {
     const { id } = request.params;
-    query(`DELETE FROM vehicles WHERE id = ?`, [id]);
+    await query(`DELETE FROM vehicles WHERE id = ?`, [id]);
     return reply.status(204).send();
   });
 }

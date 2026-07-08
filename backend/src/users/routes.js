@@ -10,12 +10,12 @@ export async function userRoutes(app) {
   app.addHook("onRequest", app.authenticate);
 
   app.get("/", async () => {
-    return query(`SELECT id, name, email, role, active FROM users`);
+    return await query(`SELECT id, name, email, role, active FROM users`);
   });
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const user = queryOne(`SELECT * FROM users WHERE id = ?`, [id]);
+    const user = await queryOne(`SELECT * FROM users WHERE id = ?`, [id]);
 
     if (!user) {
       throw { statusCode: 404, message: "Usuário não encontrado" };
@@ -40,8 +40,8 @@ export async function userRoutes(app) {
     sets.push("updated_at = datetime('now')");
     params.push(id);
 
-    query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT id, name, email, role FROM users WHERE id = ?`, [id]);
+    return await queryOne(`SELECT id, name, email, role FROM users WHERE id = ?`, [id]);
   });
 }

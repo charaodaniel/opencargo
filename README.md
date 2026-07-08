@@ -96,7 +96,7 @@ São Paulo ──(carregado)──▶ Porto Alegre
 | **Autenticação** | JWT + bcrypt |
 | **Mapas** | [Leaflet](https://leafletjs.com) + [OpenStreetMap](https://www.openstreetmap.org) + [Nominatim](https://nominatim.org) + [OSRM](http://project-osrm.org) |
 | **Clustering** | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) |
-| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) |
+| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) · [Aiven](https://aiven.io) |
 
 ---
 
@@ -107,40 +107,30 @@ São Paulo ──(carregado)──▶ Porto Alegre
 - **Node.js** >= 22 ([instalar](https://nodejs.org))
 - **npm** (vem com Node.js)
 
-### Desenvolvimento Local
+### Setup e Inicialização (tudo junto)
 
 ```bash
 # Clone o repositório
 git clone https://github.com/charaodaniel/opencargo.git
 cd opencargo
 
-# Setup automático (instala dependências)
-bash scripts/setup.sh
+# Setup automático (instala dependências e configura ambiente)
+npm run setup
 
-# Inicie o backend
-cd backend && npm run dev
+# Inicie backend + frontend simultaneamente
+npm run dev
 ```
 
-O servidor iniciará em `http://localhost:3000`.
-
-Acesse a documentação interativa da API: [`http://localhost:3000/docs`](http://localhost:3000/docs)
+- **Backend**: `http://localhost:3000` — Documentação Swagger em `/docs`
+- **Frontend**: `http://localhost:5173`
 
 ### Popular com dados de exemplo
 
 ```bash
-cd backend && npm run seed
+npm run seed
 ```
 
 > Login: `admin@opencargo.com` / `123456`
-
-### Frontend
-
-```bash
-cd frontend
-npx serve .
-```
-
-> O frontend espera a API em `http://localhost:3000/api`.
 
 ---
 
@@ -245,18 +235,35 @@ docker compose down
 
 ## 🌐 Deploy
 
-### Vercel (Frontend)
+### Vercel (Frontend — Free Tier ✅)
 
-O frontend é uma SPA estática pronta para deploy na Vercel:
+O frontend é uma **SPA estática** (HTML + Vanilla JS + CDN) — funciona perfeitamente no **free tier da Vercel** sem necessidade de build.
 
 ```bash
-# Conecte o repositório no dashboard da Vercel
-# https://vercel.com/new
+# 1. Acesse https://vercel.com/new
+# 2. Importe o repositório charaodaniel/opencargo
+# 3. A Vercel detecta automaticamente o vercel.json com rootDirectory: "frontend"
+# 4. Clique em Deploy ⚡
+```
 
-# O vercel.json na raiz do projeto já configura:
-# - rootDirectory: "frontend"
-# - SPA rewrites (/* → /index.html)
-# - Cache headers para assets
+> O `vercel.json` na raiz já configura tudo:
+> - `rootDirectory: "frontend"` — aponta para a pasta do frontend
+> - Rewrites SPA (`/*` → `/index.html`)
+> - Cache headers para assets
+
+### PostgreSQL no Aiven (Produção)
+
+O banco PostgreSQL está hospedado no [Aiven](https://aiven.io) (free tier).
+
+```bash
+# A DATABASE_URL no .env segue o formato:
+DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb"
+
+# ⚠️ Não use ?sslmode=require — o SSL é gerenciado pelo adaptador
+# O schema é criado automaticamente na primeira execução
+
+# Resetar e popular com dados de exemplo:
+cd backend && DATABASE_URL="postgres://..." node scripts/seed.js --reset
 ```
 
 ### Docker (Backend + Frontend)
@@ -270,22 +277,10 @@ cat > .env << EOF
 JWT_SECRET=seu-jwt-secret-forte-aqui
 CORS_ORIGIN=https://seudominio.com
 NODE_ENV=production
-DATABASE_URL=postgres://usuario:senha@host:5432/opencargo?sslmode=require
+DATABASE_URL=postgres://avnadmin:senha@host:25827/defaultdb
 EOF
 
 docker compose up --build -d
-```
-
-### PostgreSQL (Produção)
-
-O backend suporta detecção automática: SQLite para desenvolvimento, PostgreSQL para produção.
-
-```bash
-# Exemplo: Aiven for PostgreSQL
-export DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb?sslmode=require"
-
-# O schema é criado automaticamente na primeira execução
-npm run seed  # Popula com dados de exemplo
 ```
 
 ---

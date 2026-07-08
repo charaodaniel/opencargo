@@ -23,34 +23,34 @@ export async function loadRoutes(app) {
     const body = createLoadSchema.parse(request.body);
     const user = request.user;
 
-    const company = queryOne(`SELECT id FROM companies WHERE user_id = ?`, [user.id]);
+    const company = await queryOne(`SELECT id FROM companies WHERE user_id = ?`, [user.id]);
 
     if (!company) {
       throw { statusCode: 400, message: "Usuário não possui empresa cadastrada" };
     }
 
     const id = uuid();
-    query(
+    await query(
       `INSERT INTO loads (id, company_id, title, description, origin_city, origin_state, destination_city, destination_state, weight_kg, volume_m3, type, pickup_date, delivery_date, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [id, company.id, body.title, body.description || null, body.originCity, body.originState, body.destinationCity, body.destinationState, body.weightKg, body.volumeM3 || null, body.type || null, body.pickupDate, body.deliveryDate]
     );
 
-    const load = queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
+    const load = await queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
     return reply.status(201).send(load);
   });
 
   app.get("/", async () => {
-    return query(`SELECT * FROM loads`);
+    return await query(`SELECT * FROM loads`);
   });
 
   app.get("/available", async () => {
-    return query(`SELECT * FROM loads WHERE status = 'available'`);
+    return await query(`SELECT * FROM loads WHERE status = 'available'`);
   });
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const load = queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
+    const load = await queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
 
     if (!load) {
       throw { statusCode: 404, message: "Carga não encontrada" };
@@ -85,8 +85,8 @@ export async function loadRoutes(app) {
     sets.push("updated_at = datetime('now')");
     params.push(id);
 
-    query(`UPDATE loads SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE loads SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
   });
 }

@@ -36,28 +36,10 @@ const TABLES = [
 async function resetDatabase() {
   console.log("🧹 Removendo dados existentes...");
 
-  if (IS_PG) {
-    // PostgreSQL: desabilita FKs temporariamente
-    await execute("SET session_replication_role = 'replica';");
-    for (const table of TABLES) {
-      await execute(`DELETE FROM ${table}`);
-    }
-    await execute("SET session_replication_role = 'origin';");
-    // Reseta sequences
-    for (const table of TABLES) {
-      try {
-        await execute(`ALTER SEQUENCE ${table}_id_seq RESTART WITH 1;`);
-      } catch {
-        // Tabela pode não ter sequence (UUID PK)
-      }
-    }
-  } else {
-    // SQLite
-    db.exec("PRAGMA foreign_keys = OFF;");
-    for (const table of TABLES) {
-      execute(`DELETE FROM ${table}`);
-    }
-    db.exec("PRAGMA foreign_keys = ON;");
+  // Deleta na ordem correta (filhas primeiro) para respeitar FKs
+  // PostgreSQL: UUIDs não têm sequences, então apenas DELETE
+  for (const table of TABLES) {
+    await execute(`DELETE FROM ${table}`);
   }
 
   console.log("✅ Banco limpo!\n");

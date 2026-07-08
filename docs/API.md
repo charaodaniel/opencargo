@@ -158,13 +158,95 @@ Dados do usuário logado.
 
 ## Matching
 
+O sistema de matching conta com **filtros avançados** e algoritmo de **score de compatibilidade** (0-100) baseado em:
+- Alinhamento de cidades (50pts)
+- Compatibilidade de peso (20pts)
+- Compatibilidade de volume (10pts)
+- Proximidade de datas (10pts)
+- Tipo de veículo vs tipo de carga (10pts)
+
+### Endpoints
+
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
+| GET | `/api/matching/search` | Busca com filtros avançados | 🔐 |
 | GET | `/api/matching/loads-for-driver/:id` | Cargas compatíveis para motorista | 🔐 |
 | GET | `/api/matching/drivers-for-load/:id` | Motoristas compatíveis para carga | 🔐 |
+| GET | `/api/matching/filters` | Opções de filtro disponíveis | 🔐 |
 | POST | `/api/matching` | Criar match | 🔐 |
 | GET | `/api/matching` | Listar matches | 🔐 |
 | PATCH | `/api/matching/:id` | Atualizar status do match | 🔐 |
+
+### `GET /api/matching/search` — Busca Avançada
+
+**Query Parameters:**
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `type` | `"loads"` \| `"drivers"` | Tipo de busca (default: `loads`) |
+| `q` | string | Busca por texto (título, cidades) |
+| `originState` | string | UF de origem (ex: SP) |
+| `destinationState` | string | UF de destino (ex: RJ) |
+| `weightMin` | number | Peso mínimo (kg) |
+| `weightMax` | number | Peso máximo (kg) |
+| `dateFrom` | string | Data inicial (YYYY-MM-DD) |
+| `dateTo` | string | Data final (YYYY-MM-DD) |
+| `loadType` | string | Tipo de carga |
+| `minScore` | number | Score mínimo (0-100) |
+| `sortBy` | `"score"` \| `"date"` \| `"weight"` | Ordenação |
+| `sortOrder` | `"asc"` \| `"desc"` | Ordem |
+
+**Exemplo:**
+```
+GET /api/matching/search?type=loads&originState=SP&weightMax=5000&minScore=50&sortBy=score
+```
+
+**Response (`type=loads`):**
+```json
+{
+  "results": [
+    {
+      "load": { "id": "uuid", "title": "...", "origin_city": "...", ... },
+      "route": { "id": "uuid", "driver_name": "João", "origin_city": "...", ... },
+      "score": 85,
+      "match_reasons": ["Rotas perfeitamente alinhadas", "Peso compatível", "Datas alinhadas"]
+    }
+  ],
+  "total": 1,
+  "filters": { "type": "loads", ... }
+}
+```
+
+**Response (`type=drivers`):**
+```json
+{
+  "results": [
+    {
+      "load": { "id": "uuid", "title": "...", ... },
+      "driver": { "id": "uuid", "name": "João", "city": "...", ... },
+      "vehicle": { "model": "...", "type": "...", "capacity_kg": 10000 },
+      "route": { "id": "uuid", "departure_date": "...", ... },
+      "score": 92,
+      "match_reasons": ["Rotas perfeitamente alinhadas", "Peso compatível"]
+    }
+  ],
+  "total": 1,
+  "filters": { "type": "drivers", ... }
+}
+```
+
+### `GET /api/matching/filters` — Opções de Filtro
+
+Retorna as opções disponíveis para popular os dropdowns de filtro.
+
+**Response:**
+```json
+{
+  "states": ["SP", "RJ", "MG", ...],
+  "loadTypes": ["Carga Geral", "Carga Frágil", "Carga Frigorífica", "Carga Perigosa", "Granel"],
+  "activeTypes": ["Carga Geral", ...]
+}
+```
 
 ---
 

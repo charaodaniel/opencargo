@@ -20,38 +20,38 @@ export async function routeRoutes(app) {
     const body = createRouteSchema.parse(request.body);
     const user = request.user;
 
-    const driver = queryOne(`SELECT id FROM drivers WHERE user_id = ?`, [user.id]);
+    const driver = await queryOne(`SELECT id FROM drivers WHERE user_id = ?`, [user.id]);
 
     if (!driver) {
       throw { statusCode: 400, message: "Usuário não possui motorista cadastrado" };
     }
 
     const id = uuid();
-    query(
+    await query(
       `INSERT INTO routes (id, driver_id, origin_city, origin_state, destination_city, destination_state, departure_date, arrival_date, available_weight, available_volume, is_return)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, driver.id, body.originCity, body.originState, body.destinationCity, body.destinationState, body.departureDate, body.arrivalDate, body.availableWeight || null, body.availableVolume || null, body.isReturn ? 1 : 0]
     );
 
-    const route = queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
+    const route = await queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
     return reply.status(201).send(route);
   });
 
   app.get("/", async () => {
-    return query(`SELECT * FROM routes`);
+    return await query(`SELECT * FROM routes`);
   });
 
   app.get("/active", async () => {
-    return query(`SELECT * FROM routes WHERE status = 'active'`);
+    return await query(`SELECT * FROM routes WHERE status = 'active'`);
   });
 
   app.get("/return", async () => {
-    return query(`SELECT * FROM routes WHERE is_return = 1`);
+    return await query(`SELECT * FROM routes WHERE is_return = 1`);
   });
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const route = queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
+    const route = await queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
 
     if (!route) {
       throw { statusCode: 404, message: "Rota não encontrada" };
@@ -81,8 +81,8 @@ export async function routeRoutes(app) {
     }
 
     params.push(id);
-    query(`UPDATE routes SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE routes SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
   });
 }

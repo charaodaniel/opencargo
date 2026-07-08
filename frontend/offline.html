@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenCargo — Sem Conexão</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.95); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .bounce-in { animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
+  <div class="text-center max-w-md mx-auto">
+    <div class="bounce-in mb-8">
+      <!-- Ícone WiFi offline -->
+      <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m-2.829-2.829a5 5 0 000-7.07m-4.243 4.243a1 1 0 010-1.414" opacity="0.3"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.343 8.343a5 5 0 010 7.07m0 0l-2.828 2.828M8.343 15.414l-2.828 2.828"/>
+        <line x1="2" y1="2" x2="22" y2="22" stroke-width="2" stroke="currentColor" opacity="0.8"/>
+      </svg>
+    </div>
+
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+      Sem Conexão
+    </h1>
+
+    <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+      Você está offline no momento. <br/>
+      Verifique sua conexão e tente novamente.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button onclick="window.location.reload()"
+        class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+        <span class="flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Tentar novamente
+        </span>
+      </button>
+
+      <a href="/"
+        class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        Ir para o início
+      </a>
+    </div>
+
+    <p class="mt-10 text-sm text-gray-400 dark:text-gray-500 pulse-glow">
+      Tentando reconectar...
+    </p>
+  </div>
+
+  <script>
+    // Recarrega automaticamente quando a conexão voltar
+    window.addEventListener("online", () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

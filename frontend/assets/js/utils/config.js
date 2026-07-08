@@ -9,12 +9,13 @@ const CONFIG = {
   APP_VERSION: "0.1.0",
 
   // URLs da API
-  // Deixe vazio para usar dados mockados (JSON local).
-  // Configure para a URL do backend em produção.
-  // Ex: "https://api.opencargo.com.br/api"
-  API_BASE_URL: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:3000/api"
-    : "",
+  // 1. Tenta ler de window.__ENV__ (definido em env.js — produção)
+  // 2. Se localhost, usa http://localhost:3000/api
+  // 3. Fallback: vazio → dados mockados (JSON local)
+  API_BASE_URL: window.__ENV__?.API_BASE_URL
+    || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:3000/api"
+      : ""),
 
   // Intervalos de atualização (ms)
   REFRESH_INTERVAL: 30000,

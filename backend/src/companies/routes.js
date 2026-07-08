@@ -18,23 +18,23 @@ export async function companyRoutes(app) {
     const user = request.user;
     const id = uuid();
 
-    query(
+    await query(
       `INSERT INTO companies (id, user_id, name, document, address, city, state, phone)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, user.id, body.name, body.document, body.address || null, body.city || null, body.state || null, body.phone || null]
     );
 
-    const company = queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
+    const company = await queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
     return reply.status(201).send(company);
   });
 
   app.get("/", async () => {
-    return query(`SELECT * FROM companies`);
+    return await query(`SELECT * FROM companies`);
   });
 
   app.get("/me", async (request) => {
     const user = request.user;
-    const company = queryOne(`SELECT * FROM companies WHERE user_id = ?`, [user.id]);
+    const company = await queryOne(`SELECT * FROM companies WHERE user_id = ?`, [user.id]);
     if (!company) {
       throw { statusCode: 404, message: "Empresa não encontrada" };
     }
@@ -43,7 +43,7 @@ export async function companyRoutes(app) {
 
   app.get("/:id", async (request) => {
     const { id } = request.params;
-    const company = queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
+    const company = await queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
 
     if (!company) {
       throw { statusCode: 404, message: "Empresa não encontrada" };
@@ -70,8 +70,8 @@ export async function companyRoutes(app) {
     }
 
     params.push(id);
-    query(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`, params);
+    await query(`UPDATE companies SET ${sets.join(", ")} WHERE id = ?`, params);
 
-    return queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM companies WHERE id = ?`, [id]);
   });
 }

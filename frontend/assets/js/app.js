@@ -123,7 +123,43 @@ const App = {
   },
 };
 
+/**
+ * Registra o Service Worker para PWA
+ */
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+        });
+        console.log("✅ Service Worker registrado:", registration.scope);
+
+        // Verifica se há atualização pendente
+        registration.addEventListener("updatefound", () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener("statechange", () => {
+              if (
+                installingWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
+                // Nova versão disponível
+                Toast.info("Nova versão disponível! Atualize a página.");
+              }
+            });
+          }
+        });
+      } catch (error) {
+        console.warn("❌ Service Worker registration failed:", error);
+      }
+    });
+  }
+}
+
 // ── Inicializa quando o DOM estiver pronto ────────────
 document.addEventListener("DOMContentLoaded", () => {
+  registerServiceWorker();
   App.initialize();
 });
+

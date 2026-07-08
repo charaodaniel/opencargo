@@ -8,7 +8,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default("opencargo-dev-secret"),
   JWT_EXPIRES_IN: z.string().default("7d"),
   DATABASE_URL: z.string().default("file:./data/opencargo.db"),
-  CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  CORS_ORIGIN: z.string().default("http://localhost:5173,http://127.0.0.1:5173"),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
 });

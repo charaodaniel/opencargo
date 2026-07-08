@@ -17,12 +17,12 @@ export async function chatRoutes(app) {
     const user = request.user;
 
     const id = uuid();
-    query(
+    await query(
       `INSERT INTO messages (id, match_id, sender_id, content) VALUES (?, ?, ?, ?)`,
       [id, body.matchId, user.id, body.content]
     );
 
-    const message = queryOne(`SELECT * FROM messages WHERE id = ?`, [id]);
+    const message = await queryOne(`SELECT * FROM messages WHERE id = ?`, [id]);
     return reply.status(201).send(message);
   });
 
@@ -32,7 +32,7 @@ export async function chatRoutes(app) {
   app.get("/messages/:matchId", async (request) => {
     const { matchId } = request.params;
 
-    return query(
+    return await query(
       `SELECT * FROM messages WHERE match_id = ? ORDER BY created_at ASC LIMIT 100`,
       [matchId]
     );
@@ -45,7 +45,7 @@ export async function chatRoutes(app) {
     const { matchId } = request.params;
     const user = request.user;
 
-    query(
+    await query(
       `UPDATE messages SET read = 1 WHERE match_id = ? AND sender_id = ?`,
       [matchId, user.id]
     );

@@ -1,142 +1,530 @@
 /**
  * ── OpenCargo — Matching Page ─────────────────────────
  * Motor de matching entre cargas e rotas.
- * Demonstração visual do algoritmo de compatibilidade.
+ * Com filtros avançados, score de compatibilidade e busca.
  */
 
 const MatchingPage = {
+  _filters: {
+    type: "loads",
+    q: "",
+    originState: "",
+    destinationState: "",
+    weightMin: "",
+    weightMax: "",
+    dateFrom: "",
+    dateTo: "",
+    loadType: "",
+    sortBy: "score",
+    sortOrder: "desc",
+    minScore: 0,
+  },
+
+  _filterOptions: {
+    states: [],
+    loadTypes: [],
+  },
+
+  _results: [],
+  _matches: [],
+
   async render() {
-    const [matches, loads, routes, drivers] = await Promise.all([
+    const [matches, filterOpts] = await Promise.all([
       Api.get("matches"),
-      Api.get("loads"),
-      Api.get("routes"),
-      Api.get("drivers"),
+      this._fetchFilterOptions(),
     ]);
+
+    this._matches = matches;
+    this._filterOptions = filterOpts;
+
+    // Busca inicial
+    await this._search();
+
+    return this._buildHTML();
+  },
+
+  /**
+   * Busca opções de filtro disponíveis
+   */
+  async _fetchFilterOptions() {
+    try {
+      return await Api.get("matching/filters");
+    } catch {
+      return { states: [], loadTypes: ["Carga Geral", "Carga Frágil", "Carga Frigorífica", "Carga Perigosa", "Granel"] };
+    }
+  },
+
+  /**
+   * Executa a busca com filtros atuais
+   */
+  async _search() {
+    try {
+      const params = new URLSearchParams();
+
+      // Monta params apenas com valores preenchidos
+      Object.entries(this._filters).forEach(([key, value]) => {
+        if (value !== "" && value !== null && value !== undefined) {
+          params.set(key, value);
+        }
+      });
+
+      this._results = await Api.get(`matching/search?${params.toString()}`);
+    } catch (error) {
+      console.error("Erro na busca de matching:", error);
+      this._results = { results: [], total: 0 };
+    }
+  },
+
+  /**
+   * Constrói o HTML completo da página
+   */
+  _buildHTML() {
+    const results = this._results.results || [];
+    const total = this._results.total || 0;
 
     return `
       <div class="fade-in">
-        <div class="mb-6">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Matching</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Encontre cargas e motoristas compatíveis</p>
-        </div>
-
-        <!-- Como funciona -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">🔍 Como funciona o Matching</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="text-center p-4">
-              <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-xl">📦</span>
-              </div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">1. Carga é cadastrada</p>
-              <p class="text-xs text-gray-500 mt-1">Empresa informa origem, destino e peso</p>
-            </div>
-            <div class="text-center p-4">
-              <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-xl">⚡</span>
-              </div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">2. Sistema analisa</p>
-              <p class="text-xs text-gray-500 mt-1">Compara rotas disponíveis</p>
-            </div>
-            <div class="text-center p-4">
-              <div class="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-xl">🔗</span>
-              </div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">3. Match encontrado</p>
-              <p class="text-xs text-gray-500 mt-1">Motorista e carga compatíveis</p>
-            </div>
-            <div class="text-center p-4">
-              <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-xl">💬</span>
-              </div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">4. Conexão realizada</p>
-              <p class="text-xs text-gray-500 mt-1">Chat entre as partes</p>
-            </div>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Matching</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Encontre cargas e motoristas compatíveis com filtros avançados</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              ${total} resultado${total !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
 
-        <!-- Matches Ativos -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📋 Matches Realizados</h3>
-          ${matches.length === 0
-            ? `<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center text-gray-400">
-                <p class="text-lg font-medium">Nenhum match realizado</p>
-                <p class="text-sm">Cadastre cargas e rotas para encontrar combinações</p>
-              </div>`
-            : matches
-                .map(
-                  (m) => `
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-3 hover:border-blue-300 dark:hover:border-blue-600 transition-all">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background-color: ${Utils.getAvatarColor(m.driver_name)}">
-                      ${Utils.getInitials(m.driver_name)}
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900 dark:text-white">${Utils.escapeHtml(m.load_title)}</p>
-                      <p class="text-sm text-gray-500">${Utils.escapeHtml(m.driver_name)} • ${m.route_origin} → ${m.route_destination}</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="text-right flex flex-col items-end">
-                  <button onclick="Router.go('maps', { highlight: ${m.route_id || m.id} })" class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-1 flex items-center" title="Ver no mapa">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                    Mapa
-                  </button>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${Utils.getStatusClass(m.status)}">
-                    ${Utils.getStatusLabel(m.status)}
-                  </span>
-                  <p class="text-xs text-gray-400 mt-1">Score: ${m.score}%</p>
-                </div>
+        <!-- ═══ Filtros ═══ -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+          <!-- Toggle tipo de busca -->
+          <div class="flex items-center space-x-2 mb-5">
+            <button onclick="MatchingPage.setFilter('type', 'loads')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                this._filters.type === "loads"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }">
+              📦 Cargas para Motoristas
+            </button>
+            <button onclick="MatchingPage.setFilter('type', 'drivers')"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                this._filters.type === "drivers"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }">
+              🚛 Motoristas para Cargas
+            </button>
+          </div>
+
+          <!-- Grid de filtros -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <!-- Search -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Buscar</label>
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" value="${Utils.escapeHtml(this._filters.q)}"
+                  oninput="MatchingPage.setFilter('q', this.value)"
+                  placeholder="Cidade ou título..."
+                  class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
             </div>
-          `
-                )
-                .join("")}
-        </div>
 
-        <!-- Cargas vs Motoristas -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📦 Cargas Disponíveis</h3>
-            ${loads
-              .filter((l) => l.status === "available")
-              .slice(0, 5)
-              .map(
-                (l) => `
-              <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">${Utils.escapeHtml(l.title)}</p>
-                  <p class="text-xs text-gray-500">${l.origin_city} → ${l.destination_city} • ${Utils.formatNumber(l.weight_kg)}kg</p>
-                </div>
-                <span class="text-xs text-green-600 font-medium">Disponível</span>
-              </div>
-            `
-              )
-              .join("")}
+            <!-- Estado Origem -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">UF Origem</label>
+              <select onchange="MatchingPage.setFilter('originState', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Todas</option>
+                ${this._filterOptions.states.map((s) => `
+                  <option value="${s}" ${this._filters.originState === s ? "selected" : ""}>${s}</option>
+                `).join("")}
+              </select>
+            </div>
+
+            <!-- Estado Destino -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">UF Destino</label>
+              <select onchange="MatchingPage.setFilter('destinationState', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Todas</option>
+                ${this._filterOptions.states.map((s) => `
+                  <option value="${s}" ${this._filters.destinationState === s ? "selected" : ""}>${s}</option>
+                `).join("")}
+              </select>
+            </div>
+
+            <!-- Tipo de Carga -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo de Carga</label>
+              <select onchange="MatchingPage.setFilter('loadType', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Todos</option>
+                ${this._filterOptions.loadTypes.map((t) => `
+                  <option value="${t}" ${this._filters.loadType === t ? "selected" : ""}>${t}</option>
+                `).join("")}
+              </select>
+            </div>
+
+            <!-- Peso Mín -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Peso Mín (kg)</label>
+              <input type="number" value="${this._filters.weightMin}"
+                oninput="MatchingPage.setFilter('weightMin', this.value)"
+                placeholder="0"
+                min="0"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <!-- Peso Máx -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Peso Máx (kg)</label>
+              <input type="number" value="${this._filters.weightMax}"
+                oninput="MatchingPage.setFilter('weightMax', this.value)"
+                placeholder="99999"
+                min="0"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <!-- Data Início -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data Início</label>
+              <input type="date" value="${this._filters.dateFrom}"
+                onchange="MatchingPage.setFilter('dateFrom', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <!-- Data Fim -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data Fim</label>
+              <input type="date" value="${this._filters.dateTo}"
+                onchange="MatchingPage.setFilter('dateTo', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            </div>
+
+            <!-- Score Mín -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Score Mínimo</label>
+              <select onchange="MatchingPage.setFilter('minScore', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="0" ${this._filters.minScore == 0 ? "selected" : ""}>Qualquer</option>
+                <option value="25" ${this._filters.minScore == 25 ? "selected" : ""}>≥ 25</option>
+                <option value="50" ${this._filters.minScore == 50 ? "selected" : ""}>≥ 50</option>
+                <option value="75" ${this._filters.minScore == 75 ? "selected" : ""}>≥ 75</option>
+                <option value="90" ${this._filters.minScore == 90 ? "selected" : ""}>≥ 90</option>
+              </select>
+            </div>
+
+            <!-- Ordenar por -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordenar por</label>
+              <select onchange="MatchingPage.setFilter('sortBy', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="score" ${this._filters.sortBy === "score" ? "selected" : ""}>Score</option>
+                <option value="date" ${this._filters.sortBy === "date" ? "selected" : ""}>Data</option>
+                <option value="weight" ${this._filters.sortBy === "weight" ? "selected" : ""}>Peso</option>
+              </select>
+            </div>
+
+            <!-- Ordenar ordem -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+              <select onchange="MatchingPage.setFilter('sortOrder', this.value)"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="desc" ${this._filters.sortOrder === "desc" ? "selected" : ""}>Decrescente</option>
+                <option value="asc" ${this._filters.sortOrder === "asc" ? "selected" : ""}>Crescente</option>
+              </select>
+            </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">🛣️ Rotas de Retorno</h3>
-            ${routes
-              .filter((r) => r.is_return && r.status === "active")
-              .slice(0, 5)
-              .map(
-                (r) => `
-              <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">${r.origin_city} → ${r.destination_city}</p>
-                  <p class="text-xs text-gray-500">${Utils.escapeHtml(r.driver_name)} • ${Utils.formatDate(r.departure_date)}</p>
-                </div>
-                <span class="text-xs text-green-600 font-medium">${r.available_weight ? Utils.formatNumber(r.available_weight) + "kg" : ""}</span>
-              </div>
-            `
-              )
-              .join("")}
+          <!-- Ações: limpar filtros -->
+          <div class="flex justify-end">
+            <button onclick="MatchingPage.clearFilters()"
+              class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center space-x-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span>Limpar filtros</span>
+            </button>
           </div>
         </div>
+
+        <!-- ═══ Filter Chips ═══ -->
+        ${this._renderFilterChips()}
+
+        <!-- ═══ Resultados ═══ -->
+        ${results.length === 0 ? this._renderEmptyState() : this._renderResults(results)}
       </div>
     `;
+  },
+
+  /**
+   * Renderiza chips de filtros ativos
+   */
+  _renderFilterChips() {
+    const chips = [];
+
+    if (this._filters.q) chips.push({ key: "q", label: `"${this._filters.q}"` });
+    if (this._filters.originState) chips.push({ key: "originState", label: `UF Orig: ${this._filters.originState}` });
+    if (this._filters.destinationState) chips.push({ key: "destinationState", label: `UF Dest: ${this._filters.destinationState}` });
+    if (this._filters.loadType) chips.push({ key: "loadType", label: this._filters.loadType });
+    if (this._filters.weightMin) chips.push({ key: "weightMin", label: `≥ ${Utils.formatNumber(this._filters.weightMin)}kg` });
+    if (this._filters.weightMax) chips.push({ key: "weightMax", label: `≤ ${Utils.formatNumber(this._filters.weightMax)}kg` });
+    if (this._filters.dateFrom) chips.push({ key: "dateFrom", label: `De: ${Utils.formatDate(this._filters.dateFrom)}` });
+    if (this._filters.dateTo) chips.push({ key: "dateTo", label: `Até: ${Utils.formatDate(this._filters.dateTo)}` });
+    if (this._filters.minScore > 0) chips.push({ key: "minScore", label: `Score ≥ ${this._filters.minScore}%` });
+
+    if (chips.length === 0) return "";
+
+    return `
+      <div class="flex flex-wrap gap-2 mb-4">
+        ${chips.map((chip) => `
+          <span class="inline-flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-full">
+            <span>${chip.label}</span>
+            <button onclick="MatchingPage.removeFilter('${chip.key}')" class="hover:text-blue-900 dark:hover:text-blue-100 ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </span>
+        `).join("")}
+      </div>
+    `;
+  },
+
+  /**
+   * Renderiza resultados da busca
+   */
+  _renderResults(results) {
+    const isLoads = this._filters.type === "loads";
+
+    return `
+      <div class="space-y-4">
+        ${results.map((item) => {
+          if (isLoads) {
+            return this._renderLoadResult(item);
+          } else {
+            return this._renderDriverResult(item);
+          }
+        }).join("")}
+      </div>
+    `;
+  },
+
+  /**
+   * Renderiza um resultado de carga para motorista
+   */
+  _renderLoadResult(item) {
+    const { load, route, score, match_reasons } = item;
+
+    return `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <!-- Info principal -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start space-x-3">
+              <!-- Score circular -->
+              <div class="shrink-0">
+                ${this._renderScoreCircle(score)}
+              </div>
+              <div class="min-w-0">
+                <h3 class="font-semibold text-gray-900 dark:text-white truncate">${Utils.escapeHtml(load.title)}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  <span class="font-medium">${Utils.escapeHtml(load.origin_city)}/${load.origin_state}</span>
+                  <span class="mx-1.5 text-gray-300 dark:text-gray-600">→</span>
+                  <span class="font-medium">${Utils.escapeHtml(load.destination_city)}/${load.destination_state}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalhes carga -->
+          <div class="flex flex-wrap gap-2 sm:gap-3 sm:shrink-0">
+            <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+              <span>${Utils.formatNumber(load.weight_kg)} kg</span>
+            </span>
+            ${load.volume_m3 ? `
+              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                📦 ${Utils.formatNumber(load.volume_m3)} m³
+              </span>
+            ` : ""}
+            <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+              📅 ${Utils.formatDate(load.pickup_date)}
+            </span>
+            ${load.type ? `
+              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                ${load.type}
+              </span>
+            ` : ""}
+          </div>
+        </div>
+
+        <!-- Rota compatível -->
+        ${route ? `
+          <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <span class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rota Compatível</span>
+              <span class="text-gray-300 dark:text-gray-600">•</span>
+              <span>${Utils.escapeHtml(route.driver_name || "Motorista")}</span>
+              <span class="text-gray-300 dark:text-gray-600">•</span>
+              <span>${Utils.escapeHtml(route.origin_city)}/${route.origin_state} → ${Utils.escapeHtml(route.destination_city)}/${route.destination_state}</span>
+              <span class="text-gray-300 dark:text-gray-600">•</span>
+              <span>${route.vehicle_model || route.vehicle_type || "Veículo"}</span>
+            </div>
+          </div>
+        ` : ""}
+
+        <!-- Match reasons -->
+        ${match_reasons && match_reasons.length > 0 ? `
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            ${match_reasons.map((r) => `
+              <span class="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">✓ ${r}</span>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+    `;
+  },
+
+  /**
+   * Renderiza um resultado de motorista para carga
+   */
+  _renderDriverResult(item) {
+    const { load, driver, vehicle, route, score, match_reasons } = item;
+
+    return `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start space-x-3">
+              ${this._renderScoreCircle(score)}
+              <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-semibold text-gray-900 dark:text-white">${Utils.escapeHtml(driver.name)}</h3>
+                  ${driver.city ? `<span class="text-sm text-gray-500">${Utils.escapeHtml(driver.city)}/${driver.state || ""}</span>` : ""}
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Carga: ${Utils.escapeHtml(load.title)}
+                  <span class="mx-1.5 text-gray-300">·</span>
+                  ${Utils.escapeHtml(load.origin_city)}/${load.origin_state} → ${Utils.escapeHtml(load.destination_city)}/${load.destination_state}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 sm:shrink-0">
+            ${vehicle ? `
+              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                🚛 ${vehicle.model || vehicle.type || "Veículo"}
+              </span>
+              <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+                ⚖️ ${Utils.formatNumber(vehicle.capacity_kg)} kg
+              </span>
+            ` : ""}
+            <span class="inline-flex items-center space-x-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full">
+              📅 ${Utils.formatDate(route.departure_date)}
+            </span>
+          </div>
+        </div>
+
+        ${match_reasons && match_reasons.length > 0 ? `
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            ${match_reasons.map((r) => `
+              <span class="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">✓ ${r}</span>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+    `;
+  },
+
+  /**
+   * Renderiza círculo de score colorido
+   */
+  _renderScoreCircle(score) {
+    const color = score >= 75 ? "text-green-600" : score >= 50 ? "text-yellow-600" : score >= 25 ? "text-orange-600" : "text-gray-500";
+    const bgColor = score >= 75 ? "bg-green-100 dark:bg-green-900/30" : score >= 50 ? "bg-yellow-100 dark:bg-yellow-900/30" : score >= 25 ? "bg-orange-100 dark:bg-orange-900/30" : "bg-gray-100 dark:bg-gray-700";
+
+    return `
+      <div class="w-12 h-12 ${bgColor} rounded-full flex items-center justify-center ${color} shrink-0">
+        <span class="text-sm font-bold">${score}%</span>
+      </div>
+    `;
+  },
+
+  /**
+   * Renderiza estado vazio
+   */
+  _renderEmptyState() {
+    const hasFilters = Object.values(this._filters).some((v) => v !== "" && v !== "loads" && v !== "desc" && v !== 0);
+
+    return `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          ${hasFilters ? "Nenhum resultado encontrado" : "Nenhum match disponível"}
+        </h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+          ${hasFilters
+            ? "Tente ajustar os filtros ou ampliar a busca para encontrar mais resultados."
+            : "Cadastre cargas e rotas para encontrar combinações. Use os filtros acima para refinar a busca."}
+        </p>
+        ${hasFilters ? `
+          <button onclick="MatchingPage.clearFilters()" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            Limpar filtros
+          </button>
+        ` : ""}
+      </div>
+    `;
+  },
+
+  // ═══ Ações dos filtros ═══════════════════════════════
+
+  /**
+   * Atualiza um filtro e refaz a busca via Router.refresh()
+   * (que chama render() → _search())
+   */
+  setFilter(key, value) {
+    this._filters[key] = value;
+    Router.refresh();
+  },
+
+  /**
+   * Remove um filtro específico
+   */
+  removeFilter(key) {
+    this._filters[key] = "";
+    Router.refresh();
+  },
+
+  /**
+   * Limpa todos os filtros
+   */
+  clearFilters() {
+    this._filters = {
+      type: this._filters.type,
+      q: "",
+      originState: "",
+      destinationState: "",
+      weightMin: "",
+      weightMax: "",
+      dateFrom: "",
+      dateTo: "",
+      loadType: "",
+      sortBy: "score",
+      sortOrder: "desc",
+      minScore: 0,
+    };
+    Router.refresh();
   },
 };

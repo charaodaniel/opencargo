@@ -97,12 +97,13 @@ Os headers acima já estão configurados em `docker/nginx.conf`.
 - Listado no `.gitignore` — não versionado.
 - WAL mode para melhor performance de leitura/escrita concorrente.
 
-### PostgreSQL (Produção)
+### PostgreSQL (Produção — Aiven)
 
-- Conexão via URL com SSL (`sslmode=require`).
-- Usuário dedicado para a aplicação.
-- Firewall restrito ao IP do servidor (ex: Aiven).
-- Pool de conexões gerenciado pelo adaptador (`pg.Pool`).
+- Conexão via URL com SSL (gerenciado pelo adaptador `database-pg.js`).
+- ⚠️ **Não use `?sslmode=require`** na URL — o adaptador configura SSL com `rejectUnauthorized: false` automaticamente para Aiven.
+- Usuário dedicado para a aplicação (sem superusuário — sem `session_replication_role`).
+- Firewall restrito ao IP do servidor.
+- Pool de conexões gerenciado pelo adaptador (`pg.Pool`, max 10 conexões).
 
 ---
 

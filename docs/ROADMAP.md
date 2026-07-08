@@ -41,7 +41,7 @@
 - [ ] Notificações push
 - [ ] PWA (Progressive Web App)
 - [ ] Upload de documentos
-- [ ] Filtros avançados no matching
+- [x] Filtros avançados no matching
 - [ ] Suporte a múltiplos idiomas (pt-BR, en)
 - [ ] Avaliações entre as partes
 - [ ] Histórico de fretes

@@ -28,9 +28,9 @@ const TABLES = [
 /**
  * Limpa todas as tabelas do banco de dados
  */
-export function cleanDatabase() {
+export async function cleanDatabase() {
   for (const table of TABLES) {
-    execute(`DELETE FROM ${table}`);
+    await execute(`DELETE FROM ${table}`);
   }
 }
 
@@ -43,7 +43,7 @@ export async function createTestApp() {
     mkdirSync(TEST_DB_DIR, { recursive: true });
   }
 
-  initDatabase();
+  await initDatabase();
 
   const app = await buildApp();
   await app.ready();

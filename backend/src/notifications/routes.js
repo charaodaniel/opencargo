@@ -9,7 +9,7 @@ export async function notificationRoutes(app) {
   app.get("/", async (request) => {
     const user = request.user;
 
-    return query(
+    return await query(
       `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
       [user.id]
     );
@@ -21,9 +21,9 @@ export async function notificationRoutes(app) {
   app.patch("/:id/read", async (request) => {
     const { id } = request.params;
 
-    query(`UPDATE notifications SET read = 1 WHERE id = ?`, [id]);
+    await query(`UPDATE notifications SET read = 1 WHERE id = ?`, [id]);
 
-    return queryOne(`SELECT * FROM notifications WHERE id = ?`, [id]);
+    return await queryOne(`SELECT * FROM notifications WHERE id = ?`, [id]);
   });
 
   /**
@@ -32,7 +32,7 @@ export async function notificationRoutes(app) {
   app.post("/read-all", async (request) => {
     const user = request.user;
 
-    query(`UPDATE notifications SET read = 1 WHERE user_id = ?`, [user.id]);
+    await query(`UPDATE notifications SET read = 1 WHERE user_id = ?`, [user.id]);
 
     return { success: true };
   });
