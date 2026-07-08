@@ -29,14 +29,6 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 --     O trigger handle_new_user() (seção 4) cria o registro
 --     automaticamente quando alguém se cadastra.
 
--- Remove role CHECK antigo se existir
-DO $$
-BEGIN
-  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
-    ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-  END IF;
-END $$;
-
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -49,6 +41,14 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Remove role CHECK antigo (só roda se a tabela existir)
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
+    ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS companies (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

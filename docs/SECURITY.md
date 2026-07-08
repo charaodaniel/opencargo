@@ -6,18 +6,32 @@
 
 ## 1. Autenticação
 
-### 1.1 JWT (JSON Web Token)
+O OpenCargo suporta dois modos de autenticação, detectados automaticamente:
 
-- Tokens JWT são utilizados para autenticação stateless.
-- O token deve ser enviado no header `Authorization: Bearer <token>`.
-- Tempo de expiração padrão: 7 dias (configurável via `JWT_EXPIRES_IN`).
-- O segredo JWT é configurado via variável de ambiente `JWT_SECRET`.
+### 1.1 Supabase Auth (Produção)
 
-### 1.2 Hash de Senhas
+Quando `SUPABASE_URL` está configurado, o backend delega toda a autenticação ao Supabase:
 
-- Senhas são armazenadas utilizando **bcrypt** com fator de custo 10.
-- Nunca armazenar senhas em plain text.
-- Não há recuperação de senha — apenas redefinição (a implementar).
+- **Login:** `supabase.auth.signInWithPassword()` — verifica credenciais no Supabase Auth
+- **Registro:** `supabase.auth.admin.createUser()` — cria usuário no Supabase Auth
+- **Verificação de token:** `supabase.auth.getUser()` — valida o JWT do Supabase via API
+- **Sincronização:** Trigger `handle_new_user()` no banco cria automaticamente o registro em `public.users` quando alguém se cadastra
+- **Role:** Armazenado em `user_metadata.role` no JWT do Supabase, lido pelas políticas RLS
+
+### 1.2 JWT Próprio (Desenvolvimento/SQLite)
+
+Quando `SUPABASE_URL` está vazio, o backend usa seu próprio sistema:
+
+- Tokens JWT são gerados e verificados localmente via `@fastify/jwt`
+- O token deve ser enviado no header `Authorization: Bearer <token>`
+- Tempo de expiração padrão: 7 dias (configurável via `JWT_EXPIRES_IN`)
+- O segredo JWT é configurado via variável de ambiente `JWT_SECRET`
+
+### 1.3 Hash de Senhas (modo local)
+
+- Senhas são armazenadas utilizando **bcrypt** com fator de custo 10
+- Nunca armazenar senhas em plain text
+- Não há recuperação de senha — apenas redefinição (a implementar)
 
 ---
 

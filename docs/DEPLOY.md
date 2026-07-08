@@ -146,6 +146,17 @@ Link direto: https://supabase.com/dashboard/project/irznvnpaetvkuvmdrgoo/sql/new
 cd backend && npm run seed -- --reset
 ```
 
+> ℹ️ No modo Supabase Auth, o seed cria os usuários via `supabase.auth.admin.createUser()`. O trigger `handle_new_user()` sincroniza automaticamente para `public.users`.
+
+### 4.5 Sincronização com Supabase Auth
+
+O schema do OpenCargo foi projetado para funcionar com o Supabase Auth:
+
+- `public.users.id` referencia `auth.users(id)` — o UUID vem do Supabase, não é gerado aleatoriamente
+- Trigger `handle_new_user()`: quando um usuário se cadastra via Supabase Auth, o trigger cria automaticamente o registro em `public.users`
+- RLS (Row Level Security): todas as tabelas têm políticas que usam `auth.uid()` para identificar o usuário logado
+- O role do usuário é lido do `user_metadata` no JWT do Supabase
+
 ### 4.4 Configuração RLS
 
 O Supabase tem RLS ativado em todas as tabelas com políticas para:
@@ -165,12 +176,15 @@ O Supabase tem RLS ativado em todas as tabelas com políticas para:
 | `PORT` | Porta do servidor | `3000` | ❌ |
 | `HOST` | Host do servidor | `0.0.0.0` | ❌ |
 | `NODE_ENV` | Ambiente (`development`, `production`, `test`) | `development` | ❌ |
-| `JWT_SECRET` | Chave secreta JWT | `opencargo-dev-secret` | **⚠️** |
+| `JWT_SECRET` | Chave secreta JWT (modo local/SQLite) | `opencargo-dev-secret` | **⚠️** |
 | `JWT_EXPIRES_IN` | Expiração do token | `7d` | ❌ |
 | `DATABASE_URL` | URL do banco (SQLite ou PostgreSQL) | `file:./data/opencargo.db` | ❌ |
 | `CORS_ORIGIN` | Origens CORS (separadas por vírgula) | `http://localhost:5173,http://127.0.0.1:5173` | **⚠️** |
 | `RATE_LIMIT_MAX` | Máx. requisições por janela | `100` | ❌ |
 | `RATE_LIMIT_WINDOW_MS` | Janela de rate limit (ms) | `60000` | ❌ |
+| `SUPABASE_URL` | URL do projeto Supabase | `""` | se usar Supabase Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key do Supabase | `""` | se usar Supabase Auth |
+| `SUPABASE_ANON_KEY` | Chave anônima do Supabase | `""` | se usar Supabase Auth |
 
 ### 5.2 Exemplos de DATABASE_URL
 
@@ -212,6 +226,14 @@ Para deploy do backend no Railway:
    - `JWT_SECRET` = gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
    - `CORS_ORIGIN` = URL do frontend na Vercel
    - `NODE_ENV` = `production`
+   - `SUPABASE_URL` = URL do projeto Supabase (se usar Supabase Auth)
+   - `SUPABASE_SERVICE_ROLE_KEY` = service_role key do Supabase
+   - `SUPABASE_ANON_KEY` = chave anônima do Supabase
+
+   > ℹ️ **Modos de autenticação:**
+   > - Com `SUPABASE_URL` configurado: o backend usa **Supabase Auth** — login/register via `supabase.auth.signInWithPassword()` e `supabase.auth.admin.createUser()`. O JWT_SECRET local não é usado.
+   > - Sem `SUPABASE_URL`: o backend usa **JWT próprio + bcrypt** (modo local/dev).
+
 3. O Railway faz deploy automático a cada push no GitHub
 
 ---

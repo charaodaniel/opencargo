@@ -19,6 +19,15 @@ A maioria dos endpoints requer o header:
 Authorization: Bearer <token>
 ```
 
+### Modos de autenticação
+
+O backend suporta **dois modos** de autenticação, detectados automaticamente:
+
+| Modo | Ativação | Fluxo |
+|------|----------|-------|
+| **Supabase Auth** (produção) | `SUPABASE_URL` configurado | Login via `signInWithPassword()` · Registro via `admin.createUser()` · Token JWT do Supabase verificado via `getUser()` |
+| **JWT próprio** (dev/SQLite) | `SUPABASE_URL` vazio | Login via bcrypt + JWT próprio · Registro com hash bcrypt · Token verificado via `@fastify/jwt` |
+
 ---
 
 ## Health Check

@@ -93,7 +93,7 @@ São Paulo ──(carregado)──▶ Porto Alegre
 | **Backend** | [Node.js](https://nodejs.org) 22+ · [Fastify](https://fastify.dev) 5 · [Zod](https://zod.dev) |
 | **Frontend** | HTML5 · [Tailwind CSS](https://tailwindcss.com) · [Alpine.js](https://alpinejs.dev) · Vanilla JS |
 | **Database** | [SQLite](https://www.sqlite.org) (dev) · [PostgreSQL](https://www.postgresql.org) (prod, via [Supabase](https://supabase.com)) |
-| **Autenticação** | JWT + bcrypt |
+| **Autenticação** | [Supabase Auth](https://supabase.com/auth) (produção) · JWT + bcrypt (dev/SQLite) |
 | **Mapas** | [Leaflet](https://leafletjs.com) + [OpenStreetMap](https://www.openstreetmap.org) + [Nominatim](https://nominatim.org) + [OSRM](http://project-osrm.org) |
 | **Clustering** | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) |
 | **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) · [Railway](https://railway.app) · [Supabase](https://supabase.com) |
@@ -378,7 +378,7 @@ OpenCargo/
 | `PORT` | Porta do servidor | `3000` | ❌ |
 | `HOST` | Host do servidor | `0.0.0.0` | ❌ |
 | `NODE_ENV` | Ambiente (`development`, `production`, `test`) | `development` | ❌ |
-| `JWT_SECRET` | Chave secreta JWT | `opencargo-dev-secret` | **⚠️** |
+| `JWT_SECRET` | Chave secreta JWT (local/SQLite) | `opencargo-dev-secret` | **⚠️** |
 | `JWT_EXPIRES_IN` | Expiração do token | `7d` | ❌ |
 | `DATABASE_URL` | URL do banco (SQLite ou PostgreSQL) | `file:./data/opencargo.db` | ❌ |
 | `CORS_ORIGIN` | Origens CORS (separadas por vírgula) | `http://localhost:5173,http://127.0.0.1:5173` | **⚠️** |
@@ -386,12 +386,17 @@ OpenCargo/
 | `RATE_LIMIT_WINDOW_MS` | Janela de rate limit (ms) | `60000` | ❌ |
 | `UPLOAD_DIR` | Diretório de uploads | `./uploads` | ❌ |
 | `MAX_FILE_SIZE` | Tamanho máximo de upload (bytes) | `10485760` | ❌ |
+| `SUPABASE_URL` | URL do projeto Supabase | `""` | se usar Supabase Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key do Supabase | `""` | se usar Supabase Auth |
+| `SUPABASE_ANON_KEY` | Chave anônima do Supabase | `""` | se usar Supabase Auth |
 
-> **⚠️ Produção:** Altere `JWT_SECRET` para um valor forte:
+> **⚠️ Produção (modo local/SQLite):** Altere `JWT_SECRET` para um valor forte:
 > ```bash
 > node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > ```
-> O backend valida e exibe um warning se o JWT_SECRET não for alterado em produção.
+>
+> **Modo Supabase Auth:** Quando `SUPABASE_URL` está configurado, o backend delega autenticação ao Supabase. O `JWT_SECRET` local não é usado nesse modo. Os tokens são gerados e verificados pelo Supabase Auth.
+>
 > O CORS_ORIGIN também é verificado — origens com `localhost` em produção geram alerta.
 
 ---
