@@ -53,7 +53,7 @@ Registrar novo usuário.
 }
 ```
 
-**Roles:** `admin`, `company`, `driver`
+**Roles:** `administrador`, `gestor`, `empresa`, `motorista` (apenas `empresa` e `motorista` permitidos no registro via API)
 
 ### `POST /api/auth/login`
 
@@ -90,7 +90,7 @@ Dados do usuário logado.
 
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
-| GET | `/api/users` | Listar usuários | 🔐 |
+| GET | `/api/users` | Listar usuários (paginado: `{ data, total, page, limit, totalPages }`) | 🔐 |
 | GET | `/api/users/:id` | Buscar usuário | 🔐 |
 | PATCH | `/api/users/:id` | Atualizar usuário | 🔐 |
 
@@ -101,7 +101,7 @@ Dados do usuário logado.
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
 | POST | `/api/companies` | Cadastrar empresa | 🔐 |
-| GET | `/api/companies` | Listar empresas | 🔐 |
+| GET | `/api/companies` | Listar empresas (paginado) | 🔐 |
 | GET | `/api/companies/:id` | Buscar empresa | 🔐 |
 | PATCH | `/api/companies/:id` | Atualizar empresa | 🔐 |
 
@@ -112,7 +112,7 @@ Dados do usuário logado.
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
 | POST | `/api/drivers` | Cadastrar motorista | 🔐 |
-| GET | `/api/drivers` | Listar motoristas | 🔐 |
+| GET | `/api/drivers` | Listar motoristas (paginado) | 🔐 |
 | GET | `/api/drivers/available` | Motoristas disponíveis | 🔐 |
 | GET | `/api/drivers/:id` | Buscar motorista | 🔐 |
 | PATCH | `/api/drivers/:id` | Atualizar motorista | 🔐 |
@@ -124,7 +124,7 @@ Dados do usuário logado.
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
 | POST | `/api/vehicles` | Cadastrar veículo | 🔐 |
-| GET | `/api/vehicles` | Listar veículos | 🔐 |
+| GET | `/api/vehicles` | Listar veículos (paginado) | 🔐 |
 | GET | `/api/vehicles/:id` | Buscar veículo | 🔐 |
 | PATCH | `/api/vehicles/:id` | Atualizar veículo | 🔐 |
 | DELETE | `/api/vehicles/:id` | Remover veículo | 🔐 |
@@ -136,9 +136,9 @@ Dados do usuário logado.
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
 | POST | `/api/routes` | Cadastrar rota | 🔐 |
-| GET | `/api/routes` | Listar rotas | 🔐 |
-| GET | `/api/routes/active` | Rotas ativas | 🔐 |
-| GET | `/api/routes/return` | Rotas de retorno | 🔐 |
+| GET | `/api/routes` | Listar rotas (paginado) | 🔐 |
+| GET | `/api/routes/active` | Rotas ativas (paginado) | 🔐 |
+| GET | `/api/routes/return` | Rotas de retorno (paginado) | 🔐 |
 | GET | `/api/routes/:id` | Buscar rota | 🔐 |
 | PATCH | `/api/routes/:id` | Atualizar rota | 🔐 |
 

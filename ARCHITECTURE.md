@@ -120,7 +120,7 @@ O sistema identifica cargas compatíveis.
      ┌──────────────┴──────────────┐
      │                             │
   SQLite (dev)          PostgreSQL (prod)
-  (file.db)              (Aiven / self-hosted)
+  (file.db)              (Supabase / self-hosted)
 ```
 
 ---
@@ -178,6 +178,8 @@ Nunca depende de Google Maps. Tecnologias utilizadas:
 - Docker + Docker Compose
 - Nginx (proxy reverso)
 - Vercel (frontend deploy)
+- Railway (backend deploy)
+- Supabase (banco PostgreSQL + RLS)
 
 ---
 

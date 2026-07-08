@@ -531,109 +531,74 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ═══════════════════════════════════════════════════════════
--- 6. NOTA SOBRE CRIAÇÃO DO USUÁRIO DEV
+-- 6. SINCRONIZAR UID DO AUTH → PUBLIC.USERS COMO ADMIN
 -- ═══════════════════════════════════════════════════════════
 --
--- ⚠️ O Supabase Auth gerencia senhas com bcrypt, então NÃO é possível
---    criar o usuário via SQL direto. Use uma das opções abaixo:
+-- ⚠️ IMPORTANTE:
+--   Antes de executar este bloco, crie o usuário no Supabase Auth:
+--   Authentication → Users → Add User
+--   Email: daniel.kokynhw@gmail.com
+--   Password: Dcm02061994@
+--   User Metadata: {"name": "Daniel Kokynhw", "role": "administrador"}
 --
--- Opção A — Criar via Dashboard do Supabase:
---   1. Acesse: Authentication → Users → Add User
---   2. Email: daniel.kokynhw@gmail.com
---   3. Password: Dcm02061994@
---   4. Após criar, nas "User Metadata" adicione:
---      {"name": "Daniel Kokynhw", "role": "administrador"}
---   5. O trigger on_auth_user_created vai criar o registro em public.users
---
--- Opção B — Criar via API (SQL do PostgREST):
---   SELECT extensions.http_post(
---     'https://irznvnpaetvkuvmdrgoo.supabase.co/auth/v1/signup',
---     jsonb_build_object(
---       'email', 'daniel.kokynhw@gmail.com',
---       'password', 'Dcm02061994@',
---       'data', jsonb_build_object('name', 'Daniel Kokynhw', 'role', 'administrador')
---     )::text,
---     'Content-Type: application/json'
---   );
---
+--   Este bloco então sincroniza o UUID gerado pelo Supabase Auth
+--   com o registro em public.users, atualizando todas as FKs.
 -- ═══════════════════════════════════════════════════════════
 
--- ═══════════════════════════════════════════════════════════
--- 7. CRIAÇÃO DO USUÁRIO ADMIN VIA FUNÇÃO SEGURA
--- ═══════════════════════════════════════════════════════════
--- Esta função pode ser chamada pelo service_role para criar
--- usuários admin mesmo sem a interface do Supabase Auth.
--- Execute como: SELECT public.create_dev_user();
--- (Necessita da chave service_role no header: Authorization: Bearer sb_secret_...)
-
-CREATE OR REPLACE FUNCTION public.create_dev_user()
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+DO $$
 DECLARE
-  _user_id UUID;
+  _auth_uid UUID := '47eabb86-e5d4-47fd-a9e1-ff7085fb0815';
+  _user_email TEXT := 'daniel.kokynhw@gmail.com';
+  _user_name TEXT := 'Daniel Kokynhw';
+  _old_id UUID;
 BEGIN
-  -- Insere direto em auth.users (apenas com permissão service_role)
-  -- Nota: a senha precisa ser hasheada com bcrypt
-  INSERT INTO auth.users (
-    instance_id, id, aud, role, email,
-    encrypted_password, email_confirmed_at,
-    raw_user_meta_data, created_at, updated_at,
-    confirmation_token, email_change, email_change_token_new, recovery_token
-  ) VALUES (
-    '00000000-0000-0000-0000-000000000000',
-    uuid_generate_v4(),
-    'authenticated',
-    'authenticated',
-    'daniel.kokynhw@gmail.com',
-    crypt('Dcm02061994@', gen_salt('bf')),
-    NOW(),
-    jsonb_build_object('name', 'Daniel Kokynhw', 'role', 'administrador'),
-    NOW(),
-    NOW(),
-    '', '', '', ''
-  )
-  RETURNING id INTO _user_id;
+  -- Descobre o ID antigo (se existir)
+  SELECT id INTO _old_id FROM public.users WHERE email = _user_email;
 
-  -- O trigger on_auth_user_created vai criar o registro em public.users
-  -- Mas vamos garantir com um INSERT direto também
-  INSERT INTO public.users (id, name, email, password, role, phone, active)
-  VALUES (
-    _user_id,
-    'Daniel Kokynhw',
-    'daniel.kokynhw@gmail.com',
-    crypt('Dcm02061994@', gen_salt('bf')),
-    'administrador',
-    '11999999999',
-    1
-  )
-  ON CONFLICT (email) DO UPDATE SET
-    name = EXCLUDED.name,
-    role = EXCLUDED.role,
-    updated_at = NOW();
+  -- Se o auth_uid já existe em public.users → só atualiza a role
+  IF EXISTS (SELECT 1 FROM public.users WHERE id = _auth_uid) THEN
+    UPDATE public.users
+    SET role = 'administrador', name = _user_name, updated_at = NOW()
+    WHERE id = _auth_uid;
+    RAISE NOTICE '✅ UID % já existia — role atualizada', _auth_uid;
 
-  RETURN _user_id;
-END;
-$$;
+  -- Se existe um registro com email mas ID diferente → migra
+  ELSIF _old_id IS NOT NULL AND _old_id != _auth_uid THEN
+    -- Antes de trocar o ID, atualiza todas as FKs que apontam para o ID antigo
+    UPDATE companies SET user_id = _auth_uid WHERE user_id = _old_id;
+    UPDATE drivers   SET user_id = _auth_uid WHERE user_id = _old_id;
+    UPDATE reviews   SET reviewer_id = _auth_uid WHERE reviewer_id = _old_id;
+    UPDATE reviews   SET reviewee_id = _auth_uid WHERE reviewee_id = _old_id;
+    UPDATE messages  SET sender_id = _auth_uid WHERE sender_id = _old_id;
+    UPDATE notifications SET user_id = _auth_uid WHERE user_id = _old_id;
+    UPDATE documents SET user_id = _auth_uid WHERE user_id = _old_id;
+
+    -- Agora troca o ID do usuário
+    UPDATE public.users
+    SET id = _auth_uid, role = 'administrador', name = _user_name, updated_at = NOW()
+    WHERE id = _old_id;
+
+    RAISE NOTICE '✅ Usuário % migrado de % para % como administrador', _user_email, _old_id, _auth_uid;
+
+  -- Não existe → cria
+  ELSE
+    INSERT INTO public.users (id, name, email, password, role, phone, active)
+    VALUES (_auth_uid, _user_name, _user_email, '', 'administrador', '11999999999', 1);
+    RAISE NOTICE '✅ Usuário % criado como administrador (UID: %)', _user_email, _auth_uid;
+  END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════
--- 8. SEED DATA (opcional — descomente para inserir)
+-- 7. VERIFICAÇÃO
 -- ═══════════════════════════════════════════════════════════
+-- Execute estas queries para confirmar:
 --
--- Para popular com dados de exemplo, rode o seed via CLI:
---   cd backend && npm run seed -- --reset
+--   SELECT id, name, email, role FROM public.users
+--   WHERE email = 'daniel.kokynhw@gmail.com';
 --
--- Ou insira manualmente executando os INSERTs abaixo
--- (após criar os usuários no Supabase Auth primeiro)
+--   SELECT tablename, rowsecurity FROM pg_tables
+--   WHERE schemaname = 'public' ORDER BY tablename;
 --
+--   SELECT schemaname, tablename, policyname
+--   FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename;
 -- ═══════════════════════════════════════════════════════════
-
--- ═══════════════════════════════════════════════════════════
--- 9. VERIFICAÇÃO
--- ═══════════════════════════════════════════════════════════
--- Após executar tudo, verifique com:
---   SELECT * FROM public.users;
---   SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
---   SELECT schemaname, tablename, policyname FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename;

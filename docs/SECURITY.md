@@ -27,9 +27,10 @@
 
 | Role | Descrição |
 |------|-----------|
-| `admin` | Acesso total ao sistema |
-| `company` | Acesso a cargas e matching |
-| `driver` | Acesso a rotas e matching |
+| `administrador` | Acesso total ao sistema |
+| `gestor` | Acesso administrativo limitado |
+| `empresa` | Acesso a cargas e matching |
+| `motorista` | Acesso a rotas e matching |
 
 ### 2.2 Controle de Acesso
 
@@ -97,12 +98,11 @@ Os headers acima já estão configurados em `docker/nginx.conf`.
 - Listado no `.gitignore` — não versionado.
 - WAL mode para melhor performance de leitura/escrita concorrente.
 
-### PostgreSQL (Produção — Aiven)
+### PostgreSQL (Produção — Supabase)
 
 - Conexão via URL com SSL (gerenciado pelo adaptador `database-pg.js`).
-- ⚠️ **Não use `?sslmode=require`** na URL — o adaptador configura SSL com `rejectUnauthorized: false` automaticamente para Aiven.
-- Usuário dedicado para a aplicação (sem superusuário — sem `session_replication_role`).
-- Firewall restrito ao IP do servidor.
+- SSL ativado automaticamente para URLs do Supabase.
+- RLS (Row Level Security) com políticas por role em todas as tabelas.
 - Pool de conexões gerenciado pelo adaptador (`pg.Pool`, max 10 conexões).
 
 ---

@@ -9,7 +9,7 @@
 | Ambiente | Banco | Driver | Observação |
 |----------|-------|--------|------------|
 | Desenvolvimento | SQLite | `node:sqlite` (nativo) | Arquivo `.db` em `backend/data/` |
-| Produção | PostgreSQL | `pg` (node-postgres) | SSL requerido (Aiven, Railway, etc.) |
+| Produção | PostgreSQL | `pg` (node-postgres) | SSL via Supabase, Railway, etc. |
 
 **Detecção automática:** O backend identifica o banco pela `DATABASE_URL`:
 - `file:./data/opencargo.db` → SQLite
@@ -85,7 +85,7 @@
 | name | TEXT | VARCHAR(255) | Nome completo |
 | email | TEXT (unique) | VARCHAR(255) UNIQUE | E-mail de login |
 | password | TEXT | VARCHAR(255) | Hash bcrypt |
-| role | TEXT | VARCHAR(20) CHECK | admin, company, driver |
+| role | TEXT | VARCHAR(20) CHECK | administrador, gestor, empresa, motorista |
 | phone | TEXT | VARCHAR(20) | Telefone |
 | active | INTEGER (1/0) | INTEGER DEFAULT 1 | Usuário ativo |
 | created_at | TEXT | TIMESTAMP DEFAULT NOW() | Data de criação |

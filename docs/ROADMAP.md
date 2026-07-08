@@ -36,14 +36,18 @@
 
 ---
 
-## 🔄 Versão 0.3 — Experiência do Usuário
+## ✅ Versão 0.3 — Experiência do Usuário
 
 - [ ] Notificações push
 - [ ] PWA (Progressive Web App)
 - [x] Upload de documentos
 - [x] Filtros avançados no matching
-- [x] Suporte a múltiplos idiomas (pt-BR, en)  - [x] Avaliações entre as partes
-  - [x] Histórico de fretes
+- [x] Suporte a múltiplos idiomas (pt-BR, en)
+- [x] Avaliações entre as partes
+- [x] Histórico de fretes
+- [x] Paginação em todas as listas
+- [x] Supabase + RLS (Row Level Security)
+- [x] Roles: administrador, gestor, empresa, motorista
 
 ---
 

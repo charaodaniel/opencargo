@@ -1,6 +1,6 @@
 # OpenCargo — Deploy
 
-> Guia de instalação local, Docker, Vercel (frontend) e produção com PostgreSQL no Aiven.
+> Guia de instalação local, Docker, Vercel (frontend) e produção com Supabase PostgreSQL + Railway.
 
 ---
 
@@ -20,7 +20,7 @@ cd opencargo
 npm run setup
 
 # Configurar banco de dados
-# O .env já está configurado para PostgreSQL no Aiven (produção)
+# O .env já está configurado para PostgreSQL no Supabase (produção)
 # Para desenvolvimento local com SQLite, altere o .env:
 #   DATABASE_URL=file:./data/opencargo.db
 ```
@@ -116,41 +116,43 @@ window.__ENV__ = {
 
 ---
 
-## 4. Aiven (PostgreSQL — Produção)
+## 4. Supabase (PostgreSQL — Produção)
 
-O banco de dados PostgreSQL está hospedado no [Aiven](https://aiven.io) (free tier disponível).
+O banco de dados PostgreSQL está hospedado no [Supabase](https://supabase.com) (free tier).
 
 ### 4.1 Conexão
 
-A `DATABASE_URL` no `.env` segue o formato:
+A `DATABASE_URL` segue o formato:
 
 ```
-postgres://avnadmin:senha@pg-opencargo-opencargo.l.aivencloud.com:25827/defaultdb
+postgresql://postgres:senha@db.PROJECT.supabase.co:5432/postgres
 ```
 
-> ⚠️ **Não use `?sslmode=require`** na URL. O SSL é gerenciado automaticamente pelo adaptador `database-pg.js` com `rejectUnauthorized: false` para Aiven.
+> ⚠️ SSL é ativado automaticamente quando a URL contém `supabase`.
 
 ### 4.2 Schema
 
-As tabelas são criadas automaticamente na primeira execução (`initDatabase()` em `database.js` / `database-pg.js`).
+Execute o script `database/supabase-setup.sql` no SQL Editor do Supabase Dashboard para criar:
+- Tabelas
+- Índices
+- RLS (Row Level Security) com políticas por role
+- Trigger de sincronização `auth.users → public.users`
+
+Link direto: https://supabase.com/dashboard/project/irznvnpaetvkuvmdrgoo/sql/new
 
 ### 4.3 Seed
 
 ```bash
-cd backend
-DATABASE_URL="postgres://avnadmin:senha@host:25827/defaultdb" node scripts/seed.js --reset
+cd backend && npm run seed -- --reset
 ```
 
-### 4.4 Limitações do Aiven Free Tier
+### 4.4 Configuração RLS
 
-| Recurso | Limite |
-|---------|--------|
-| Storage | 1 GB |
-| Conexões | 5 paralelas |
-| Superusuário | ❌ (sem `session_replication_role`) |
-| SSL | Obrigatório |
-
-> O adaptador já lida com todas essas limitações automaticamente.
+O Supabase tem RLS ativado em todas as tabelas com políticas para:
+- **administrador**: Acesso total (SELECT/INSERT/UPDATE/DELETE)
+- **gestor**: Acesso administrativo limitado
+- **empresa**: Gerencia próprios recursos
+- **motorista**: Gerencia próprios recursos
 
 ---
 
@@ -176,8 +178,8 @@ DATABASE_URL="postgres://avnadmin:senha@host:25827/defaultdb" node scripts/seed.
 # Desenvolvimento (SQLite)
 DATABASE_URL="file:./data/opencargo.db"
 
-# Produção (Aiven for PostgreSQL)
-DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb"
+# Produção (Supabase PostgreSQL)
+DATABASE_URL="postgresql://postgres:senha@db.PROJECT.supabase.co:5432/postgres"
 ```
 
 > **⚠️ Produção:** Altere `JWT_SECRET` para um valor forte:
@@ -200,16 +202,17 @@ Para deploy do frontend na Vercel, você só precisa de **1 variável**:
 4. Selecione "Production" como ambiente
 5. Clique em **Save** e faça um novo deploy
 
-### 5.4 Configurando no Render (Backend)
+### 5.4 Configurando no Railway (Backend)
 
-Para deploy do backend no Render:
+Para deploy do backend no Railway:
 
-1. Acesse [dashboard.render.com](https://dashboard.render.com) > Seu Web Service
-2. Vá em **Environment**
-3. Adicione todas as variáveis da seção 5.1
-4. Destaque para `JWT_SECRET`, `DATABASE_URL` e `CORS_ORIGIN`
-
-> Consulte o arquivo `.env.example` na raiz do projeto para ver todas as variáveis disponíveis.
+1. Conecte o repositório no [Railway Dashboard](https://railway.app)
+2. Adicione as variáveis de ambiente:
+   - `DATABASE_URL` = string de conexão do Supabase PostgreSQL
+   - `JWT_SECRET` = gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   - `CORS_ORIGIN` = URL do frontend na Vercel
+   - `NODE_ENV` = `production`
+3. O Railway faz deploy automático a cada push no GitHub
 
 ---
 
@@ -217,16 +220,16 @@ Para deploy do backend no Render:
 
 ```text
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Vercel     │     │  Node.js     │     │   Aiven      │
+│   Vercel     │     │   Railway    │     │   Supabase   │
 │  (Frontend)  │────▶│  (Backend)   │────▶│ (PostgreSQL) │
 │  SPA Estática│     │  Fastify API │     │  Managed DB  │
 └──────────────┘     └──────────────┘     └──────────────┘
-     :5173                 :3000               :25827
+     :443                  :3000                :5432
 ```
 
 - **Frontend:** Vercel (free tier — estático, sem build)
-- **Backend:** Servidor Node.js (Render, Railway, Fly.io, ou VPS própria)
-- **Banco:** Aiven PostgreSQL (free tier — 1GB storage)
+- **Backend:** Railway (Node.js + Fastify)
+- **Banco:** Supabase PostgreSQL (free tier)
 
 ---
 
@@ -240,7 +243,7 @@ npm ci --production
 
 export JWT_SECRET="seu-jwt-secret-forte"
 export NODE_ENV=production
-export DATABASE_URL="postgres://avnadmin:senha@host:25827/defaultdb"
+export DATABASE_URL="postgresql://postgres:senha@db.PROJECT.supabase.co:5432/postgres"
 export CORS_ORIGIN="https://seu-frontend.vercel.app"
 
 node src/index.js

@@ -10,9 +10,10 @@
 
 | Tipo | Descrição |
 |------|-----------|
-| Admin | Administrador do sistema |
-| Company | Empresa que cadastra cargas |
-| Driver | Motorista que transporta cargas |
+| administrador | Acesso total ao sistema |
+| gestor | Acesso administrativo limitado |
+| empresa | Empresa que cadastra cargas |
+| motorista | Motorista que transporta cargas |
 
 ### 1.2 Regras
 
@@ -27,7 +28,7 @@
 
 ### 2.1 Cadastro
 
-- Uma empresa é vinculada a um usuário do tipo `company`.
+- Uma empresa é vinculada a um usuário do tipo `empresa`.
 - O documento (CNPJ) deve ser único.
 - Uma empresa pode cadastrar múltiplas cargas.
 
@@ -37,7 +38,7 @@
 
 ### 3.1 Cadastro
 
-- Um motorista é vinculado a um usuário do tipo `driver`.
+- Um motorista é vinculado a um usuário do tipo `motorista`.
 - O documento (CPF) deve ser único.
 - A CNH é obrigatória para criar rotas.
 
@@ -173,15 +174,15 @@ Match encontrado com score 100!
 
 ## 10. Permissões
 
-| Ação | Admin | Company | Driver |
-|------|-------|---------|--------|
-| Gerenciar usuários | ✅ | ❌ | ❌ |
-| Cadastrar empresa | ❌ | ✅ | ❌ |
-| Cadastrar motorista | ❌ | ❌ | ✅ |
-| Cadastrar veículo | ❌ | ❌ | ✅ |
-| Cadastrar carga | ❌ | ✅ | ❌ |
-| Cadastrar rota | ❌ | ❌ | ✅ |
-| Ver matching | ✅ | ✅ | ✅ |
-| Aceitar/rejeitar proposta | ❌ | ✅ | ✅ |
-| Enviar mensagem | ❌ | ✅ | ✅ |
-| Visualizar mapa | ✅ | ✅ | ✅ |
+| Ação | administrador | gestor | empresa | motorista |
+|------|:------------:|:-----:|:-------:|:---------:|
+| Gerenciar usuários | ✅ | ✅ | ❌ | ❌ |
+| Gerenciar empresas | ✅ | ✅ | própria | ❌ |
+| Gerenciar motoristas | ✅ | ✅ | ❌ | próprio |
+| Gerenciar veículos | ✅ | ✅ | ❌ | próprios |
+| Cadastrar carga | ✅ | ✅ | ✅ | ❌ |
+| Cadastrar rota | ✅ | ✅ | ❌ | ✅ |
+| Ver matching | ✅ | ✅ | ✅ | ✅ |
+| Aceitar/rejeitar match | ✅ | ✅ | ✅ | ✅ |
+| Chat | ✅ | ✅ | ✅ | ✅ |
+| Visualizar mapa | ✅ | ✅ | ✅ | ✅ |

@@ -92,11 +92,11 @@ São Paulo ──(carregado)──▶ Porto Alegre
 |-------|-------------|
 | **Backend** | [Node.js](https://nodejs.org) 22+ · [Fastify](https://fastify.dev) 5 · [Zod](https://zod.dev) |
 | **Frontend** | HTML5 · [Tailwind CSS](https://tailwindcss.com) · [Alpine.js](https://alpinejs.dev) · Vanilla JS |
-| **Database** | [SQLite](https://www.sqlite.org) (dev) · [PostgreSQL](https://www.postgresql.org) (prod, via Aiven) |
+| **Database** | [SQLite](https://www.sqlite.org) (dev) · [PostgreSQL](https://www.postgresql.org) (prod, via [Supabase](https://supabase.com)) |
 | **Autenticação** | JWT + bcrypt |
 | **Mapas** | [Leaflet](https://leafletjs.com) + [OpenStreetMap](https://www.openstreetmap.org) + [Nominatim](https://nominatim.org) + [OSRM](http://project-osrm.org) |
 | **Clustering** | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) |
-| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) · [Aiven](https://aiven.io) |
+| **Infra** | [Docker](https://www.docker.com) · [Docker Compose](https://docs.docker.com/compose/) · [Nginx](https://nginx.org) · [Vercel](https://vercel.com) · [Railway](https://railway.app) · [Supabase](https://supabase.com) |
 
 ---
 
@@ -130,7 +130,7 @@ npm run dev
 npm run seed
 ```
 
-> Login: `admin@opencargo.com` / `123456`
+> Login: `daniel.kokynhw@gmail.com` / `Dcm02061994@` (admin)
 
 ---
 
@@ -145,7 +145,7 @@ GET /api/health
 ### Autenticação
 
 ```http
-POST /api/auth/register     # Registrar (company, driver, admin)
+POST /api/auth/register     # Registrar (empresa, motorista)
 POST /api/auth/login        # Login → retorna JWT
 GET  /api/auth/me           # Dados do usuário logado (🔐)
 ```
@@ -251,37 +251,33 @@ O frontend é uma **SPA estática** (HTML + Vanilla JS + CDN) — funciona perfe
 > - Rewrites SPA (`/*` → `/index.html`)
 > - Cache headers para assets
 
-### PostgreSQL no Aiven (Produção)
+### Supabase PostgreSQL (Produção)
 
-O banco PostgreSQL está hospedado no [Aiven](https://aiven.io) (free tier).
+O banco PostgreSQL está hospedado no [Supabase](https://supabase.com) (free tier).
 
 ```bash
 # A DATABASE_URL no .env segue o formato:
-DATABASE_URL="postgres://avnadmin:senha@pg-opencargo.l.aivencloud.com:25827/defaultdb"
+DATABASE_URL="postgresql://postgres:senha@db.PROJECT.supabase.co:5432/postgres"
 
-# ⚠️ Não use ?sslmode=require — o SSL é gerenciado pelo adaptador
+# ⚠️ SSL é ativado automaticamente pelo adaptador para URLs do Supabase
 # O schema é criado automaticamente na primeira execução
 
 # Resetar e popular com dados de exemplo:
-cd backend && DATABASE_URL="postgres://..." node scripts/seed.js --reset
+cd backend && npm run seed -- --reset
 ```
 
-### Docker (Backend + Frontend)
+### Railway (Backend) + Vercel (Frontend)
 
-```bash
-git clone https://github.com/charaodaniel/opencargo.git
-cd opencargo
+**Backend:**
+1. Conecte o repositório no [Railway](https://railway.app)
+2. Root directory: `backend`
+3. Start command: `node src/index.js`
+4. Configure as env vars no dashboard
 
-# Configure as variáveis de ambiente
-cat > .env << EOF
-JWT_SECRET=seu-jwt-secret-forte-aqui
-CORS_ORIGIN=https://seudominio.com
-NODE_ENV=production
-DATABASE_URL=postgres://avnadmin:senha@host:25827/defaultdb
-EOF
-
-docker compose up --build -d
-```
+**Frontend:**
+1. Conecte o repositório na [Vercel](https://vercel.com)
+2. O `vercel.json` detecta automaticamente o `frontend/`
+3. Edite `frontend/assets/js/env.js` com a URL do backend
 
 ---
 
@@ -385,11 +381,18 @@ OpenCargo/
 | `JWT_SECRET` | Chave secreta JWT | `opencargo-dev-secret` | **⚠️** |
 | `JWT_EXPIRES_IN` | Expiração do token | `7d` | ❌ |
 | `DATABASE_URL` | URL do banco (SQLite ou PostgreSQL) | `file:./data/opencargo.db` | ❌ |
-| `CORS_ORIGIN` | Origem permitida CORS | `http://localhost:5173` | **⚠️** |
+| `CORS_ORIGIN` | Origens CORS (separadas por vírgula) | `http://localhost:5173,http://127.0.0.1:5173` | **⚠️** |
 | `RATE_LIMIT_MAX` | Máx. requisições por janela | `100` | ❌ |
 | `RATE_LIMIT_WINDOW_MS` | Janela de rate limit (ms) | `60000` | ❌ |
+| `UPLOAD_DIR` | Diretório de uploads | `./uploads` | ❌ |
+| `MAX_FILE_SIZE` | Tamanho máximo de upload (bytes) | `10485760` | ❌ |
 
-> **⚠️ Produção:** Altere `JWT_SECRET` para um valor forte (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
+> **⚠️ Produção:** Altere `JWT_SECRET` para um valor forte:
+> ```bash
+> node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+> ```
+> O backend valida e exibe um warning se o JWT_SECRET não for alterado em produção.
+> O CORS_ORIGIN também é verificado — origens com `localhost` em produção geram alerta.
 
 ---
 
