@@ -64,10 +64,10 @@ const DashboardPage = {
    */
   _quickActions() {
     const actions = [
-      { icon: Icons.package({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.newLoad"), desc: __("dashboard.newLoad.desc"), page: "loads" },
-      { icon: Icons.route({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.newRoute"), desc: __("dashboard.newRoute.desc"), page: "routes" },
-      { icon: Icons.link({ class: 'w-5 h-5 shrink-0' }), title: __("dashboard.viewMatching"), desc: __("dashboard.viewMatching.desc"), page: "matching" },
-      { icon: Icons.chat({ class: 'w-5 h-5 shrink-0' }), title: __("nav.chat"), desc: __("dashboard.chat.desc"), page: "chat" },
+      { icon: Icons.package({ class: 'w-5 h-5 shrink-0 icon-lift' }), title: __("dashboard.newLoad"), desc: __("dashboard.newLoad.desc"), page: "loads" },
+      { icon: Icons.route({ class: 'w-5 h-5 shrink-0 icon-rotate' }), title: __("dashboard.newRoute"), desc: __("dashboard.newRoute.desc"), page: "routes" },
+      { icon: Icons.link({ class: 'w-5 h-5 shrink-0 icon-scale' }), title: __("dashboard.viewMatching"), desc: __("dashboard.viewMatching.desc"), page: "matching" },
+      { icon: Icons.chat({ class: 'w-5 h-5 shrink-0 icon-pulse', noHover: true }), title: __("nav.chat"), desc: __("dashboard.chat.desc"), page: "chat" },
     ];
 
     return `
