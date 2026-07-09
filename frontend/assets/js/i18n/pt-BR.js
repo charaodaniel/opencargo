@@ -165,6 +165,7 @@ const I18nPtBr = {
   "message.error": "Erro ao processar solicitação",
   "message.offline": "Você está offline no momento.",
   "message.newVersion": "Nova versão disponível! Atualize a página.",
+  "message.confirmLogout": "Tem certeza que deseja sair?",
   "message.unauthorized": "Não autorizado",
   "message.invalidCredentials": "Credenciais inválidas",
   "message.sessionExpired": "Sessão expirada. Faça login novamente.",
@@ -242,9 +243,13 @@ const I18nPtBr = {
 
   // ── Roles ──────────────────────────────────────────
   "role.admin": "Administrador",
+  "role.administrador": "Administrador",
   "role.manager": "Gestor",
+  "role.gestor": "Gestor",
   "role.company": "Empresa",
+  "role.empresa": "Empresa",
   "role.driver": "Motorista",
+  "role.motorista": "Motorista",
 
   // ── Formulários ────────────────────────────────────
   "form.select": "Selecione...",

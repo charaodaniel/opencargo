@@ -167,6 +167,7 @@ const I18nEn = {
   "message.error": "Error processing request",
   "message.offline": "You are currently offline.",
   "message.newVersion": "New version available! Refresh the page.",
+  "message.confirmLogout": "Are you sure you want to logout?",
   "message.unauthorized": "Unauthorized",
   "message.invalidCredentials": "Invalid credentials",
   "message.sessionExpired": "Session expired. Please log in again.",
@@ -244,9 +245,13 @@ const I18nEn = {
 
   // ── Roles ─────────────────────────────────────────
   "role.admin": "Administrator",
+  "role.administrador": "Administrator",
   "role.manager": "Manager",
+  "role.gestor": "Manager",
   "role.company": "Company",
+  "role.empresa": "Company",
   "role.driver": "Driver",
+  "role.motorista": "Driver",
 
   // ── Forms ─────────────────────────────────────────
   "form.select": "Select...",
