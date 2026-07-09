@@ -211,9 +211,9 @@ export async function logRoutes(app) {
       `SELECT entity_type, COUNT(*) as count FROM activity_logs GROUP BY entity_type ORDER BY count DESC`
     );
     const [recent30] = await query(
-      `SELECT DATE(created_at) as day, COUNT(*) as count FROM activity_logs
+      `SELECT DATE(created_at) as day, action, COUNT(*) as count FROM activity_logs
        WHERE created_at >= datetime('now', '-30 days')
-       GROUP BY DATE(created_at) ORDER BY day ASC`
+       GROUP BY DATE(created_at), action ORDER BY day ASC, action ASC`
     );
     const [recent7] = await query(
       `SELECT DATE(created_at) as day, COUNT(*) as count FROM activity_logs

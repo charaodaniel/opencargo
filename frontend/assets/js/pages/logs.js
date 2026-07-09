@@ -331,7 +331,8 @@ const LogsPage = {
   },
 
   /**
-   * Inicializa o gráfico de atividade diária
+   * Inicializa o gráfico de atividade diária com barras empilhadas
+   * (create/update/delete/login com cores distintas)
    */
   _initActivityChart() {
     const canvas = document.getElementById("chart-logs-activity");
@@ -343,8 +344,8 @@ const LogsPage = {
       this._chart = null;
     }
 
-    const days = this._stats.daily_30;
-    if (days.length === 0) {
+    const rows = this._stats.daily_30;
+    if (rows.length === 0) {
       canvas.parentElement.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-sm">Nenhum dado disponível</div>`;
       return;
     }
@@ -352,41 +353,74 @@ const LogsPage = {
     const isDark = document.documentElement.classList.contains("dark");
     const textColor = isDark ? "#9ca3af" : "#6b7280";
     const gridColor = isDark ? "#374151" : "#e5e7eb";
-
-    // Preenche dias sem atividade com 0
-    const labels = [];
-    const data = [];
     const today = new Date();
+
+    // Actions que queremos mostrar (com cores e labels)
+    const ACTIONS = {
+      create: { label: "Criações", color: "rgba(34, 197, 94, 0.75)", border: "#22c55e" },
+      update: { label: "Atualizações", color: "rgba(59, 130, 246, 0.75)", border: "#3b82f6" },
+      delete: { label: "Exclusões", color: "rgba(239, 68, 68, 0.75)", border: "#ef4444" },
+      login: { label: "Logins", color: "rgba(168, 85, 247, 0.75)", border: "#a855f7" },
+      login_failed: { label: "Login Falhas", color: "rgba(249, 115, 22, 0.75)", border: "#f97316" },
+    };
+    const actionKeys = Object.keys(ACTIONS);
+
+    // Gera labels para os últimos 30 dias
+    const labels = [];
+    const dateKeys = [];
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const key = d.toISOString().split("T")[0];
-      const found = days.find(day => day.day === key);
       labels.push(key.slice(5)); // MM-DD
-      data.push(found ? found.count : 0);
+      dateKeys.push(key);
     }
+
+    // Constrói um mapa: day -> { action: count }
+    const dayMap = {};
+    rows.forEach(r => {
+      if (!dayMap[r.day]) dayMap[r.day] = {};
+      dayMap[r.day][r.action] = (dayMap[r.day][r.action] || 0) + r.count;
+    });
+
+    // Monta datasets: um para cada action
+    const datasets = actionKeys.map(action => ({
+      label: ACTIONS[action].label,
+      data: dateKeys.map(key => dayMap[key]?.[action] || 0),
+      backgroundColor: ACTIONS[action].color,
+      borderColor: ACTIONS[action].border,
+      borderWidth: 1,
+      borderRadius: 2,
+    }));
 
     this._chart = new Chart(canvas, {
       type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "Ações",
-          data,
-          backgroundColor: "rgba(59, 130, 246, 0.6)",
-          borderColor: "#3b82f6",
-          borderWidth: 1,
-          borderRadius: 3,
-          barPercentage: 0.8,
-          categoryPercentage: 0.9,
-        }],
-      },
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              color: textColor,
+              boxWidth: 12,
+              boxHeight: 12,
+              borderRadius: 3,
+              padding: 12,
+              font: { size: 11 },
+              usePointStyle: true,
+              pointStyle: "rectRounded",
+            },
+          },
           tooltip: {
+            mode: "index",
+            intersect: false,
             callbacks: {
               title: (items) => {
                 const dateStr = items[0].label;
@@ -395,11 +429,25 @@ const LogsPage = {
                 const day = dateStr.split("-")[1];
                 return `${day}/${month}/${year}`;
               },
+              footer: (items) => {
+                const total = items.reduce((sum, i) => sum + (i.parsed?.y || 0), 0);
+                return `Total: ${total}`;
+              },
             },
           },
         },
         scales: {
+          x: {
+            stacked: true,
+            ticks: {
+              color: textColor,
+              maxTicksLimit: 10,
+              maxRotation: 0,
+            },
+            grid: { display: false },
+          },
           y: {
+            stacked: true,
             beginAtZero: true,
             ticks: {
               color: textColor,
@@ -407,14 +455,6 @@ const LogsPage = {
               precision: 0,
             },
             grid: { color: gridColor },
-          },
-          x: {
-            ticks: {
-              color: textColor,
-              maxTicksLimit: 10,
-              maxRotation: 0,
-            },
-            grid: { display: false },
           },
         },
       },
