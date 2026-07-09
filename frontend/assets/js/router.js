@@ -164,7 +164,7 @@ const Router = {
       landing: "LandingPage",
       login: "LoginPage",
       profile: "ProfilePage",
-      settings: "ProfilePage",
+      settings: "SettingsPage",
       "admin-users": "AdminUsersPage",
     };
 
