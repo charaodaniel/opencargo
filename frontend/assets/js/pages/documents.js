@@ -154,13 +154,13 @@ const DocumentsPage = {
                 </div>
               </div>
               <div class="flex items-center justify-end space-x-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
-                <a href="${CONFIG.API_BASE_URL || ""}/documents/${f.id}/download"
+                <button onclick="DocumentsPage.downloadFile('${f.id}')"
                   class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
                   <span>Download</span>
-                </a>
+                </button>
                 <button onclick="DocumentsPage.confirmDelete('${f.id}')"
                   class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium flex items-center space-x-1">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,6 +317,43 @@ const DocumentsPage = {
   filter(type) {
     this._filterType = type;
     Router.refresh();
+  },
+
+  /**
+   * Download de arquivo via signed URL
+   */
+  async downloadFile(id) {
+    try {
+      const token = Storage.getToken();
+
+      // Abre janela ANTES do fetch para preservar gesto do usuario
+      const downloadWin = window.open("", "_blank");
+      if (!downloadWin) {
+        // Popup bloqueado — fallback: navegar direto
+        throw new Error("Popup bloqueado. Permita popups para este site.");
+      }
+
+      const res = await fetch(`${CONFIG.API_BASE_URL}/documents/${id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        downloadWin.close();
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erro ao baixar arquivo");
+      }
+
+      const { downloadUrl } = await res.json();
+
+      if (downloadUrl) {
+        downloadWin.location.href = downloadUrl;
+      } else {
+        downloadWin.close();
+        Toast.info("Download disponível apenas em produção.");
+      }
+    } catch (error) {
+      Toast.error(error.message || "Erro ao baixar documento");
+    }
   },
 
   /**

@@ -1,31 +1,74 @@
+import { createClient } from "@supabase/supabase-js";
 import { query, queryOne, uuid } from "../common/database.js";
-import { config } from "../common/config.js";
+import { config, isSupabaseAuth } from "../common/config.js";
 import { getPagination, paginatedResponse } from "../common/pagination.js";
-import { existsSync, mkdirSync, unlinkSync } from "fs";
-import { writeFile } from "fs/promises";
-import { join, extname } from "path";
+import { extname } from "path";
 
-const ALLOWED_MIMES = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain",
-];
+const STORAGE_BUCKET = "documents";
+const SIGNED_URL_EXPIRY = 60 * 60; // 1 hora em segundos
 
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".doc", ".docx", ".xls", ".xlsx", ".txt"];
 
 const ENTITY_TYPES = ["company", "driver", "vehicle", "load", "general"];
 
+let _supabase = null;
+
+function getSupabase() {
+  if (_supabase) return _supabase;
+  _supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  return _supabase;
+}
+
+/**
+ * Sobe arquivo para o Supabase Storage
+ */
+async function uploadToStorage(filePath, buffer, mimeType) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(filePath, buffer, {
+      contentType: mimeType,
+      upsert: false,
+    });
+
+  if (error) throw new Error(`Erro no upload Supabase: ${error.message}`);
+  return data;
+}
+
+/**
+ * Gera URL assinada para download
+ */
+async function getSignedUrl(filePath) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(filePath, SIGNED_URL_EXPIRY);
+
+  if (error) throw new Error(`Erro ao gerar URL: ${error.message}`);
+  return data.signedUrl;
+}
+
+/**
+ * Remove arquivo do Supabase Storage
+ */
+async function deleteFromStorage(filePath) {
+  const supabase = getSupabase();
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .remove([filePath]);
+
+  if (error) {
+    console.error("Erro ao remover do Supabase Storage:", error.message);
+  }
+}
+
 export async function documentRoutes(app) {
   app.addHook("onRequest", app.authenticate);
 
   /**
-   * POST /upload — Upload de arquivo
+   * POST /upload — Upload de arquivo para o Supabase Storage
    */
   app.post("/upload", async (request, reply) => {
     const data = await request.file();
@@ -67,16 +110,12 @@ export async function documentRoutes(app) {
 
     // Gera nome único para o arquivo
     const storedName = `${uuid()}${ext}`;
+    const storagePath = `${user.id}/${storedName}`;
 
-    // Cria diretório de upload se não existir
-    const uploadDir = config.UPLOAD_DIR;
-    if (!existsSync(uploadDir)) {
-      mkdirSync(uploadDir, { recursive: true });
+    // Upload para o Supabase Storage
+    if (isSupabaseAuth()) {
+      await uploadToStorage(storagePath, buffer, data.mimetype || "application/octet-stream");
     }
-
-    // Salva o arquivo no disco
-    const filePath = join(uploadDir, storedName);
-    await writeFile(filePath, buffer);
 
     // Registra no banco
     const id = uuid();
@@ -119,7 +158,7 @@ export async function documentRoutes(app) {
   });
 
   /**
-   * GET /:id — Baixar arquivo
+   * GET /:id/download — Gera URL assinada para download
    */
   app.get("/:id/download", async (request, reply) => {
     const { id } = request.params;
@@ -136,20 +175,32 @@ export async function documentRoutes(app) {
       return reply.status(403).send({ error: "Acesso negado" });
     }
 
-    const filePath = join(config.UPLOAD_DIR, doc.stored_name);
+    const storagePath = `${doc.user_id}/${doc.stored_name}`;
 
-    if (!existsSync(filePath)) {
-      return reply.status(404).send({ error: "Arquivo não encontrado no disco" });
+    try {
+      if (isSupabaseAuth()) {
+        const signedUrl = await getSignedUrl(storagePath);
+        return reply.send({
+          downloadUrl: signedUrl,
+          originalName: doc.original_name,
+          mimeType: doc.mime_type,
+        });
+      } else {
+        // Modo dev/test sem Supabase — retorna apenas metadados
+        return reply.send({
+          downloadUrl: null,
+          originalName: doc.original_name,
+          mimeType: doc.mime_type,
+          message: "Download disponível apenas em produção com Supabase Storage",
+        });
+      }
+    } catch (error) {
+      return reply.status(500).send({ error: "Erro ao gerar link de download" });
     }
-
-    return reply
-      .header("Content-Disposition", `attachment; filename="${doc.original_name}"`)
-      .header("Content-Type", doc.mime_type)
-      .sendFile(doc.stored_name, config.UPLOAD_DIR);
   });
 
   /**
-   * DELETE /:id — Excluir documento
+   * DELETE /:id — Excluir documento (também do Storage)
    */
   app.delete("/:id", async (request, reply) => {
     const { id } = request.params;
@@ -165,14 +216,10 @@ export async function documentRoutes(app) {
       return reply.status(403).send({ error: "Acesso negado" });
     }
 
-    // Remove arquivo do disco
-    const filePath = join(config.UPLOAD_DIR, doc.stored_name);
-    try {
-      if (existsSync(filePath)) {
-        unlinkSync(filePath);
-      }
-    } catch {
-      // Ignora se arquivo não existe
+    // Remove do Supabase Storage
+    if (isSupabaseAuth()) {
+      const storagePath = `${doc.user_id}/${doc.stored_name}`;
+      await deleteFromStorage(storagePath);
     }
 
     // Remove registro do banco
