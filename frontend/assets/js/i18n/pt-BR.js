@@ -241,6 +241,7 @@ const I18nPtBr = {
 
   // ── Roles ──────────────────────────────────────────
   "role.admin": "Administrador",
+  "role.manager": "Gestor",
   "role.company": "Empresa",
   "role.driver": "Motorista",
 
@@ -387,6 +388,16 @@ const I18nPtBr = {
   "error.upload": "Erro ao enviar documento",
   "error.delete": "Erro ao excluir",
   "error.api": "Erro de comunicação com o servidor",
+
+  // ── Admin ─────────────────────────────────────────
+  "admin.users.title": "Gerenciar Usuários",
+  "admin.users.desc": "Gerencie todos os usuários da plataforma",
+  "admin.users.total": "usuários",
+  "admin.users.empty": "Nenhum usuário encontrado",
+  "admin.users.roleUpdated": "Role alterada com sucesso!",
+  "admin.users.activated": "Usuário ativado com sucesso!",
+  "admin.users.deactivated": "Usuário desativado com sucesso!",
+  "nav.adminUsers": "Admin",
 
   // ── Temas ─────────────────────────────────────────
   "theme.toggle": "Alternar tema",

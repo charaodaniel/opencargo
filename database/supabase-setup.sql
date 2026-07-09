@@ -542,7 +542,31 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ═══════════════════════════════════════════════════════════
--- 6. SINCRONIZAR ADMIN EXISTENTE
+-- 6. TRIGGER: Deletar public.users quando usuário for removido
+-- ═══════════════════════════════════════════════════════════
+-- Quando um usuário é excluído no Supabase Auth (dashboard ou API),
+-- este trigger remove o registro correspondente em public.users.
+-- As FKs com ON DELETE CASCADE cuidam do resto (companies, drivers, etc.)
+
+CREATE OR REPLACE FUNCTION public.handle_deleted_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  DELETE FROM public.users WHERE id = OLD.id;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
+CREATE TRIGGER on_auth_user_deleted
+  AFTER DELETE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_deleted_user();
+
+-- ═══════════════════════════════════════════════════════════
+-- 7. SINCRONIZAR ADMIN EXISTENTE
 -- ═══════════════════════════════════════════════════════════
 --
 -- ⚠️  Crie o usuário no Supabase Auth primeiro:

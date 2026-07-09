@@ -285,7 +285,28 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- ═══════════════════════════════════════════════════════════
--- 3. SINCRONIZAR SEU UID COMO ADMIN
+-- 3. TRIGGER: Deletar public.users quando usuário for removido
+-- ═══════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION public.handle_deleted_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  DELETE FROM public.users WHERE id = OLD.id;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
+CREATE TRIGGER on_auth_user_deleted
+  AFTER DELETE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_deleted_user();
+
+-- ═══════════════════════════════════════════════════════════
+-- 4. SINCRONIZAR SEU UID COMO ADMIN
 -- ═══════════════════════════════════════════════════════════
 -- Crie o usuário no Supabase Auth primeiro:
 --   Authentication > Add User

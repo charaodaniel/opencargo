@@ -244,6 +244,7 @@ const I18nEn = {
 
   // ── Roles ─────────────────────────────────────────
   "role.admin": "Administrator",
+  "role.manager": "Manager",
   "role.company": "Company",
   "role.driver": "Driver",
 
@@ -390,6 +391,16 @@ const I18nEn = {
   "error.upload": "Error uploading document",
   "error.delete": "Error deleting",
   "error.api": "Server communication error",
+
+  // ── Admin ─────────────────────────────────────────
+  "admin.users.title": "Manage Users",
+  "admin.users.desc": "Manage all platform users",
+  "admin.users.total": "users",
+  "admin.users.empty": "No users found",
+  "admin.users.roleUpdated": "Role updated successfully!",
+  "admin.users.activated": "User activated successfully!",
+  "admin.users.deactivated": "User deactivated successfully!",
+  "nav.adminUsers": "Admin",
 
   // ── Themes ────────────────────────────────────────
   "theme.toggle": "Toggle theme",

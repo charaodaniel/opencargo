@@ -208,6 +208,22 @@ export class AuthService {
     const authUser = data.user;
     const meta = authUser.user_metadata || {};
 
+    // Verifica se o usuário ainda existe e está ativo em public.users
+    // Isso garante que mesmo que o token JWT ainda não tenha expirado,
+    // um usuário deletado do Supabase Auth não consiga mais acessar
+    const localUser = await queryOne(
+      `SELECT id, active FROM users WHERE id = ?`,
+      [authUser.id]
+    );
+
+    if (!localUser) {
+      throw new Error("Usuário não encontrado ou foi removido");
+    }
+
+    if (!localUser.active) {
+      throw new Error("Usuário desativado");
+    }
+
     return {
       id: authUser.id,
       email: authUser.email,
