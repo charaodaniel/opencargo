@@ -107,4 +107,19 @@ export async function routeRoutes(app) {
 
     return await queryOne(`SELECT * FROM routes WHERE id = ?`, [id]);
   });
+
+  /**
+   * Excluir rota
+   */
+  app.delete("/:id", async (request, reply) => {
+    const { id } = request.params;
+
+    const route = await queryOne(`SELECT id FROM routes WHERE id = ?`, [id]);
+    if (!route) {
+      return reply.status(404).send({ error: "Rota não encontrada" });
+    }
+
+    await query(`DELETE FROM routes WHERE id = ?`, [id]);
+    return reply.status(204).send();
+  });
 }

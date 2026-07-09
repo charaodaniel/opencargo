@@ -78,6 +78,14 @@ const RoutesPage = {
               label: "Status",
               render: (r) => Table.statusBadge(r.status),
             },
+            {
+              key: "actions",
+              label: "Ações",
+              render: (r) => Table.actions({
+                onEdit: `RoutesPage.openForm(${r.id})`,
+                onDelete: `RoutesPage.confirmDelete(${r.id})`,
+              }),
+            },
           ],
           data: filtered,
           emptyMessage: "Nenhuma rota encontrada.",
@@ -132,6 +140,21 @@ const RoutesPage = {
       ],
       "rotas"
     );
+  },
+
+  /**
+   * Confirma exclusão de rota
+   */
+  confirmDelete(id) {
+    Modal.confirm("Tem certeza que deseja excluir esta rota?", async () => {
+      try {
+        await Api.delete("routes", id);
+        Toast.success("Rota excluída!");
+        Router.refresh();
+      } catch (err) {
+        Toast.error(err.message || "Erro ao excluir rota");
+      }
+    });
   },
 
   async openForm(routeId = null) {

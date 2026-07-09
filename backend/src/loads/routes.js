@@ -104,4 +104,19 @@ export async function loadRoutes(app) {
 
     return await queryOne(`SELECT * FROM loads WHERE id = ?`, [id]);
   });
+
+  /**
+   * Excluir carga
+   */
+  app.delete("/:id", async (request, reply) => {
+    const { id } = request.params;
+
+    const load = await queryOne(`SELECT id FROM loads WHERE id = ?`, [id]);
+    if (!load) {
+      return reply.status(404).send({ error: "Carga não encontrada" });
+    }
+
+    await query(`DELETE FROM loads WHERE id = ?`, [id]);
+    return reply.status(204).send();
+  });
 }

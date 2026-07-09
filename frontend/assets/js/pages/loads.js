@@ -67,6 +67,14 @@ const LoadsPage = {
               label: "Status",
               render: (r) => Table.statusBadge(r.status),
             },
+            {
+              key: "actions",
+              label: "Ações",
+              render: (r) => Table.actions({
+                onEdit: `LoadsPage.openForm(${r.id})`,
+                onDelete: `LoadsPage.confirmDelete(${r.id})`,
+              }),
+            },
           ],
           data: filtered,
           emptyMessage: "Nenhuma carga encontrada.",
@@ -98,6 +106,21 @@ const LoadsPage = {
   setFilterCard(value) {
     this._filterCard = value;
     Router.refresh();
+  },
+
+  /**
+   * Confirma exclusão de carga
+   */
+  confirmDelete(id) {
+    Modal.confirm("Tem certeza que deseja excluir esta carga?", async () => {
+      try {
+        await Api.delete("loads", id);
+        Toast.success("Carga excluída!");
+        Router.refresh();
+      } catch (err) {
+        Toast.error(err.message || "Erro ao excluir carga");
+      }
+    });
   },
 
   /**
