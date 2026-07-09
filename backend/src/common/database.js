@@ -209,6 +209,18 @@ async function getAdapter() {
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
           );
 
+          CREATE TABLE IF NOT EXISTS activity_logs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+            user_name TEXT,
+            action TEXT NOT NULL,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT,
+            details TEXT,
+            ip TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+          );
+
           CREATE TABLE IF NOT EXISTS documents (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -237,6 +249,9 @@ async function getAdapter() {
           "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);",
           "CREATE INDEX IF NOT EXISTS idx_documents_entity ON documents(entity_type, entity_id);",
           "CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);",
+          "CREATE INDEX IF NOT EXISTS idx_activity_logs_created ON activity_logs(created_at);",
+          "CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);",
+          "CREATE INDEX IF NOT EXISTS idx_activity_logs_entity ON activity_logs(entity_type, entity_id);",
         ];
         for (const idx of indexes) {
           _db.exec(idx);

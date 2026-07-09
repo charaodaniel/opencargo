@@ -29,6 +29,7 @@ const I18nEn = {
   "nav.loads": "Loads",
   "nav.documents": "Documents",
   "nav.freights": "Freight History",
+  "nav.history": "Activity Log",
   "nav.matching": "Matching",
   "nav.maps": "Map",
   "nav.chat": "Chat",

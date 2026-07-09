@@ -129,6 +129,7 @@ const Router = {
       chat: "chat",
       documents: "documents",
       freights: "freights",
+      logs: "logs",
       notifications: "notifications",
       reviews: "reviews",
       maps: "maps",
@@ -166,6 +167,7 @@ const Router = {
       profile: "SettingsPage",
       settings: "SettingsPage",
       "admin-users": "AdminUsersPage",
+      logs: "LogsPage",
     };
 
     const globalName = globalMap[moduleName];
@@ -202,6 +204,7 @@ const Router = {
       chat: "Chat",
       notifications: "Notificações",
       reviews: "Avaliações",
+      logs: "Histórico",
       maps: "Mapa",
     };
 

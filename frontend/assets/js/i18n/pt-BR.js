@@ -29,6 +29,7 @@ const I18nPtBr = {
   "nav.loads": "Cargas",
   "nav.documents": "Documentos",
   "nav.freights": "Histórico de Fretes",
+  "nav.history": "Histórico",
   "nav.matching": "Matching",
   "nav.maps": "Mapa",
   "nav.chat": "Chat",

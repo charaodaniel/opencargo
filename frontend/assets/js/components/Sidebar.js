@@ -67,6 +67,7 @@ const Sidebar = {
         { icon: "matching", labelKey: "nav.matching", page: "matching" },
         { icon: "documents", labelKey: "nav.documents", page: "documents" },
         { icon: "freights", labelKey: "nav.freights", page: "freights" },
+        { icon: "documents", labelKey: "nav.history", page: "logs" },
       ],
     },
     {

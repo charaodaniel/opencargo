@@ -23,6 +23,7 @@ import { documentRoutes } from "./documents/routes.js";
 import { reviewRoutes } from "./reviews/routes.js";
 import { freightRoutes } from "./freights/routes.js";
 import { chatRoutes } from "./chat/routes.js";
+import { logRoutes, logAction } from "./logs/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -90,6 +91,37 @@ export async function buildApp() {
   // Expõe authService para as rotas (algumas rotas usam app.authService)
   app.decorate("authService", authService);
 
+  // ── Middleware de Log para ações de escrita ────────────────
+  app.addHook("onResponse", async (request, reply) => {
+    if (!request.user) return;
+    const method = request.method;
+    if (!["POST", "PATCH", "PUT", "DELETE"].includes(method)) return;
+    if (request.url.includes("/api/auth/login") || request.url.includes("/api/auth/register")) return;
+    if (request.url.includes("/api/chat/ws") || request.url.includes("/api/notifications/ws")) return;
+
+    const url = request.url.replace("/api/", "");
+    const entityType = url.split("/")[0];
+    const entityId = url.split("/")[1] || null;
+
+    const actionMap = {
+      POST: "create",
+      PUT: "update",
+      PATCH: "update",
+      DELETE: "delete",
+    };
+
+    if (reply.statusCode >= 200 && reply.statusCode < 300) {
+      await logAction({
+        user: request.user,
+        action: actionMap[method] || method.toLowerCase(),
+        entityType,
+        entityId,
+        details: request.body ? { body: request.body } : null,
+        ip: request.ip,
+      });
+    }
+  });
+
   // ── Rotas ──────────────────────────────────────────────────
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(userRoutes, { prefix: "/api/users" });
@@ -105,6 +137,7 @@ export async function buildApp() {
   await app.register(reviewRoutes, { prefix: "/api/reviews" });
   await app.register(freightRoutes, { prefix: "/api/freights" });
   await app.register(chatRoutes, { prefix: "/api/chat" });
+  await app.register(logRoutes, { prefix: "/api/logs" });
 
   // ── Health Check ───────────────────────────────────────────
   app.get("/api/health", async () => {
