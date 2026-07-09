@@ -60,13 +60,36 @@ const Navbar = {
               </div>
             </div>
 
-            <!-- Notifications bell -->
-            <button onclick="Router.go('notifications')" class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="${__("page.notifications")}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-              </svg>
-              <span id="notification-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold hidden">0</span>
-            </button>
+            <!-- Notifications bell with dropdown -->
+            <div class="relative" id="notif-menu">
+              <button onclick="Navbar.toggleNotifications()"
+                class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="${__("page.notifications")}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span id="notification-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold hidden">0</span>
+              </button>
+
+              <!-- Dropdown -->
+              <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <span class="text-sm font-semibold text-gray-900 dark:text-white">${__("page.notifications")}</span>
+                  <button onclick="Navbar.markAllNotifRead()" class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">${__("action.markAllRead")}</button>
+                </div>
+                <div id="notif-list" class="max-h-72 overflow-y-auto">
+                  <div class="p-4 text-center text-sm text-gray-400">
+                    <span class="inline-block animate-pulse">Carregando...</span>
+                  </div>
+                </div>
+                <div class="border-t border-gray-100 dark:border-gray-700 p-2">
+                  <button onclick="Router.go('notifications'); Navbar.closeNotifications()"
+                    class="w-full text-center px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-colors">
+                    ${__("label.all")} →
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <!-- Theme toggle -->
             <button data-toggle-theme onclick="Navbar.toggleTheme()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="${__("theme.toggle")}">
@@ -223,6 +246,103 @@ const Navbar = {
   },
 
   /**
+   * Alterna o dropdown de notificações e carrega dados
+   */
+  async toggleNotifications() {
+    const menu = document.getElementById("notif-dropdown");
+    if (!menu) return;
+
+    const isOpen = !menu.classList.contains("hidden");
+
+    if (!isOpen) {
+      menu.classList.remove("hidden");
+      await this._fetchRecentNotifications();
+
+      // Fecha ao clicar fora
+      const close = (e) => {
+        if (!e.target.closest("#notif-menu")) {
+          menu.classList.add("hidden");
+          document.removeEventListener("click", close);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", close), 10);
+    } else {
+      menu.classList.add("hidden");
+    }
+  },
+
+  /**
+   * Fecha o dropdown de notificações
+   */
+  closeNotifications() {
+    const menu = document.getElementById("notif-dropdown");
+    if (menu) menu.classList.add("hidden");
+  },
+
+  /**
+   * Busca e renderiza as últimas notificações no dropdown
+   */
+  async _fetchRecentNotifications() {
+    const list = document.getElementById("notif-list");
+    if (!list) return;
+
+    try {
+      const notifications = await Api.get("notifications");
+      const recent = notifications.slice(0, 5);
+
+      if (recent.length === 0) {
+        list.innerHTML = `
+          <div class="p-6 text-center">
+            <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">${__("notif.empty.title")}</p>
+          </div>
+        `;
+        return;
+      }
+
+      const unreadCount = notifications.filter(n => !n.read).length;
+
+      // Atualiza badge
+      const badge = document.getElementById("notification-badge");
+      if (badge) {
+        if (unreadCount > 0) {
+          badge.classList.remove("hidden");
+          badge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+        } else {
+          badge.classList.add("hidden");
+        }
+      }
+
+      const typeIcons = {
+        match: Icons.link({ class: 'w-4 h-4 text-blue-500' }),
+        message: Icons.chat({ class: 'w-4 h-4 text-green-500' }),
+        system: Icons.info({ class: 'w-4 h-4 text-amber-500' }),
+      };
+
+      list.innerHTML = recent.map(n => `
+        <div class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${!n.read ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}">
+          <span class="shrink-0 mr-3 mt-0.5">${typeIcons[n.type] || Icons.info({ class: 'w-4 h-4 text-gray-400' })}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${Utils.escapeHtml(n.title)}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${Utils.escapeHtml(n.message)}</p>
+            <p class="text-xs text-gray-400 mt-0.5">${Utils.formatDate(n.created_at, true)}</p>
+          </div>
+          ${!n.read ? '<span class="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-2"></span>' : ''}
+        </div>
+      `).join("");
+
+    } catch {
+      list.innerHTML = `
+        <div class="p-4 text-center text-sm text-gray-400">
+          Erro ao carregar notificações
+        </div>
+      `;
+    }
+  },
+
+  /**
    * Atualiza o badge de notificações
    */
   async updateNotificationBadge() {
@@ -241,5 +361,13 @@ const Navbar = {
     } catch {
       // Ignora erros
     }
+  },
+
+  /**
+   * Marca todas as notificações como lidas
+   */
+  async markAllNotifRead() {
+    Toast.success(__("notif.allRead"));
+    await this._fetchRecentNotifications();
   },
 };
