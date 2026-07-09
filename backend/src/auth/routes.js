@@ -57,14 +57,29 @@ export async function authRoutes(app) {
 
   app.post("/login", async (request, reply) => {
     const body = loginSchema.parse(request.body);
-    const result = await authService.login(body);
+
+    let result;
+    try {
+      result = await authService.login(body);
+    } catch (err) {
+      // Loga tentativa de login falha (não bloqueante)
+      logAction({
+        user: null,
+        action: "login_failed",
+        entityType: "auth",
+        details: { email: body.email },
+        ip: request.ip,
+      }).catch(() => {});
+
+      return reply.status(err.statusCode || 401).send({ error: err.message || "Credenciais inválidas" });
+    }
 
     // Verifica se a senha do usuário atende aos requisitos atuais
     // Se não atender, sinaliza para o frontend pedir redefinição
     const user = result.user;
     const needsPasswordReset = !isValidPassword(body.password);
 
-    // Loga o login (não bloqueante)
+    // Loga o login bem-sucedido (não bloqueante)
     logAction({
       user,
       action: "login",

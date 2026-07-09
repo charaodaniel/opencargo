@@ -27,8 +27,9 @@ export async function logAction({ user, action, entityType, entityId = null, det
     );
 
     // Verifica atividade suspeita após registrar (não bloqueante)
-    if (user && action === "delete") {
-      checkSuspiciousActivity(user).catch(err =>
+    // login_failed não tem user autenticado, mas ainda precisa ser verificado
+    if (user || action === "login_failed") {
+      checkSuspiciousActivity({ user, action, entityType, details, ip }).catch(err =>
         console.error("Erro ao verificar atividade suspeita:", err)
       );
     }
@@ -38,33 +39,38 @@ export async function logAction({ user, action, entityType, entityId = null, det
 }
 
 /**
- * Detecta padrões suspeitos e notifica administradores
- * - 3+ exclusões pelo mesmo usuário nos últimos 5 minutos
- * - 10+ exclusões totais nos últimos 5 minutos
+ * Detecta padrões suspeitos e notifica administradores.
+ * Regras por tipo de ação:
+ * - delete: 3+ pelo mesmo usuário OU 10+ totais em 5 min
+ * - update: 5+ pelo mesmo usuário em 5 min (edição em massa)
+ * - login_failed: 5+ falhas para o mesmo email em 5 min
  */
-async function checkSuspiciousActivity(user) {
+async function checkSuspiciousActivity({ user, action, entityType, details, ip }) {
   const fiveMinAgo = "datetime('now', '-5 minutes')";
 
+  if (action === "delete") {
+    await _checkMassDeletes(user, fiveMinAgo);
+  } else if (action === "update") {
+    await _checkMassUpdates(user, fiveMinAgo);
+  } else if (action === "login_failed") {
+    await _checkFailedLogins(details?.email, ip, fiveMinAgo);
+  }
+}
+
+/**
+ * Verifica exclusões em massa
+ */
+async function _checkMassDeletes(user, fiveMinAgo) {
   // Conta exclusões do mesmo usuário nos últimos 5 min
   const [userDeletes] = await query(
     `SELECT COUNT(*) as count FROM activity_logs
      WHERE user_id = ? AND action = 'delete' AND created_at >= ${fiveMinAgo}`,
     [user.id]
   );
-
   const userDeleteCount = userDeletes?.count || 0;
 
-  // Evita notificações duplicadas — verifica se já notificamos admins nos últimos 5 min
-  const [recentAlert] = await query(
-    `SELECT COUNT(*) as count FROM notifications n
-     JOIN users u ON n.user_id = u.id
-     WHERE n.type = 'system' AND u.role = 'administrador'
-     AND n.message LIKE ? AND n.created_at >= ${fiveMinAgo}`,
-    [`%${user.name}%exclusões%`]
-  );
-
-  if (recentAlert?.count === 0) {
-    // Gera alerta se 3+ exclusões pelo mesmo usuário
+  // Evita notificações duplicadas
+  if (!await _hasRecentAlert(user.name, "exclusões", fiveMinAgo)) {
     if (userDeleteCount >= 3) {
       const label = userDeleteCount >= 5 ? "crítico" : "alerta";
       await notifyAdmins({
@@ -74,16 +80,16 @@ async function checkSuspiciousActivity(user) {
       });
       return;
     }
+  }
 
-    // Conta exclusões totais nos últimos 5 min
+  // Conta exclusões totais nos últimos 5 min
+  if (!await _hasRecentAlert("exclusões", "exclusões", fiveMinAgo)) {
     const [totalDeletes] = await query(
       `SELECT COUNT(*) as count FROM activity_logs
        WHERE action = 'delete' AND created_at >= ${fiveMinAgo}`,
     );
-
     const totalDeleteCount = totalDeletes?.count || 0;
 
-    // Gera alerta se 10+ exclusões totais
     if (totalDeleteCount >= 10) {
       await notifyAdmins({
         type: "system",
@@ -92,6 +98,62 @@ async function checkSuspiciousActivity(user) {
       });
     }
   }
+}
+
+/**
+ * Verifica edições em massa (5+ updates pelo mesmo usuário em 5 min)
+ */
+async function _checkMassUpdates(user, fiveMinAgo) {
+  const [userUpdates] = await query(
+    `SELECT COUNT(*) as count FROM activity_logs
+     WHERE user_id = ? AND action = 'update' AND created_at >= ${fiveMinAgo}`,
+    [user.id]
+  );
+  const updateCount = userUpdates?.count || 0;
+
+  if (updateCount >= 5 && !await _hasRecentAlert(user.name, "atualizações", fiveMinAgo)) {
+    await notifyAdmins({
+      type: "system",
+      title: `⚠️ Edição em massa detectada`,
+      message: `${user.name} realizou ${updateCount} alterações nos últimos 5 minutos.`,
+    });
+  }
+}
+
+/**
+ * Verifica múltiplas tentativas de login falhas (5+ para o mesmo email em 5 min)
+ */
+async function _checkFailedLogins(email, ip, fiveMinAgo) {
+  if (!email) return;
+
+  const [failedAttempts] = await query(
+    `SELECT COUNT(*) as count FROM activity_logs
+     WHERE action = 'login_failed' AND details LIKE ? AND created_at >= ${fiveMinAgo}`,
+    [`%"email":"${email}"%`]
+  );
+  const failCount = failedAttempts?.count || 0;
+
+  if (failCount >= 5 && !await _hasRecentAlert(email, "login", fiveMinAgo)) {
+    await notifyAdmins({
+      type: "system",
+      title: "⚠️ Múltiplas tentativas de login",
+      message: `${failCount} tentativas de login falhas para o e-mail ${email} nos últimos 5 minutos${ip ? ` (IP: ${ip})` : ""}.`,
+    });
+  }
+}
+
+/**
+ * Verifica se já notificamos admins sobre este alerta nos últimos 5 min
+ */
+async function _hasRecentAlert(keyword, context, fiveMinAgo) {
+  const [recent] = await query(
+    `SELECT COUNT(*) as count FROM notifications n
+     JOIN users u ON n.user_id = u.id
+     WHERE n.type = 'system' AND u.role = 'administrador'
+     AND n.message LIKE ? AND n.created_at >= ${fiveMinAgo}`,
+    [`%${keyword}%${context}%`]
+  );
+  return (recent?.count || 0) > 0;
 }
 
 export async function logRoutes(app) {
