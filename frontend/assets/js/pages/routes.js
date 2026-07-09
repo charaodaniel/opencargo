@@ -134,20 +134,26 @@ const RoutesPage = {
     );
   },
 
-  openForm(routeId = null) {
+  async openForm(routeId = null) {
+    let route = null;
+    if (routeId) {
+      const routes = await Api.get("routes");
+      route = routes.find(r => r.id === routeId);
+    }
+
     Modal.openForm({
       title: routeId ? "Editar Rota" : "Nova Rota",
       submitText: routeId ? "Atualizar" : "Criar Rota",
       fields: [
-        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true, autocomplete: "city", placeholder: "Ex: São Paulo" },
-        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true, placeholder: "SP" },
-        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true, autocomplete: "city", placeholder: "Ex: Porto Alegre" },
-        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true, placeholder: "RS" },
-        { name: "departure_date", label: "Data de Partida", type: "date", required: true },
-        { name: "arrival_date", label: "Data de Chegada", type: "date", required: true },
-        { name: "available_weight", label: "Peso Disponível (kg)", type: "number", min: 1, placeholder: "5000" },
-        { name: "available_volume", label: "Volume Disponível (m³)", type: "number", min: 1, placeholder: "30" },
-        { name: "is_return", label: "É Rota de Retorno?", type: "select", options: [
+        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true, autocomplete: "city", placeholder: "Ex: São Paulo", value: route?.origin_city || "" },
+        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true, placeholder: "SP", value: route?.origin_state || "" },
+        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true, autocomplete: "city", placeholder: "Ex: Porto Alegre", value: route?.destination_city || "" },
+        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true, placeholder: "RS", value: route?.destination_state || "" },
+        { name: "departure_date", label: "Data de Partida", type: "date", required: true, value: route?.departure_date || "" },
+        { name: "arrival_date", label: "Data de Chegada", type: "date", required: true, value: route?.arrival_date || "" },
+        { name: "available_weight", label: "Peso Disponível (kg)", type: "number", min: 1, placeholder: "5000", value: route?.available_weight || "" },
+        { name: "available_volume", label: "Volume Disponível (m³)", type: "number", min: 1, placeholder: "30", value: route?.available_volume || "" },
+        { name: "is_return", label: "É Rota de Retorno?", type: "select", value: route?.is_return ? "1" : "0", options: [
           { value: "0", label: "Não" },
           { value: "1", label: "Sim" },
         ]},

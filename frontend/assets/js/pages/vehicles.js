@@ -126,24 +126,30 @@ const VehiclesPage = {
   /**
    * Abre formulário para criar/editar veículo
    */
-  openForm(vehicleId = null) {
+  async openForm(vehicleId = null) {
     const isEdit = !!vehicleId;
+    let vehicle = null;
+    if (isEdit) {
+      const vehicles = await Api.get("vehicles");
+      vehicle = vehicles.find(v => v.id === vehicleId);
+    }
+
     Modal.openForm({
       title: isEdit ? "Editar Veículo" : "Novo Veículo",
       submitText: isEdit ? "Atualizar" : "Criar Veículo",
       fields: [
-        { name: "plate", label: "Placa", type: "text", required: true },
-        { name: "model", label: "Modelo", type: "text", required: true },
-        { name: "year", label: "Ano", type: "number" },
-        { name: "capacity_kg", label: "Capacidade (kg)", type: "number", required: true, min: 1 },
-        { name: "capacity_m3", label: "Volume (m³)", type: "number", required: true, min: 1 },
-        { name: "type", label: "Tipo", type: "select", options: [
+        { name: "plate", label: "Placa", type: "text", required: true, value: vehicle?.plate || "" },
+        { name: "model", label: "Modelo", type: "text", required: true, value: vehicle?.model || "" },
+        { name: "year", label: "Ano", type: "number", value: vehicle?.year || "" },
+        { name: "capacity_kg", label: "Capacidade (kg)", type: "number", required: true, min: 1, value: vehicle?.capacity_kg || "" },
+        { name: "capacity_m3", label: "Volume (m³)", type: "number", required: true, min: 1, value: vehicle?.capacity_m3 || "" },
+        { name: "type", label: "Tipo", type: "select", value: vehicle?.type || "", options: [
           { value: "truck", label: "Caminhão Truck" },
           { value: "carreta", label: "Carreta" },
           { value: "van", label: "Van" },
           { value: "baú", label: "Baú" },
         ]},
-        { name: "status", label: "Status", type: "select", options: [
+        { name: "status", label: "Status", type: "select", value: vehicle?.status || "active", options: [
           { value: "active", label: "Ativo" },
           { value: "maintenance", label: "Em Manutenção" },
           { value: "inactive", label: "Inativo" },

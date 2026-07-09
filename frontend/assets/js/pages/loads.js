@@ -99,19 +99,30 @@ const LoadsPage = {
     this._filterCard = value;
     Router.refresh();
   },
+
+  /**
+   * Abre formulário para criar/editar carga
+   */
+  async openForm(loadId = null) {
+    let load = null;
+    if (loadId) {
+      const loads = await Api.get("loads");
+      load = loads.find(l => l.id === loadId);
+    }
+
     Modal.openForm({
       title: loadId ? "Editar Carga" : "Nova Carga",
       submitText: loadId ? "Atualizar" : "Criar Carga",
       fields: [
-        { name: "title", label: "Título da Carga", type: "text", required: true },
-        { name: "description", label: "Descrição", type: "textarea" },
-        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true, autocomplete: "city", placeholder: "Ex: São Paulo" },
-        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true, placeholder: "SP" },
-        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true, autocomplete: "city", placeholder: "Ex: Rio de Janeiro" },
-        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true, placeholder: "RJ" },
-        { name: "weight_kg", label: "Peso (kg)", type: "number", required: true, min: 1 },
-        { name: "volume_m3", label: "Volume (m³)", type: "number", min: 0.1, step: 0.1 },
-        { name: "type", label: "Tipo de Carga", type: "select", options: [
+        { name: "title", label: "Título da Carga", type: "text", required: true, value: load?.title || "" },
+        { name: "description", label: "Descrição", type: "textarea", value: load?.description || "" },
+        { name: "origin_city", label: "Cidade de Origem", type: "text", required: true, autocomplete: "city", placeholder: "Ex: São Paulo", value: load?.origin_city || "" },
+        { name: "origin_state", label: "UF Origem", type: "text", maxlength: 2, required: true, placeholder: "SP", value: load?.origin_state || "" },
+        { name: "destination_city", label: "Cidade de Destino", type: "text", required: true, autocomplete: "city", placeholder: "Ex: Rio de Janeiro", value: load?.destination_city || "" },
+        { name: "destination_state", label: "UF Destino", type: "text", maxlength: 2, required: true, placeholder: "RJ", value: load?.destination_state || "" },
+        { name: "weight_kg", label: "Peso (kg)", type: "number", required: true, min: 1, value: load?.weight_kg || "" },
+        { name: "volume_m3", label: "Volume (m³)", type: "number", min: 0.1, step: 0.1, value: load?.volume_m3 || "" },
+        { name: "type", label: "Tipo de Carga", type: "select", value: load?.type || "", options: [
           { value: "", label: "Selecione..." },
           { value: "Carga Geral", label: "Carga Geral" },
           { value: "Carga Frágil", label: "Carga Frágil" },
@@ -119,8 +130,8 @@ const LoadsPage = {
           { value: "Carga Perigosa", label: "Carga Perigosa" },
           { value: "Granel", label: "Granel" },
         ]},
-        { name: "pickup_date", label: "Data de Coleta", type: "date", required: true },
-        { name: "delivery_date", label: "Data de Entrega", type: "date", required: true },
+        { name: "pickup_date", label: "Data de Coleta", type: "date", required: true, value: load?.pickup_date || "" },
+        { name: "delivery_date", label: "Data de Entrega", type: "date", required: true, value: load?.delivery_date || "" },
       ],
       onSubmit: async (data) => {
         try {
