@@ -8,7 +8,11 @@ const ChatPage = {
   /** Match selecionado atualmente */
   _selectedMatchId: null,
 
-  async render() {
+  /** MatchId recebido via Router.go('chat', { matchId }) para auto-selecionar */
+  _pendingMatchId: null,
+
+  async render(params = {}) {
+    this._pendingMatchId = params.matchId || null;
     // Nota: mensagens são carregadas individualmente ao selecionar um match
     // O backend expõe GET /api/chat/messages/:matchId (não /api/messages)
     // e GET /api/matching (não /api/matches)
@@ -191,8 +195,11 @@ const ChatPage = {
    * Hook executado após renderizar
    */
   afterRender() {
-    // Se houver match selecionado, recarrega
-    if (this._selectedMatchId) {
+    // Se houver matchId pendente via Router.go('chat', { matchId }), seleciona
+    if (this._pendingMatchId) {
+      this.selectMatch(this._pendingMatchId);
+      this._pendingMatchId = null;
+    } else if (this._selectedMatchId) {
       this.selectMatch(this._selectedMatchId);
     }
   },

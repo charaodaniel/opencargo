@@ -419,8 +419,13 @@ const MatchingPage = {
           </div>
         ` : ""}
 
-        <!-- Ações: Anexar doc / Criar OS -->
+        <!-- Ações: Chat / Anexar doc / Criar OS -->
         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+          <button onclick="MatchingPage.openChat('${load.id}', '${route?.driver_id || ""}', '${Utils.escapeHtml(load.title)}')"
+            class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+            ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+            <span>Chat</span>
+          </button>
           <button onclick="MatchingPage.attachDocument('${load.id}', '${Utils.escapeHtml(load.title)}')"
             class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
             ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
@@ -483,6 +488,15 @@ const MatchingPage = {
             `).join("")}
           </div>
         ` : ""}
+
+        <!-- Ações: Chat -->
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+          <button onclick="MatchingPage.openChat('${load?.id || ""}', '${driver?.id || ""}', '${Utils.escapeHtml(driver?.name || load?.title || "")}')"
+            class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+            ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+            <span>Chat</span>
+          </button>
+        </div>
       </div>
     `;
   },
@@ -946,6 +960,27 @@ const MatchingPage = {
       Modal.close();
     } catch (err) {
       Toast.error(err.message || "Erro ao criar OS");
+    }
+  },
+
+  // ═══ Chat ═════════════════════════════════════════
+
+  /**
+   * Navega para o chat, auto-selecionando o match se existir
+   */
+  openChat(loadId, driverId, title) {
+    // Procura match existente para esta carga
+    const existingMatch = (this._matches || []).find(m =>
+      m.load_id === loadId || m.loadId === loadId
+    );
+
+    if (existingMatch) {
+      // Match já existe — navega com o matchId para auto-selecionar
+      Router.go("chat", { matchId: existingMatch.id || existingMatch.match_id });
+    } else {
+      // Ainda não há match — navega para o chat normalmente
+      Toast.info(`💬 Envie uma mensagem sobre "${title}" após criar um match.`);
+      Router.go("chat");
     }
   },
 
