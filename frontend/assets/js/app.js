@@ -153,7 +153,7 @@ const App = {
 
     // Primeira atualização após um pequeno delay para garantir que o
     // DOM da página foi renderizado
-    setTimeout(updateProgress, 100);
+    setTimeout(() => this._updateScrollProgress(), 100);
   },
 
   /**

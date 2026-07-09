@@ -105,6 +105,12 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Só cacheia requisições GET (POST/PUT/DELETE não podem ser cacheadas)
+  if (request.method !== "GET") {
+    event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+    return;
+  }
+
   // Estratégia: Cache First para assets estáticos
   if (isStaticAsset(url)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
