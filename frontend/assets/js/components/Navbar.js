@@ -86,7 +86,7 @@ const Navbar = {
                 </div>
                 <div class="hidden md:block text-left">
                   <p class="text-sm font-medium text-gray-900 dark:text-white leading-tight">${Utils.escapeHtml(user.name)}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">${user.role === "admin" ? __("role.admin") : user.role === "company" ? __("role.company") : __("role.driver")}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">${__("role." + user.role) || __("role.driver")}</p>
                 </div>
               </button>
             </div>

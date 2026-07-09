@@ -32,6 +32,7 @@ const I18nPtBr = {
   "nav.matching": "Matching",
   "nav.maps": "Mapa",
   "nav.chat": "Chat",
+  "nav.reviews": "Avaliações",
   "nav.notifications": "Notificações",
   "nav.settings": "Configurações",
   "nav.profile": "Perfil",
