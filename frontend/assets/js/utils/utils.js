@@ -207,4 +207,44 @@ const Utils = {
     div.textContent = html;
     return div.innerHTML;
   },
+
+  /**
+   * Exporta dados como CSV e faz download
+   * @param {Array<Object>} data - Dados a exportar
+   * @param {Array<{key: string, label: string}>} columns - Colunas
+   * @param {string} filename - Nome do arquivo
+   */
+  exportCsv(data, columns, filename = "export") {
+    if (!data || data.length === 0) {
+      Toast.warning("Nenhum dado para exportar.");
+      return;
+    }
+    const header = columns.map((c) => `"${c.label.replace(/"/g, '""')}"`).join(",");
+    const rows = data.map((row) =>
+      columns.map((c) => {
+        const val = this._getNestedValue(row, c.key);
+        if (val === null || val === undefined) return "";
+        return `"${String(val).replace(/"/g, '""')}"`;
+      }).join(",")
+    );
+    const csv = "\uFEFF" + [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${filename}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    Toast.success(`${filename}.csv exportado!`);
+  },
+
+  /**
+   * Acessa valor aninhado (ex: "user.name")
+   */
+  _getNestedValue(obj, key) {
+    if (!key || !obj) return obj;
+    return key.split(".").reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
+  },
 };

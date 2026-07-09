@@ -35,6 +35,10 @@ const AdminUsersPage = {
             <p class="text-sm text-gray-500 dark:text-gray-400">${__("admin.users.desc")}</p>
           </div>
           <div class="flex items-center space-x-3">
+            <button onclick="AdminUsersPage.exportCsv()" class="flex items-center space-x-1.5 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="${__("action.exportCsv")}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span class="hidden sm:inline">${__("action.exportCsv")}</span>
+            </button>
             <span class="text-sm text-gray-500 dark:text-gray-400">
               ${Utils.escapeHtml(String(this._users.length))} ${__("admin.users.total")}
             </span>
@@ -249,6 +253,24 @@ const AdminUsersPage = {
       this._users = [];
       this._totalPages = 1;
     }
+  },
+
+  /**
+   * Exporta usuários como CSV
+   */
+  exportCsv() {
+    Utils.exportCsv(
+      this._users,
+      [
+        { key: "name", label: "Nome" },
+        { key: "email", label: "E-mail" },
+        { key: "role", label: "Tipo" },
+        { key: "phone", label: "Telefone" },
+        { key: "active", label: "Ativo" },
+        { key: "created_at", label: "Criado em" },
+      ],
+      "usuarios"
+    );
   },
 
   /**

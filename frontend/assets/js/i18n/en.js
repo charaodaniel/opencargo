@@ -92,6 +92,7 @@ const I18nEn = {
   "action.learnMore": "Learn More",
   "action.startNow": "Get Started",
   "action.clearFilters": "Clear filters",
+  "action.exportCsv": "Export CSV",
   "action.markAllRead": "Mark all as read",
   "action.viewOnMap": "View on map",
   "action.rate": "Rate",

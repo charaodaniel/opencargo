@@ -90,6 +90,7 @@ const I18nPtBr = {
   "action.learnMore": "Saiba Mais",
   "action.startNow": "Começar Agora",
   "action.clearFilters": "Limpar filtros",
+  "action.exportCsv": "Exportar CSV",
   "action.markAllRead": "Marcar todas como lidas",
   "action.viewOnMap": "Ver no mapa",
   "action.rate": "Avaliar",
