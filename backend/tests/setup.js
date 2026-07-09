@@ -14,6 +14,7 @@ process.env.NODE_ENV = "test";
 process.env.DATABASE_URL = `file:${TEST_DB_PATH}`;
 process.env.JWT_SECRET = "test-secret-opencargo";
 process.env.RATE_LIMIT_MAX = "1000";
+process.env.SUPABASE_URL = "";
 
 import { buildApp } from "../src/app.js";
 import { initDatabase, execute } from "../src/common/database.js";

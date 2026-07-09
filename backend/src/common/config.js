@@ -23,7 +23,11 @@ const envSchema = z.object({
 const parsed = envSchema.parse(process.env);
 
 // ── Helper: está usando Supabase Auth? ────────────────
-export const isSupabaseAuth = !!parsed.SUPABASE_URL;
+// Função (não constante) para permitir que testes sobrescrevam SUPABASE_URL
+// antes de qualquer chamada de API. Lê de process.env em tempo real.
+export function isSupabaseAuth() {
+  return !!process.env.SUPABASE_URL;
+}
 
 // ── Validação de segurança ──────────────────────────────
 const DEV_JWT_SECRET = "opencargo-dev-secret";

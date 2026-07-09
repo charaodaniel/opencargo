@@ -73,7 +73,7 @@ export async function buildApp() {
   // ── Autenticação decorator ─────────────────────────────────
   app.decorate("authenticate", async function (request, reply) {
     try {
-      if (isSupabaseAuth) {
+      if (isSupabaseAuth()) {
         // Modo Supabase Auth: verifica o JWT via API do Supabase
         const authHeader = request.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {

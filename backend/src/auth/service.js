@@ -31,7 +31,7 @@ export class AuthService {
   }
 
   async register(input) {
-    if (isSupabaseAuth) {
+    if (isSupabaseAuth()) {
       // ── Modo Supabase Auth ──────────────────────────────────
       const supabase = getSupabase();
 
@@ -62,9 +62,9 @@ export class AuthService {
       if (!user) {
         // Se o trigger não criou ainda, insere manualmente
         await query(
-          `INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?)
-           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()`,
-          [authUser.id, input.name, input.email, input.role]
+          `INSERT INTO users (id, name, email, role, updated_at) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = excluded.updated_at`,
+          [authUser.id, input.name, input.email, input.role, new Date().toISOString()]
         );
         user = { id: authUser.id, name: input.name, email: input.email, role: input.role };
       }
@@ -108,7 +108,7 @@ export class AuthService {
   }
 
   async login(input) {
-    if (isSupabaseAuth) {
+    if (isSupabaseAuth()) {
       // ── Modo Supabase Auth ──────────────────────────────────
       const supabase = getSupabase();
 
@@ -193,7 +193,7 @@ export class AuthService {
    * @returns {Promise<{id: string, email: string, role: string}>}
    */
   async verifyToken(token) {
-    if (!isSupabaseAuth) {
+    if (!isSupabaseAuth()) {
       // Modo local — usa o JWT do Fastify
       return this.app.jwt.verify(token);
     }
