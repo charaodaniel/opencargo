@@ -4,6 +4,9 @@
  */
 
 const LoadsPage = {
+  /** Card de filtro ativo */
+  _filterCard: "all",
+
   async render() {
     const [loads, companies] = await Promise.all([
       Api.get("loads"),
@@ -11,18 +14,17 @@ const LoadsPage = {
     ]);
     this._loads = loads;
 
-    const statusCounts = {};
-    loads.forEach((l) => {
-      statusCounts[l.status] = (statusCounts[l.status] || 0) + 1;
-    });
+    // Filtra dados conforme card ativo
+    const filtered = this._filterCard === "all"
+      ? loads
+      : loads.filter(l => l.status === this._filterCard);
 
-    const statusSummary = [
-      { status: "pending", label: "Pendentes" },
-      { status: "available", label: "Disponíveis" },
-      { status: "matched", label: "Compatíveis" },
-      { status: "in_transit", label: "Em Trânsito" },
-      { status: "delivered", label: "Entregues" },
-    ];
+    // Contagens para os cards
+    const statusOrder = ["pending", "available", "matched", "in_transit", "delivered", "cancelled"];
+    const statusLabels = {
+      pending: "Pendentes", available: "Disponíveis", matched: "Compatíveis",
+      in_transit: "Em Trânsito", delivered: "Entregues", cancelled: "Canceladas",
+    };
 
     return `
       <div class="fade-in">
@@ -43,18 +45,10 @@ const LoadsPage = {
           </div>
         </div>
 
-        <!-- Status summary -->
-        <div class="flex flex-wrap gap-3 mb-6">
-          ${statusSummary
-            .map(
-              (s) => `
-            <div class="flex items-center space-x-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <span class="text-sm font-medium text-gray-900 dark:text-white">${statusCounts[s.status] || 0}</span>
-              <span class="text-xs text-gray-500">${s.label}</span>
-            </div>
-          `
-            )
-            .join("")}
+        <!-- Filter Cards -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          ${this._renderFilterCard("all", "Todas", loads.length)}
+          ${statusOrder.map(s => this._renderFilterCard(s, statusLabels[s], loads.filter(l => l.status === s).length)).join("")}
         </div>
 
         ${Table.render({
@@ -74,38 +68,37 @@ const LoadsPage = {
               render: (r) => Table.statusBadge(r.status),
             },
           ],
-          data: loads,
-          emptyMessage: "Nenhuma carga cadastrada.",
+          data: filtered,
+          emptyMessage: "Nenhuma carga encontrada.",
         })}
       </div>
     `;
   },
 
   /**
-   * Exporta cargas como CSV
+   * Renderiza um card de filtro clicável
    */
-  exportCsv() {
-    Utils.exportCsv(
-      this._loads,
-      [
-        { key: "title", label: "Título" },
-        { key: "origin_city", label: "Origem" },
-        { key: "origin_state", label: "UF Origem" },
-        { key: "destination_city", label: "Destino" },
-        { key: "destination_state", label: "UF Destino" },
-        { key: "weight_kg", label: "Peso (kg)" },
-        { key: "volume_m3", label: "Volume (m³)" },
-        { key: "type", label: "Tipo" },
-        { key: "company_name", label: "Empresa" },
-        { key: "status", label: "Status" },
-        { key: "pickup_date", label: "Coleta" },
-        { key: "delivery_date", label: "Entrega" },
-      ],
-      "cargas"
-    );
+  _renderFilterCard(value, label, count) {
+    const isActive = this._filterCard === value;
+    return `
+      <button onclick="LoadsPage.setFilterCard('${value}')"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
+          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+        }">
+        ${label}
+        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
+      </button>
+    `;
   },
 
-  openForm(loadId = null) {
+  /**
+   * Define o filtro ativo e recarrega
+   */
+  setFilterCard(value) {
+    this._filterCard = value;
+    Router.refresh();
+  },
     Modal.openForm({
       title: loadId ? "Editar Carga" : "Nova Carga",
       submitText: loadId ? "Atualizar" : "Criar Carga",

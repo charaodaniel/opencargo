@@ -4,6 +4,9 @@
  */
 
 const RoutesPage = {
+  /** Card de filtro ativo */
+  _filterCard: "all",
+
   async render() {
     const [routes, drivers] = await Promise.all([
       Api.get("routes"),
@@ -11,8 +14,23 @@ const RoutesPage = {
     ]);
     this._routes = routes;
 
-    const activeRoutes = routes.filter((r) => r.status === "active").length;
-    const returnRoutes = routes.filter((r) => r.is_return).length;
+    // Filtra dados conforme card ativo
+    let filtered = routes;
+    if (this._filterCard === "active") {
+      filtered = routes.filter(r => r.status === "active");
+    } else if (this._filterCard === "return") {
+      filtered = routes.filter(r => r.is_return);
+    } else if (this._filterCard === "completed") {
+      filtered = routes.filter(r => r.status === "completed");
+    } else if (this._filterCard === "cancelled") {
+      filtered = routes.filter(r => r.status === "cancelled");
+    }
+
+    // Contagens para os cards
+    const activeRoutes = routes.filter(r => r.status === "active").length;
+    const returnRoutes = routes.filter(r => r.is_return).length;
+    const completedRoutes = routes.filter(r => r.status === "completed").length;
+    const cancelledRoutes = routes.filter(r => r.status === "cancelled").length;
 
     return `
       <div class="fade-in">
@@ -33,16 +51,13 @@ const RoutesPage = {
           </div>
         </div>
 
-        <!-- Mini stats -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">${activeRoutes}</p>
-            <p class="text-sm text-gray-500">Rotas Ativas</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">${returnRoutes}</p>
-            <p class="text-sm text-gray-500">Rotas de Retorno</p>
-          </div>
+        <!-- Filter Cards -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          ${this._renderFilterCard("all", "Todas", routes.length)}
+          ${this._renderFilterCard("active", "Ativas", activeRoutes)}
+          ${this._renderFilterCard("return", "Retorno", returnRoutes)}
+          ${this._renderFilterCard("completed", "Concluídas", completedRoutes)}
+          ${this._renderFilterCard("cancelled", "Canceladas", cancelledRoutes)}
         </div>
 
         ${Table.render({
@@ -64,11 +79,36 @@ const RoutesPage = {
               render: (r) => Table.statusBadge(r.status),
             },
           ],
-          data: routes,
-          emptyMessage: "Nenhuma rota cadastrada.",
+          data: filtered,
+          emptyMessage: "Nenhuma rota encontrada.",
         })}
       </div>
     `;
+  },
+
+  /**
+   * Renderiza um card de filtro clicável
+   */
+  _renderFilterCard(value, label, count) {
+    const isActive = this._filterCard === value;
+    return `
+      <button onclick="RoutesPage.setFilterCard('${value}')"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
+          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+        }">
+        ${label}
+        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
+      </button>
+    `;
+  },
+
+  /**
+   * Define o filtro ativo e recarrega
+   */
+  setFilterCard(value) {
+    this._filterCard = value;
+    Router.refresh();
   },
 
   /**

@@ -4,12 +4,24 @@
  */
 
 const CompaniesPage = {
+  /** Card de filtro ativo */
+  _filterCard: "all",
+
   /**
    * Renderiza a página de empresas
    */
   async render() {
     const companies = await Api.get("companies");
     this._companies = companies;
+
+    // Filtra dados conforme card ativo
+    const filtered = this._filterCard === "all"
+      ? companies
+      : companies.filter(c => String(c.active) === this._filterCard);
+
+    // Contagens para os cards
+    const totalActive = companies.filter(c => c.active).length;
+    const totalInactive = companies.filter(c => !c.active).length;
 
     return `
       <div class="fade-in">
@@ -28,6 +40,13 @@ const CompaniesPage = {
               <span class="hidden sm:inline">Nova Empresa</span>
             </button>
           </div>
+        </div>
+
+        <!-- Filter Cards -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          ${this._renderFilterCard("all", "Todas", companies.length)}
+          ${this._renderFilterCard("true", "Ativas", totalActive)}
+          ${this._renderFilterCard("false", "Inativas", totalInactive)}
         </div>
 
         ${Table.render({
@@ -52,11 +71,36 @@ const CompaniesPage = {
               }),
             },
           ],
-          data: companies,
-          emptyMessage: "Nenhuma empresa cadastrada. Clique em 'Nova Empresa' para começar.",
+          data: filtered,
+          emptyMessage: "Nenhuma empresa encontrada.",
         })}
       </div>
     `;
+  },
+
+  /**
+   * Renderiza um card de filtro clicável
+   */
+  _renderFilterCard(value, label, count) {
+    const isActive = this._filterCard === value;
+    return `
+      <button onclick="CompaniesPage.setFilterCard('${value}')"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
+          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+        }">
+        ${label}
+        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
+      </button>
+    `;
+  },
+
+  /**
+   * Define o filtro ativo e recarrega
+   */
+  setFilterCard(value) {
+    this._filterCard = value;
+    Router.refresh();
   },
 
   /**
