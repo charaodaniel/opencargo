@@ -24,6 +24,7 @@ import { reviewRoutes } from "./reviews/routes.js";
 import { freightRoutes } from "./freights/routes.js";
 import { chatRoutes } from "./chat/routes.js";
 import { logRoutes, logAction } from "./logs/routes.js";
+import { serviceOrderRoutes } from "./service-orders/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -138,6 +139,7 @@ export async function buildApp() {
   await app.register(freightRoutes, { prefix: "/api/freights" });
   await app.register(chatRoutes, { prefix: "/api/chat" });
   await app.register(logRoutes, { prefix: "/api/logs" });
+  await app.register(serviceOrderRoutes, { prefix: "/api/service-orders" });
 
   // ── Health Check ───────────────────────────────────────────
   app.get("/api/health", async () => {

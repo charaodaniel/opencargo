@@ -124,6 +124,26 @@ const MatchingPage = {
             </button>
           </div>
 
+          <!-- Busca por proximidade (Cargas perto de mim) -->
+          <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-blue-700 dark:text-blue-300">📍 Cargas perto de mim</span>
+              <button onclick="MatchingPage.searchNearby()"
+                class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors active:scale-95">
+                Buscar perto
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" id="nearby-city" placeholder="Cidade (opcional)"
+                class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+              <input type="text" id="nearby-state" placeholder="UF" maxlength="2"
+                class="w-14 px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 uppercase" />
+              <input type="number" id="nearby-radius" placeholder="Km" value="150"
+                class="w-20 px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div id="nearby-status" class="mt-1 text-xs text-blue-600 dark:text-blue-400 hidden"></div>
+          </div>
+
           <!-- Grid de filtros -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <!-- Search -->
@@ -398,6 +418,20 @@ const MatchingPage = {
             `).join("")}
           </div>
         ` : ""}
+
+        <!-- Ações: Anexar doc / Criar OS -->
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+          <button onclick="MatchingPage.attachDocument('${load.id}', '${Utils.escapeHtml(load.title)}')"
+            class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
+            ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
+            <span>Anexar doc</span>
+          </button>
+          <button onclick="MatchingPage.createServiceOrder('${load.id}', '${route?.id || ""}', '${Utils.escapeHtml(load.title)}')"
+            class="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium flex items-center space-x-1">
+            ${Icons.document({ class: 'w-3.5 h-3.5', noHover: true })}
+            <span>Criar OS</span>
+          </button>
+        </div>
       </div>
     `;
   },
@@ -546,4 +580,374 @@ const MatchingPage = {
     };
     Router.refresh();
   },
+
+  // ═══ Cargas perto de mim ═══════════════════════════
+
+  /**
+   * Busca cargas próximas usando GPS ou cidade manual
+   */
+  async searchNearby() {
+    const statusEl = document.getElementById("nearby-status");
+    const cityEl = document.getElementById("nearby-city");
+    const stateEl = document.getElementById("nearby-state");
+    const radiusEl = document.getElementById("nearby-radius");
+
+    if (!statusEl) return;
+    statusEl.classList.remove("hidden");
+    statusEl.textContent = "Obtendo localização...";
+
+    const city = cityEl?.value?.trim() || "";
+    const state = stateEl?.value?.trim() || "";
+    const radius = radiusEl?.value || "150";
+
+    let lat, lng;
+
+    // Tenta GPS primeiro
+    if (!city && navigator.geolocation) {
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 10000,
+            enableHighAccuracy: false,
+          });
+        });
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+        statusEl.textContent = `📍 GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)} — buscando cargas num raio de ${radius}km...`;
+      } catch {
+        statusEl.textContent = "⚠️ GPS indisponível. Digite uma cidade manualmente.";
+        return;
+      }
+    }
+
+    // Monta URL
+    const params = new URLSearchParams();
+    if (lat && lng) { params.set("lat", lat); params.set("lng", lng); }
+    if (city) params.set("city", city);
+    if (state) params.set("state", state);
+    params.set("radius", radius);
+
+    try {
+      statusEl.textContent = "Buscando cargas próximas...";
+      const data = await Api.get(`loads/nearby?${params.toString()}`);
+
+      if (data.results?.length > 0) {
+        statusEl.textContent = `✅ ${data.results.length} carga(s) encontrada(s) num raio de ${radius}km!`;
+        Toast.success(`${data.results.length} carga(s) próxima(s) encontrada(s)!`);
+        this._results = { results: data.results.map((r) => ({
+          load: r,
+          route: null,
+          score: 100 - Math.min(r.distance_km / 10, 50),
+          match_reasons: [`📍 ${r.distance_km}km de distância`],
+        })), total: data.results.length };
+        Router.refresh();
+      } else {
+        statusEl.textContent = "Nenhuma carga encontrada próxima. Tente aumentar o raio.";
+        Toast.info("Nenhuma carga próxima encontrada.");
+      }
+    } catch (err) {
+      statusEl.textContent = "Erro ao buscar cargas próximas.";
+      Toast.error(err.message || "Erro na busca");
+    }
+  },
+
+  // ═══ Anexar documento ═══════════════════════════════
+
+  /**
+   * Abre modal de upload de documento vinculado a uma carga
+   */
+  attachDocument(loadId, loadTitle) {
+    const modalHtml = `
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Anexar documento à carga: <strong class="text-gray-900 dark:text-white">${Utils.escapeHtml(loadTitle)}</strong>
+        </p>
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer"
+          id="attach-dropzone"
+          onclick="document.getElementById('attach-file-input').click()"
+          ondragover="event.preventDefault(); this.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20')"
+          ondragleave="this.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20')"
+          ondrop="event.preventDefault(); MatchingPage.handleAttachDrop(event)">
+          <input type="file" id="attach-file-input" class="hidden" onchange="MatchingPage.handleAttachSelect(event)" />
+          <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span class="text-blue-600 dark:text-blue-400">Clique para selecionar</span> ou arraste o arquivo aqui
+          </p>
+          <p class="text-xs text-gray-400 mt-1">PDF, imagens, DOC, XLS, TXT — até 10MB</p>
+          <div id="attach-file-info" class="mt-3 hidden">
+            <div class="inline-flex items-center space-x-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              <span id="attach-file-name" class="text-sm font-medium text-gray-900 dark:text-white"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    Modal.open({
+      title: "Anexar Documento",
+      body: modalHtml,
+      footer: `
+        <div class="flex space-x-3">
+          <button type="button" onclick="Modal.close()" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">Cancelar</button>
+          <button type="button" onclick="MatchingPage.submitAttachDoc('${loadId}')" id="attach-submit-btn" class="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium" disabled>Enviar</button>
+        </div>
+      `,
+    });
+
+    this._attachFile = null;
+  },
+
+  _attachFile: null,
+
+  handleAttachSelect(event) {
+    const file = event.target.files[0];
+    if (file) this._showAttachFileInfo(file);
+  },
+
+  handleAttachDrop(event) {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) this._showAttachFileInfo(file);
+    document.getElementById("attach-dropzone")?.classList.remove("border-blue-500", "bg-blue-50", "dark:bg-blue-900/20");
+  },
+
+  _showAttachFileInfo(file) {
+    this._attachFile = file;
+    const btn = document.getElementById("attach-submit-btn");
+    const info = document.getElementById("attach-file-info");
+    const name = document.getElementById("attach-file-name");
+    if (btn) btn.disabled = false;
+    if (info) info.classList.remove("hidden");
+    if (name) name.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  },
+
+  async submitAttachDoc(loadId) {
+    if (!this._attachFile) return;
+    const btn = document.getElementById("attach-submit-btn");
+    if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", this._attachFile);
+      formData.append("entityType", "load");
+      formData.append("entityId", loadId);
+
+      const res = await fetch(`${CONFIG.API_BASE_URL}/documents/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${Storage.getToken()}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erro no upload");
+      }
+
+      Toast.success("Documento anexado à carga!");
+      Modal.close();
+      this._attachFile = null;
+    } catch (err) {
+      Toast.error(err.message || "Erro ao anexar");
+      if (btn) { btn.disabled = false; btn.textContent = "Enviar"; }
+    }
+  },
+
+  // ═══ Ordem de Serviço ══════════════════════════════
+
+  /**
+   * Abre modal para criar Ordem de Serviço
+   */
+  async createServiceOrder(loadId, routeId, loadTitle) {
+    const user = Storage.getUser();
+
+    // Busca dados do motorista/empresa
+    let driver = null;
+    let company = null;
+    try {
+      const driverData = await Api.get("drivers/me");
+      driver = driverData;
+    } catch { /* fallback */ }
+
+    try {
+      const loads = this._results.results || [];
+      const result = loads.find(r => r.load?.id === loadId);
+      if (result?.load?.company_id) {
+        company = { id: result.load.company_id, name: result.load.company_name };
+      }
+    } catch { /* fallback */ }
+
+    if (!driver) {
+      Toast.error("Você precisa estar cadastrado como motorista.");
+      return;
+    }
+
+    const modalHtml = `
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Criar Ordem de Serviço para: <strong class="text-gray-900 dark:text-white">${Utils.escapeHtml(loadTitle)}</strong>
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de OS</label>
+          <select id="os-type" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
+            <option value="text">📝 Texto (descrição livre)</option>
+            <option value="pdf">📄 PDF (gerado pelo sistema)</option>
+            <option value="upload">📎 Upload (arquivo personalizado)</option>
+          </select>
+        </div>
+
+        <div id="os-text-field">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição / Observações</label>
+          <textarea id="os-description" rows="4"
+            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white"
+            placeholder="Descreva os serviços, condições, valores..."></textarea>
+        </div>
+
+        <div id="os-value-field">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor (R$) — opcional</label>
+          <input type="number" id="os-value" step="0.01" min="0"
+            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white"
+            placeholder="0,00" />
+        </div>
+
+        <div id="os-upload-field" class="hidden">
+          <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer"
+            onclick="document.getElementById('os-file-input').click()">
+            <input type="file" id="os-file-input" class="hidden" />
+            <p class="text-sm text-gray-500">Clique para fazer upload do arquivo da OS</p>
+            <p class="text-xs text-gray-400 mt-1">PDF, DOC, imagens</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    Modal.open({
+      title: "Nova Ordem de Serviço",
+      body: modalHtml,
+      footer: `
+        <div class="flex space-x-3">
+          <button type="button" onclick="Modal.close()" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">Cancelar</button>
+          <button type="button" onclick="MatchingPage.submitServiceOrder('${loadId}', '${routeId}', '${driver?.id || ""}', '${company?.id || ""}')" class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Criar OS</button>
+        </div>
+      `,
+    });
+
+    // Toggle campo de upload quando seleciona tipo upload
+    document.getElementById("os-type")?.addEventListener("change", function() {
+      const uploadField = document.getElementById("os-upload-field");
+      uploadField.classList.toggle("hidden", this.value !== "upload");
+      const textField = document.getElementById("os-text-field");
+      if (this.value === "pdf") {
+        textField.innerHTML = '<p class="text-sm text-blue-600 dark:text-blue-400">📄 A OS será gerada automaticamente em PDF com os dados da carga e motorista.</p>';
+      } else {
+        textField.innerHTML = `
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição / Observações</label>
+          <textarea id="os-description" rows="4" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white" placeholder="Descreva os serviços..."></textarea>
+        `;
+      }
+    });
+  },
+
+  /**
+   * Envia a criação da Ordem de Serviço
+   */
+  async submitServiceOrder(loadId, routeId, driverId, companyId) {
+    const type = document.getElementById("os-type")?.value || "text";
+    const description = document.getElementById("os-description")?.value || "";
+    const valueBrl = parseFloat(document.getElementById("os-value")?.value) || null;
+    const fileInput = document.getElementById("os-file-input");
+
+    let uploadedDocId = null;
+
+    // Se for upload, faz upload primeiro
+    if (type === "upload" && fileInput?.files[0]) {
+      try {
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("entityType", "load");
+        formData.append("entityId", loadId);
+
+        const res = await fetch(`${CONFIG.API_BASE_URL}/documents/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${Storage.getToken()}` },
+          body: formData,
+        });
+        if (res.ok) {
+          const doc = await res.json();
+          uploadedDocId = doc.id;
+        }
+      } catch { /* fallback */ }
+    }
+
+    // Gera PDF se for tipo pdf
+    let pdfUrl = null;
+    if (type === "pdf") {
+      const load = this._results.results?.find(r => r.load?.id === loadId)?.load;
+      const user = Storage.getUser();
+      const osHtml = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Ordem de Serviço</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; }
+  h1 { text-align: center; color: #2563eb; }
+  .info { margin: 20px 0; }
+  .info td { padding: 6px 12px; }
+  .info td:first-child { font-weight: bold; color: #374151; }
+  .desc { margin: 20px 0; padding: 16px; background: #f3f4f6; border-radius: 8px; white-space: pre-wrap; }
+  .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+</style></head>
+<body>
+  <h1>ORDEM DE SERVIÇO</h1>
+  <hr/>
+  <table class="info">
+    <tr><td>Carga:</td><td>${load?.title || loadTitle}</td></tr>
+    <tr><td>Origem:</td><td>${load?.origin_city || ""}/${load?.origin_state || ""}</td></tr>
+    <tr><td>Destino:</td><td>${load?.destination_city || ""}/${load?.destination_state || ""}</td></tr>
+    <tr><td>Peso:</td><td>${load?.weight_kg || ""} kg</td></tr>
+    <tr><td>Tipo:</td><td>${load?.type || ""}</td></tr>
+    <tr><td>Motorista:</td><td>${user?.name || ""}</td></tr>
+    <tr><td>Valor:</td><td>R$ ${valueBrl?.toFixed(2) || "0,00"}</td></tr>
+    <tr><td>Data:</td><td>${new Date().toLocaleDateString("pt-BR")}</td></tr>
+  </table>
+  ${description ? `<div class="desc">${description}</div>` : ""}
+  <hr/>
+  <div class="footer">Documento gerado pelo OpenCargo em ${new Date().toLocaleString("pt-BR")}</div>
+</body></html>`.trim();
+      pdfUrl = "data:text/html;charset=utf-8," + encodeURIComponent(osHtml);
+    }
+
+    // Encontra o matchId para esta carga/rota
+    let matchId = null;
+    try {
+      const matchData = await Api.get("matching");
+      const matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
+      const match = matches.find(m => m.load_id === loadId || m.loadId === loadId);
+      if (match) matchId = match.id || match.match_id;
+    } catch { /* fallback */ }
+
+    try {
+      await Api.post("service-orders", {
+          matchId: matchId || loadId,
+          loadId,
+          driverId,
+          companyId,
+          type,
+          description: description || "OS gerada pelo sistema",
+          valueBrl,
+          pdfUrl,
+          uploadedDocId,
+      });
+
+      Toast.success("Ordem de Serviço criada com sucesso!");
+      Modal.close();
+    } catch (err) {
+      Toast.error(err.message || "Erro ao criar OS");
+    }
+  },
+
+  // ═══ Fim ações ════════════════════════════════════
 };

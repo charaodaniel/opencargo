@@ -232,6 +232,23 @@ async function getAdapter() {
             size_bytes INTEGER NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
           );
+
+          CREATE TABLE IF NOT EXISTS service_orders (
+            id TEXT PRIMARY KEY,
+            match_id TEXT REFERENCES matches(id) ON DELETE SET NULL,
+            load_id TEXT NOT NULL REFERENCES loads(id) ON DELETE CASCADE,
+            driver_id TEXT NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+            company_id TEXT REFERENCES companies(id) ON DELETE SET NULL,
+            type TEXT NOT NULL DEFAULT 'text' CHECK(type IN ('text', 'pdf', 'upload')),
+            number TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'signed', 'completed', 'cancelled')),
+            description TEXT,
+            value_brl REAL,
+            pdf_url TEXT,
+            uploaded_doc_id TEXT REFERENCES documents(id) ON DELETE SET NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+          );
         `);
 
         // Índices
