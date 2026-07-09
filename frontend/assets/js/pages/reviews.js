@@ -63,7 +63,8 @@ const ReviewsPage = {
    */
   async _fetchPendingMatches(user) {
     try {
-      const matches = await Api.get("matches");
+      const matchData = await Api.get("matching");
+      const matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
       this._pendingMatches = matches.filter(
         (m) =>
           m.status === "completed" &&
@@ -272,8 +273,9 @@ const ReviewsPage = {
    */
   async openReviewForm(matchId) {
     // Busca dados do match para mostrar contexto
-    const matches = await Api.get("matches");
-    const match = matches.find((m) => m.id === matchId);
+    const matchData = await Api.get("matching");
+    const allMatches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
+    const match = allMatches.find((m) => m.id === matchId);
     if (!match) return;
 
     Modal.openForm({
