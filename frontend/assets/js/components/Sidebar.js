@@ -101,12 +101,30 @@ const Sidebar = {
   },
 
   /**
+   * Retorna os grupos filtrando itens por role do usuário
+   */
+  _getFilteredGroups() {
+    const user = Storage.getUser();
+    const isAdmin = user && user.role === "administrador";
+
+    return this._groups.map(group => ({
+      ...group,
+      items: group.items.filter(item => {
+        // Esconde o link Admin para usuários não-admin
+        if (item.page === "admin-users" && !isAdmin) return false;
+        return true;
+      }),
+    })).filter(group => group.items.length > 0);
+  },
+
+  /**
    * Renderiza a sidebar
    * @param {string} currentPage - Página ativa
    * @returns {string} HTML da sidebar
    */
   render(currentPage = "dashboard") {
     const isCollapsed = this._collapsed;
+    const groups = this._getFilteredGroups();
 
     return `
       <aside id="sidebar"
@@ -137,7 +155,7 @@ const Sidebar = {
 
         <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-1 sidebar-scrollbar">
-          ${this._groups.map((group) => this._renderGroup(group, currentPage)).join("")}
+          ${groups.map((group) => this._renderGroup(group, currentPage)).join("")}
         </nav>
 
         <!-- Footer -->
