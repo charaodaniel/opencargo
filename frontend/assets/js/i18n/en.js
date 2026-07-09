@@ -407,6 +407,7 @@ const I18nEn = {
   "admin.users.roleUpdated": "Role updated successfully!",
   "admin.users.activated": "User activated successfully!",
   "admin.users.deactivated": "User deactivated successfully!",
+  "nav.alerts": "Alerts",
   "nav.adminUsers": "Admin",
 
   // ── Themes ────────────────────────────────────────

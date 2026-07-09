@@ -227,6 +227,86 @@ export async function logRoutes(app) {
   });
 
   /**
+   * Alertas de segurança — atividade suspeita consolidada
+   */
+  app.get("/alerts", { preHandler: [adminOnly] }, async (request) => {
+    const { page, limit, offset } = getPagination(request.query);
+
+    // 1. Busca notificações do tipo 'system' com alertas suspeitos
+    const [alertNotifications, [{ notifTotal }]] = await Promise.all([
+      query(
+        `SELECT n.* FROM notifications n
+         JOIN users u ON n.user_id = u.id
+         WHERE n.type = 'system' AND u.role = 'administrador'
+         ORDER BY n.created_at DESC LIMIT ? OFFSET ?`,
+        [limit, offset]
+      ),
+      query(
+        `SELECT COUNT(*) as notifTotal FROM notifications n
+         JOIN users u ON n.user_id = u.id
+         WHERE n.type = 'system' AND u.role = 'administrador'`
+      ),
+    ]);
+
+    // 2. Estatísticas das últimas 24h
+    const [loginFailed24h] = await query(
+      `SELECT COUNT(*) as count FROM activity_logs
+       WHERE action = 'login_failed' AND created_at >= datetime('now', '-24 hours')`
+    );
+    const [massActions24h] = await query(
+      `SELECT COUNT(*) as count FROM activity_logs
+       WHERE action IN ('delete', 'update') AND created_at >= datetime('now', '-24 hours')`
+    );
+
+    // 3. Top IPs com login_failed nas últimas 24h
+    const [topIps] = await query(
+      `SELECT ip, COUNT(*) as count FROM activity_logs
+       WHERE action = 'login_failed' AND ip IS NOT NULL
+       AND created_at >= datetime('now', '-24 hours')
+       GROUP BY ip ORDER BY count DESC LIMIT 5`
+    );
+
+    // 4. Top emails com login_failed nas últimas 24h
+    const [topEmails] = await query(
+      `SELECT details, COUNT(*) as count FROM activity_logs
+       WHERE action = 'login_failed' AND details IS NOT NULL
+       AND created_at >= datetime('now', '-24 hours')
+       GROUP BY details ORDER BY count DESC LIMIT 5`
+    );
+    const parsedEmails = (topEmails || []).map(e => {
+      try {
+        const d = JSON.parse(e.details);
+        return { email: d.email || "desconhecido", count: e.count };
+      } catch {
+        return { email: "desconhecido", count: e.count };
+      }
+    });
+
+    // 5. Últimos login_failed individuais (para timeline)
+    const [recentFailures] = await query(
+      `SELECT * FROM activity_logs
+       WHERE action = 'login_failed'
+       ORDER BY created_at DESC LIMIT 20`
+    );
+    const parsedFailures = (recentFailures || []).map(r => ({
+      ...r,
+      details: r.details ? JSON.parse(r.details) : null,
+    }));
+
+    return {
+      notifications: alertNotifications || [],
+      stats: {
+        login_failed_24h: loginFailed24h?.count || 0,
+        mass_actions_24h: massActions24h?.count || 0,
+        top_ips: topIps || [],
+        top_emails: parsedEmails,
+      },
+      recent_failures: parsedFailures,
+      pagination: { page, limit, total: notifTotal?.notifTotal || 0 },
+    };
+  });
+
+  /**
    * Limpar logs antigos (admin) — query param ?days=30
    */
   app.delete("/cleanup", { preHandler: [adminOnly] }, async (request) => {

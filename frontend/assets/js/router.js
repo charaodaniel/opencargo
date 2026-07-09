@@ -138,6 +138,7 @@ const Router = {
       profile: "profile",
       settings: "settings",
       "admin-users": "admin-users",
+      alerts: "alerts",
     };
 
     const moduleName = pageMap[pageName] || "dashboard";
@@ -168,6 +169,7 @@ const Router = {
       settings: "SettingsPage",
       "admin-users": "AdminUsersPage",
       logs: "LogsPage",
+      alerts: "AlertsPage",
     };
 
     const globalName = globalMap[moduleName];

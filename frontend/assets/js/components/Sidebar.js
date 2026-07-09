@@ -77,6 +77,7 @@ const Sidebar = {
         { icon: "chat", labelKey: "nav.chat", page: "chat" },
         { icon: "reviews", labelKey: "nav.reviews", page: "reviews" },
         { icon: "notifications", labelKey: "nav.notifications", page: "notifications" },
+        { icon: "documents", labelKey: "nav.alerts", page: "alerts" },
       ],
     },
     {
@@ -109,8 +110,8 @@ const Sidebar = {
     return this._groups.map(group => ({
       ...group,
       items: group.items.filter(item => {
-        // Esconde o link Admin para usuários não-admin
-        if (item.page === "admin-users" && !isAdmin) return false;
+        // Esconde páginas admin para usuários não-admin
+        if ((item.page === "admin-users" || item.page === "alerts") && !isAdmin) return false;
         return true;
       }),
     })).filter(group => group.items.length > 0);

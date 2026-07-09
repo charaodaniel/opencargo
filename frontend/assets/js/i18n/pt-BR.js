@@ -405,6 +405,7 @@ const I18nPtBr = {
   "admin.users.roleUpdated": "Role alterada com sucesso!",
   "admin.users.activated": "Usuário ativado com sucesso!",
   "admin.users.deactivated": "Usuário desativado com sucesso!",
+  "nav.alerts": "Alertas",
   "nav.adminUsers": "Admin",
 
   // ── Temas ─────────────────────────────────────────
