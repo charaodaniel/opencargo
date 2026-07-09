@@ -177,6 +177,13 @@ const AdminUsersPage = {
         </td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${createdDate}</td>
         <td class="px-6 py-4 text-right">
+          <button onclick="AdminUsersPage.viewUser('${user.id}')"
+            class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            title="Ver detalhes">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
           <button onclick="AdminUsersPage.confirmDelete('${user.id}', '${Utils.escapeHtml(user.name)}')"
             class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             title="${__("action.delete")}">
@@ -308,6 +315,110 @@ const AdminUsersPage = {
     if (!confirm(`${__("message.confirmDelete")} "${userName}"?`)) return;
 
     this._deleteUser(userId);
+  },
+
+  /**
+   * Abre modal com detalhes do usuário
+   */
+  async viewUser(userId) {
+    try {
+      const token = Storage.getToken();
+      const res = await fetch(`${CONFIG.API_BASE_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error(`Erro: ${res.status}`);
+
+      const user = await res.json();
+      const initials = Utils.getInitials(user.name);
+      const avatarColor = Utils.getAvatarColor(user.name);
+
+      const roleLabels = {
+        "administrador": __("role.admin"),
+        "gestor": __("role.manager"),
+        "empresa": __("role.company"),
+        "motorista": __("role.driver"),
+      };
+
+      const createdDate = user.created_at
+        ? new Date(user.created_at).toLocaleDateString(I18n.locale === "en" ? "en-US" : "pt-BR")
+        : "-";
+
+      const updatedDate = user.updated_at
+        ? new Date(user.updated_at).toLocaleDateString(I18n.locale === "en" ? "en-US" : "pt-BR")
+        : "-";
+
+      Modal.open({
+        title: `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background-color: ${avatarColor}">
+              ${initials}
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-gray-900 dark:text-white">${Utils.escapeHtml(user.name)}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">${Utils.escapeHtml(user.email)}</p>
+            </div>
+          </div>
+        `,
+        body: `
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.name")}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">${Utils.escapeHtml(user.name)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.email")}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">${Utils.escapeHtml(user.email)}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.type")}</p>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  user.role === "administrador" ? "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-400" :
+                  user.role === "gestor" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-400" :
+                  user.role === "empresa" ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400" :
+                  "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400"
+                }">${roleLabels[user.role] || user.role}</span>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.status")}</p>
+                <span class="inline-flex items-center space-x-1.5 mt-1">
+                  <span class="w-2 h-2 rounded-full ${user.active ? "bg-green-500" : "bg-red-500"}"></span>
+                  <span class="text-sm font-medium ${user.active ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}">
+                    ${user.active ? __("label.active") : __("label.inactive")}
+                  </span>
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.phone")}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">${user.phone ? Utils.escapeHtml(user.phone) : '<span class="text-gray-400">—</span>'}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">ID</p>
+                <p class="text-sm font-mono text-gray-900 dark:text-white mt-1 truncate max-w-[180px]" title="${user.id}">${user.id}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.createdAt")}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">${createdDate}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">${__("label.updatedAt") || "Atualizado em"}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">${updatedDate}</p>
+              </div>
+            </div>
+          </div>
+        `,
+        footer: `
+          <button onclick="Modal.close()"
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            ${__("action.close")}
+          </button>
+        `,
+      });
+    } catch (err) {
+      console.error("Erro ao carregar detalhes do usuário:", err);
+      Toast.error(__("message.error"));
+    }
   },
 
   /**
