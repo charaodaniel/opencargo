@@ -45,10 +45,10 @@ const VehiclesPage = {
 
         <!-- Filter Cards -->
         <div class="flex flex-wrap gap-2 mb-6">
-          ${this._renderFilterCard("all", "Todos", vehicles.length)}
-          ${this._renderFilterCard("active", "Ativos", totalActive)}
-          ${this._renderFilterCard("maintenance", "Manutenção", totalMaintenance)}
-          ${this._renderFilterCard("inactive", "Inativos", totalInactive)}
+          ${Utils.renderFilterCard({ value: "all", label: "Todos", count: vehicles.length, isActive: this._filterCard === "all", pageNs: "VehiclesPage" })}
+          ${Utils.renderFilterCard({ value: "active", label: "Ativos", count: totalActive, isActive: this._filterCard === "active", pageNs: "VehiclesPage" })}
+          ${Utils.renderFilterCard({ value: "maintenance", label: "Manutenção", count: totalMaintenance, isActive: this._filterCard === "maintenance", pageNs: "VehiclesPage" })}
+          ${Utils.renderFilterCard({ value: "inactive", label: "Inativos", count: totalInactive, isActive: this._filterCard === "inactive", pageNs: "VehiclesPage" })}
         </div>
 
         ${Table.render({
@@ -76,23 +76,6 @@ const VehiclesPage = {
           emptyMessage: "Nenhum veículo encontrado.",
         })}
       </div>
-    `;
-  },
-
-  /**
-   * Renderiza um card de filtro clicável
-   */
-  _renderFilterCard(value, label, count) {
-    const isActive = this._filterCard === value;
-    return `
-      <button onclick="VehiclesPage.setFilterCard('${value}')"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-        }">
-        ${label}
-        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
-      </button>
     `;
   },
 

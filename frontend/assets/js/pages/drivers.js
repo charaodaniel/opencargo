@@ -44,9 +44,9 @@ const DriversPage = {
 
         <!-- Filter Cards -->
         <div class="flex flex-wrap gap-2 mb-6">
-          ${this._renderFilterCard("all", "Todos", drivers.length)}
-          ${this._renderFilterCard("true", "Disponíveis", totalAvailable)}
-          ${this._renderFilterCard("false", "Indisponíveis", totalUnavailable)}
+          ${Utils.renderFilterCard({ value: "all", label: "Todos", count: drivers.length, isActive: this._filterCard === "all", pageNs: "DriversPage" })}
+          ${Utils.renderFilterCard({ value: "true", label: "Disponíveis", count: totalAvailable, isActive: this._filterCard === "true", pageNs: "DriversPage" })}
+          ${Utils.renderFilterCard({ value: "false", label: "Indisponíveis", count: totalUnavailable, isActive: this._filterCard === "false", pageNs: "DriversPage" })}
         </div>
 
         ${Table.render({
@@ -87,23 +87,6 @@ const DriversPage = {
           emptyMessage: "Nenhum motorista encontrado.",
         })}
       </div>
-    `;
-  },
-
-  /**
-   * Renderiza um card de filtro clicável
-   */
-  _renderFilterCard(value, label, count) {
-    const isActive = this._filterCard === value;
-    return `
-      <button onclick="DriversPage.setFilterCard('${value}')"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-        }">
-        ${label}
-        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
-      </button>
     `;
   },
 

@@ -293,4 +293,29 @@ const Utils = {
     if (!key || !obj) return obj;
     return key.split(".").reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
   },
+
+  /**
+   * Renderiza um card de filtro clicável para as páginas CRUD.
+   * Centraliza o HTML que era duplicado em 7 páginas.
+   *
+   * @param {Object} opts
+   * @param {string} opts.value - Valor do filtro (ex: "all", "active", "")
+   * @param {string} opts.label - Texto exibido (ex: "Todas", "Ativas")
+   * @param {number} opts.count - Quantidade de itens
+   * @param {boolean} opts.isActive - Se este filtro está ativo
+   * @param {string} opts.pageNs - Namespace global da página (ex: "CompaniesPage")
+   * @returns {string} HTML do card
+   */
+  renderFilterCard({ value, label, count, isActive, pageNs }) {
+    return `
+      <button onclick="${pageNs}.setFilterCard('${value}')"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
+          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+        }">
+        ${label}
+        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
+      </button>
+    `;
+  },
 };

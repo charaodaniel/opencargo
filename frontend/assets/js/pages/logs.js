@@ -67,11 +67,11 @@ const LogsPage = {
 
         <!-- Filter Cards (action) -->
         <div class="flex flex-wrap gap-2 mb-4">
-          ${this._renderFilterCard("", "Todas", this._stats?.total || 0)}
-          ${this._renderFilterCard("create", "Criações", this._stats?.by_action?.find(a => a.action === "create")?.count || 0)}
-          ${this._renderFilterCard("update", "Atualizações", this._stats?.by_action?.find(a => a.action === "update")?.count || 0)}
-          ${this._renderFilterCard("delete", "Exclusões", this._stats?.by_action?.find(a => a.action === "delete")?.count || 0)}
-          ${this._renderFilterCard("login", "Logins", this._stats?.by_action?.find(a => a.action === "login")?.count || 0)}
+          ${Utils.renderFilterCard({ value: "", label: "Todas", count: this._stats?.total || 0, isActive: this._filterCard === "", pageNs: "LogsPage" })}
+          ${Utils.renderFilterCard({ value: "create", label: "Criações", count: this._stats?.by_action?.find(a => a.action === "create")?.count || 0, isActive: this._filterCard === "create", pageNs: "LogsPage" })}
+          ${Utils.renderFilterCard({ value: "update", label: "Atualizações", count: this._stats?.by_action?.find(a => a.action === "update")?.count || 0, isActive: this._filterCard === "update", pageNs: "LogsPage" })}
+          ${Utils.renderFilterCard({ value: "delete", label: "Exclusões", count: this._stats?.by_action?.find(a => a.action === "delete")?.count || 0, isActive: this._filterCard === "delete", pageNs: "LogsPage" })}
+          ${Utils.renderFilterCard({ value: "login", label: "Logins", count: this._stats?.by_action?.find(a => a.action === "login")?.count || 0, isActive: this._filterCard === "login", pageNs: "LogsPage" })}
         </div>
 
         <!-- Filters -->
@@ -296,23 +296,6 @@ const LogsPage = {
     this._filters = { action: "", entity_type: "", q: "", dateFrom: "", dateTo: "" };
     this._filterCard = "";
     Router.refresh();
-  },
-
-  /**
-   * Renderiza um card de filtro clicável
-   */
-  _renderFilterCard(value, label, count) {
-    const isActive = this._filterCard === value;
-    return `
-      <button onclick="LogsPage.setFilterCard('${value}')"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-        }">
-        ${label}
-        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
-      </button>
-    `;
   },
 
   /**

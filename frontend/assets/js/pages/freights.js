@@ -82,11 +82,11 @@ const FreightsPage = {
 
         <!-- Filter Cards (status) -->
         <div class="flex flex-wrap gap-2 mb-4">
-          ${this._renderFilterCard("", "Todos", this._stats?.total || 0)}
-          ${this._renderFilterCard("completed", "Concluídos", this._stats?.completed || 0)}
-          ${this._renderFilterCard("accepted", "Em Andamento", this._stats?.in_progress || 0)}
-          ${this._renderFilterCard("pending", "Pendentes", this._freights.filter(f => f.match?.status === "pending").length || 0)}
-          ${this._renderFilterCard("cancelled", "Cancelados", this._stats?.cancelled || 0)}
+          ${Utils.renderFilterCard({ value: "", label: "Todos", count: this._stats?.total || 0, isActive: this._filterCard === "", pageNs: "FreightsPage" })}
+          ${Utils.renderFilterCard({ value: "completed", label: "Concluídos", count: this._stats?.completed || 0, isActive: this._filterCard === "completed", pageNs: "FreightsPage" })}
+          ${Utils.renderFilterCard({ value: "accepted", label: "Em Andamento", count: this._stats?.in_progress || 0, isActive: this._filterCard === "accepted", pageNs: "FreightsPage" })}
+          ${Utils.renderFilterCard({ value: "pending", label: "Pendentes", count: this._freights.filter(f => f.match?.status === "pending").length || 0, isActive: this._filterCard === "pending", pageNs: "FreightsPage" })}
+          ${Utils.renderFilterCard({ value: "cancelled", label: "Cancelados", count: this._stats?.cancelled || 0, isActive: this._filterCard === "cancelled", pageNs: "FreightsPage" })}
         </div>
 
         <!-- Filters -->
@@ -360,23 +360,6 @@ const FreightsPage = {
     this._filters = { status: "", q: "", dateFrom: "", dateTo: "", role: "" };
     this._filterCard = "";
     Router.refresh();
-  },
-
-  /**
-   * Renderiza um card de filtro clicável
-   */
-  _renderFilterCard(value, label, count) {
-    const isActive = this._filterCard === value;
-    return `
-      <button onclick="FreightsPage.setFilterCard('${value}')"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-        }">
-        ${label}
-        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
-      </button>
-    `;
   },
 
   /**

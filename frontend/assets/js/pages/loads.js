@@ -47,8 +47,8 @@ const LoadsPage = {
 
         <!-- Filter Cards -->
         <div class="flex flex-wrap gap-2 mb-6">
-          ${this._renderFilterCard("all", "Todas", loads.length)}
-          ${statusOrder.map(s => this._renderFilterCard(s, statusLabels[s], loads.filter(l => l.status === s).length)).join("")}
+          ${Utils.renderFilterCard({ value: "all", label: "Todas", count: loads.length, isActive: this._filterCard === "all", pageNs: "LoadsPage" })}
+          ${statusOrder.map(s => Utils.renderFilterCard({ value: s, label: statusLabels[s], count: loads.filter(l => l.status === s).length, isActive: this._filterCard === s, pageNs: "LoadsPage" })).join("")}
         </div>
 
         ${Table.render({
@@ -80,23 +80,6 @@ const LoadsPage = {
           emptyMessage: "Nenhuma carga encontrada.",
         })}
       </div>
-    `;
-  },
-
-  /**
-   * Renderiza um card de filtro clicável
-   */
-  _renderFilterCard(value, label, count) {
-    const isActive = this._filterCard === value;
-    return `
-      <button onclick="LoadsPage.setFilterCard('${value}')"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-          ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600'
-          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-        }">
-        ${label}
-        <span class="ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}">(${count})</span>
-      </button>
     `;
   },
 
