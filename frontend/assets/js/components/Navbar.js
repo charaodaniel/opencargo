@@ -69,7 +69,7 @@ const Navbar = {
             </button>
 
             <!-- Theme toggle -->
-            <button onclick="Navbar.toggleTheme()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="${__("theme.toggle")}">
+            <button data-toggle-theme onclick="Navbar.toggleTheme()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="${__("theme.toggle")}">
               <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
               </svg>
@@ -135,13 +135,16 @@ const Navbar = {
     Storage.setTheme(isDark ? "dark" : "light");
 
     // Animação de rotação no botão de tema
-    const toggleBtn = document.querySelector('[onclick*="toggleTheme"]');
+    const toggleBtn = document.querySelector('[data-toggle-theme]');
     if (toggleBtn) {
       toggleBtn.classList.remove("theme-spin");
       // Força reflow para reiniciar a animação
       void toggleBtn.offsetWidth;
       toggleBtn.classList.add("theme-spin");
-      setTimeout(() => toggleBtn.classList.remove("theme-spin"), 500);
+      // Remove a classe quando a animação terminar (mais robusto que setTimeout)
+      toggleBtn.addEventListener("animationend", () => {
+        toggleBtn.classList.remove("theme-spin");
+      }, { once: true });
     }
   },
 

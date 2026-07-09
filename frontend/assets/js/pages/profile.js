@@ -144,7 +144,7 @@ const ProfilePage = {
                 <p class="text-sm font-medium text-gray-900 dark:text-white">Tema escuro</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Alternar entre tema claro e escuro</p>
               </div>
-              <button onclick="Navbar.toggleTheme(); ProfilePage._updateThemeToggle()" 
+              <button data-toggle-theme onclick="Navbar.toggleTheme(); ProfilePage._updateThemeToggle()" 
                 class="relative w-12 h-6 rounded-full transition-colors duration-300 ${Storage.getTheme() === "dark" ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}" role="switch">
                 <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${Storage.getTheme() === "dark" ? "translate-x-6" : ""}"></span>
               </button>
@@ -315,7 +315,7 @@ const ProfilePage = {
    */
   _updateThemeToggle() {
     const isDark = Storage.getTheme() === "dark";
-    const toggle = document.querySelector('[onclick*="toggleTheme"]');
+    const toggle = document.querySelector('[data-toggle-theme]');
     if (toggle) {
       toggle.className = `relative w-12 h-6 rounded-full transition-colors duration-300 ${isDark ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"}`;
       const knob = toggle.querySelector("span");

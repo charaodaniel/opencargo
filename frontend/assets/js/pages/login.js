@@ -70,7 +70,7 @@ const LoginPage = {
         <!-- Right: Form Panel -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white dark:bg-gray-900 relative">
           <!-- Theme toggle -->
-          <button onclick="Navbar.toggleTheme()" class="absolute top-4 right-4 p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-10" title="${__("theme.toggle")}">
+          <button data-toggle-theme onclick="Navbar.toggleTheme()" class="absolute top-4 right-4 p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-10" title="${__("theme.toggle")}">
             <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
             </svg>
