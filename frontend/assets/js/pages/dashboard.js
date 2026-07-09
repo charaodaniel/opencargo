@@ -11,13 +11,23 @@ const DashboardPage = {
    */
   async render() {
     // Carrega dados em paralelo
-    const [companies, drivers, loads, routes, matches] = await Promise.all([
+    // Nota: matches não é mais buscado via Api.get("matches") porque o backend
+    // expõe /api/matching (não /api/matches). O matching é opcional no dashboard.
+    const [companies, drivers, loads, routes] = await Promise.all([
       Api.get("companies"),
       Api.get("drivers"),
       Api.get("loads"),
       Api.get("routes"),
-      Api.get("matches"),
     ]);
+
+    // Tenta carregar matches, mas não quebra a página se falhar
+    let matches = [];
+    try {
+      const matchData = await Api.get("matching");
+      matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
+    } catch {
+      // matches é opcional no dashboard
+    }
 
     const activeLoads = loads.filter((l) => l.status === "available").length;
     const activeRoutes = routes.filter((r) => r.status === "active").length;

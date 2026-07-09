@@ -162,6 +162,8 @@ const Router = {
       maps: "MapsPage",
       landing: "LandingPage",
       login: "LoginPage",
+      profile: "ProfilePage",
+      settings: "ProfilePage",
     };
 
     const globalName = globalMap[moduleName];

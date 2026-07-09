@@ -9,10 +9,16 @@ const ChatPage = {
   _selectedMatchId: null,
 
   async render() {
-    const [messages, matches] = await Promise.all([
-      Api.get("messages"),
-      Api.get("matches"),
-    ]);
+    // Nota: mensagens são carregadas individualmente ao selecionar um match
+    // O backend expõe GET /api/chat/messages/:matchId (não /api/messages)
+    // e GET /api/matching (não /api/matches)
+    let matches = [];
+    try {
+      const matchData = await Api.get("matching");
+      matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
+    } catch {
+      matches = [];
+    }
 
     const activeMatches = matches.filter((m) => ["pending", "accepted"].includes(m.status));
 
@@ -94,9 +100,14 @@ const ChatPage = {
       el.classList.toggle("dark:bg-gray-700/50", el.dataset.matchId === matchId);
     });
 
-    // Carrega mensagens
-    const messages = await Api.get("messages");
-    const matchMessages = messages.filter((m) => m.match_id === matchId);
+    // Carrega mensagens via endpoint correto: GET /api/chat/messages/:matchId
+    let matchMessages = [];
+    try {
+      const msgData = await Api.get(`chat/messages/${matchId}`);
+      matchMessages = Array.isArray(msgData) ? msgData : (msgData?.data || []);
+    } catch {
+      matchMessages = [];
+    }
 
     const mainArea = document.getElementById("chat-main-area");
     mainArea.innerHTML = this._renderChat(matchMessages);

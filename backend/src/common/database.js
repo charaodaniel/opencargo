@@ -131,6 +131,7 @@ async function getAdapter() {
             capacity_kg REAL NOT NULL,
             capacity_m3 REAL NOT NULL,
             type TEXT,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'maintenance', 'inactive')),
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
           );
 

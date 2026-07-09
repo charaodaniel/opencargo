@@ -45,7 +45,7 @@ export async function loadRoutes(app) {
     const { page, limit, offset } = getPagination(request.query);
 
     const [rows, [{ total }]] = await Promise.all([
-      query(`SELECT * FROM loads ORDER BY created_at DESC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT l.*, c.name AS company_name FROM loads l LEFT JOIN companies c ON l.company_id = c.id ORDER BY l.created_at DESC LIMIT ? OFFSET ?`, [limit, offset]),
       query(`SELECT COUNT(*) as total FROM loads`),
     ]);
 
@@ -56,7 +56,7 @@ export async function loadRoutes(app) {
     const { page, limit, offset } = getPagination(request.query);
 
     const [rows, [{ total }]] = await Promise.all([
-      query(`SELECT * FROM loads WHERE status = 'available' ORDER BY pickup_date ASC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`SELECT l.*, c.name AS company_name FROM loads l LEFT JOIN companies c ON l.company_id = c.id WHERE l.status = 'available' ORDER BY l.pickup_date ASC LIMIT ? OFFSET ?`, [limit, offset]),
       query(`SELECT COUNT(*) as total FROM loads WHERE status = 'available'`),
     ]);
 

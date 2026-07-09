@@ -9,6 +9,7 @@ const createVehicleSchema = z.object({
   capacityKg: z.number().positive(),
   capacityM3: z.number().positive(),
   type: z.string().optional(),
+  status: z.enum(["active", "maintenance", "inactive"]).optional(),
 });
 
 export async function vehicleRoutes(app) {
@@ -26,9 +27,9 @@ export async function vehicleRoutes(app) {
 
     const id = uuid();
     await query(
-      `INSERT INTO vehicles (id, driver_id, plate, model, year, capacity_kg, capacity_m3, type)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, driver.id, body.plate, body.model, body.year || null, body.capacityKg, body.capacityM3, body.type || null]
+      `INSERT INTO vehicles (id, driver_id, plate, model, year, capacity_kg, capacity_m3, type, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, driver.id, body.plate, body.model, body.year || null, body.capacityKg, body.capacityM3, body.type || null, body.status || 'active']
     );
 
     const vehicle = await queryOne(`SELECT * FROM vehicles WHERE id = ?`, [id]);
@@ -69,6 +70,7 @@ export async function vehicleRoutes(app) {
     if (body.capacityKg) { sets.push("capacity_kg = ?"); params.push(body.capacityKg); }
     if (body.capacityM3) { sets.push("capacity_m3 = ?"); params.push(body.capacityM3); }
     if (body.type !== undefined) { sets.push("type = ?"); params.push(body.type); }
+    if (body.status !== undefined) { sets.push("status = ?"); params.push(body.status); }
 
     if (sets.length === 0) {
       throw { statusCode: 400, message: "Nenhum campo para atualizar" };

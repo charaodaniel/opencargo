@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   capacity_kg REAL NOT NULL,
   capacity_m3 REAL NOT NULL,
   type VARCHAR(50),
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'maintenance', 'inactive')),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

@@ -29,12 +29,17 @@ const MatchingPage = {
   _matches: [],
 
   async render() {
-    const [matches, filterOpts] = await Promise.all([
-      Api.get("matches"),
-      this._fetchFilterOptions(),
-    ]);
+    const filterOpts = await this._fetchFilterOptions();
 
-    this._matches = matches;
+    // Tenta carregar matches do backend, mas não quebra a página se falhar
+    // O backend expõe GET /api/matching (não /api/matches)
+    try {
+      const matchData = await Api.get("matching");
+      this._matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
+    } catch {
+      this._matches = [];
+    }
+
     this._filterOptions = filterOpts;
 
     // Busca inicial
