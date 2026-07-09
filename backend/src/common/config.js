@@ -18,6 +18,14 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().default(""),
   SUPABASE_SERVICE_ROLE_KEY: z.string().default(""),
   SUPABASE_ANON_KEY: z.string().default(""),
+
+  // Thresholds de detecção de atividade suspeita
+  SUSPICIOUS_DELETE_USER: z.coerce.number().default(3),
+  SUSPICIOUS_DELETE_TOTAL: z.coerce.number().default(10),
+  SUSPICIOUS_DELETE_CRITICAL: z.coerce.number().default(5),
+  SUSPICIOUS_UPDATE_USER: z.coerce.number().default(5),
+  SUSPICIOUS_LOGIN_FAILED: z.coerce.number().default(5),
+  SUSPICIOUS_WINDOW_MIN: z.coerce.number().default(5),
 });
 
 const parsed = envSchema.parse(process.env);

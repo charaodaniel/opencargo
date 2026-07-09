@@ -7,6 +7,7 @@
 import { query, queryOne, uuid } from "../common/database.js";
 import { getPagination, paginatedResponse } from "../common/pagination.js";
 import { notifyAdmins } from "../notifications/routes.js";
+import { config } from "../common/config.js";
 
 async function adminOnly(request, reply) {
   if (request.user.role !== "administrador") {
@@ -40,13 +41,16 @@ export async function logAction({ user, action, entityType, entityId = null, det
 
 /**
  * Detecta padrões suspeitos e notifica administradores.
- * Regras por tipo de ação:
- * - delete: 3+ pelo mesmo usuário OU 10+ totais em 5 min
- * - update: 5+ pelo mesmo usuário em 5 min (edição em massa)
- * - login_failed: 5+ falhas para o mesmo email em 5 min
+ * Thresholds configuráveis via env vars:
+ * - SUSPICIOUS_DELETE_USER (default 3) — mesmo usuário
+ * - SUSPICIOUS_DELETE_TOTAL (default 10) — totais
+ * - SUSPICIOUS_DELETE_CRITICAL (default 5) — label crítico
+ * - SUSPICIOUS_UPDATE_USER (default 5) — mesmo usuário
+ * - SUSPICIOUS_LOGIN_FAILED (default 5) — mesmo email
+ * - SUSPICIOUS_WINDOW_MIN (default 5) — janela em minutos
  */
 async function checkSuspiciousActivity({ user, action, entityType, details, ip }) {
-  const fiveMinAgo = "datetime('now', '-5 minutes')";
+  const fiveMinAgo = `datetime('now', '-${config.SUSPICIOUS_WINDOW_MIN} minutes')`;
 
   if (action === "delete") {
     await _checkMassDeletes(user, fiveMinAgo);
@@ -71,12 +75,12 @@ async function _checkMassDeletes(user, fiveMinAgo) {
 
   // Evita notificações duplicadas
   if (!await _hasRecentAlert(user.name, "exclusões", fiveMinAgo)) {
-    if (userDeleteCount >= 3) {
-      const label = userDeleteCount >= 5 ? "crítico" : "alerta";
+    if (userDeleteCount >= config.SUSPICIOUS_DELETE_USER) {
+      const label = userDeleteCount >= config.SUSPICIOUS_DELETE_CRITICAL ? "crítico" : "alerta";
       await notifyAdmins({
         type: "system",
         title: `⚠️ Atividade suspeita (${label})`,
-        message: `${user.name} realizou ${userDeleteCount} exclusões nos últimos 5 minutos.`,
+        message: `${user.name} realizou ${userDeleteCount} exclusões nos últimos ${config.SUSPICIOUS_WINDOW_MIN} minutos.`,
       });
       return;
     }
@@ -90,11 +94,11 @@ async function _checkMassDeletes(user, fiveMinAgo) {
     );
     const totalDeleteCount = totalDeletes?.count || 0;
 
-    if (totalDeleteCount >= 10) {
+    if (totalDeleteCount >= config.SUSPICIOUS_DELETE_TOTAL) {
       await notifyAdmins({
         type: "system",
         title: "⚠️ Volume alto de exclusões",
-        message: `Foram realizadas ${totalDeleteCount} exclusões nos últimos 5 minutos em toda a plataforma.`,
+        message: `Foram realizadas ${totalDeleteCount} exclusões nos últimos ${config.SUSPICIOUS_WINDOW_MIN} minutos em toda a plataforma.`,
       });
     }
   }
@@ -111,11 +115,11 @@ async function _checkMassUpdates(user, fiveMinAgo) {
   );
   const updateCount = userUpdates?.count || 0;
 
-  if (updateCount >= 5 && !await _hasRecentAlert(user.name, "atualizações", fiveMinAgo)) {
+  if (updateCount >= config.SUSPICIOUS_UPDATE_USER && !await _hasRecentAlert(user.name, "atualizações", fiveMinAgo)) {
     await notifyAdmins({
       type: "system",
       title: `⚠️ Edição em massa detectada`,
-      message: `${user.name} realizou ${updateCount} alterações nos últimos 5 minutos.`,
+      message: `${user.name} realizou ${updateCount} alterações nos últimos ${config.SUSPICIOUS_WINDOW_MIN} minutos.`,
     });
   }
 }
@@ -133,11 +137,11 @@ async function _checkFailedLogins(email, ip, fiveMinAgo) {
   );
   const failCount = failedAttempts?.count || 0;
 
-  if (failCount >= 5 && !await _hasRecentAlert(email, "login", fiveMinAgo)) {
+  if (failCount >= config.SUSPICIOUS_LOGIN_FAILED && !await _hasRecentAlert(email, "login", fiveMinAgo)) {
     await notifyAdmins({
       type: "system",
       title: "⚠️ Múltiplas tentativas de login",
-      message: `${failCount} tentativas de login falhas para o e-mail ${email} nos últimos 5 minutos${ip ? ` (IP: ${ip})` : ""}.`,
+      message: `${failCount} tentativas de login falhas para o e-mail ${email} nos últimos ${config.SUSPICIOUS_WINDOW_MIN} minutos${ip ? ` (IP: ${ip})` : ""}.`,
     });
   }
 }
