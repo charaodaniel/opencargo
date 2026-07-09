@@ -322,7 +322,7 @@ const Navbar = {
       };
 
       list.innerHTML = recent.map(n => `
-        <div class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${!n.read ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}">
+        <div onclick="Navbar.markNotifRead('${n.id}'); event.stopPropagation();" class="flex items-start px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${!n.read ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}">
           <span class="shrink-0 mr-3 mt-0.5">${typeIcons[n.type] || Icons.info({ class: 'w-4 h-4 text-gray-400' })}</span>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${Utils.escapeHtml(n.title)}</p>
@@ -368,6 +368,16 @@ const Navbar = {
    */
   async markAllNotifRead() {
     Toast.success(__("notif.allRead"));
+    await this._fetchRecentNotifications();
+  },
+
+  /**
+   * Marca uma notificação como lida ao clicar no item do dropdown
+   * @param {string} id - ID da notificação
+   */
+  async markNotifRead(id) {
+    await Api.patch(`notifications/${id}/read`);
+    Toast.info(__("notif.marked"));
     await this._fetchRecentNotifications();
   },
 };

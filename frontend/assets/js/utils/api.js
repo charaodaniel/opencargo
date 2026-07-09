@@ -91,6 +91,24 @@ const Api = {
   },
 
   /**
+   * Atualização parcial na API (ex: PATCH /notifications/:id/read)
+   * @param {string} path - Caminho após a base URL (ex: "notifications/abc-123/read")
+   * @param {object} [data] - Dados opcionais para enviar no body
+   */
+  async patch(path, data) {
+    if (!CONFIG.API_BASE_URL) {
+      console.log(`[API Mock] PATCH ${path}:`, data);
+      return { success: true };
+    }
+    const res = await fetch(`${CONFIG.API_BASE_URL}/${path}`, {
+      method: "PATCH",
+      headers: this._getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return res.json();
+  },
+
+  /**
    * Carrega dados mockados do arquivo JSON
    */
   async _loadMock(endpoint) {
