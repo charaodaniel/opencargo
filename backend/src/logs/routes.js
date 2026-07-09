@@ -6,6 +6,7 @@
 
 import { query, queryOne, uuid } from "../common/database.js";
 import { getPagination, paginatedResponse } from "../common/pagination.js";
+import { notifyAdmins } from "../notifications/routes.js";
 
 async function adminOnly(request, reply) {
   if (request.user.role !== "administrador") {
@@ -14,7 +15,7 @@ async function adminOnly(request, reply) {
 }
 
 /**
- * Registra uma ação no log
+ * Registra uma ação no log e verifica atividade suspeita
  */
 export async function logAction({ user, action, entityType, entityId = null, details = null, ip = null }) {
   try {
@@ -24,8 +25,72 @@ export async function logAction({ user, action, entityType, entityId = null, det
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       [id, user?.id || null, user?.name || "Sistema", action, entityType, entityId, details ? JSON.stringify(details) : null, ip]
     );
+
+    // Verifica atividade suspeita após registrar (não bloqueante)
+    if (user && action === "delete") {
+      checkSuspiciousActivity(user).catch(err =>
+        console.error("Erro ao verificar atividade suspeita:", err)
+      );
+    }
   } catch (err) {
     console.error("Erro ao registrar log:", err);
+  }
+}
+
+/**
+ * Detecta padrões suspeitos e notifica administradores
+ * - 3+ exclusões pelo mesmo usuário nos últimos 5 minutos
+ * - 10+ exclusões totais nos últimos 5 minutos
+ */
+async function checkSuspiciousActivity(user) {
+  const fiveMinAgo = "datetime('now', '-5 minutes')";
+
+  // Conta exclusões do mesmo usuário nos últimos 5 min
+  const [userDeletes] = await query(
+    `SELECT COUNT(*) as count FROM activity_logs
+     WHERE user_id = ? AND action = 'delete' AND created_at >= ${fiveMinAgo}`,
+    [user.id]
+  );
+
+  const userDeleteCount = userDeletes?.count || 0;
+
+  // Evita notificações duplicadas — verifica se já notificamos admins nos últimos 5 min
+  const [recentAlert] = await query(
+    `SELECT COUNT(*) as count FROM notifications n
+     JOIN users u ON n.user_id = u.id
+     WHERE n.type = 'system' AND u.role = 'administrador'
+     AND n.message LIKE ? AND n.created_at >= ${fiveMinAgo}`,
+    [`%${user.name}%exclusões%`]
+  );
+
+  if (recentAlert?.count === 0) {
+    // Gera alerta se 3+ exclusões pelo mesmo usuário
+    if (userDeleteCount >= 3) {
+      const label = userDeleteCount >= 5 ? "crítico" : "alerta";
+      await notifyAdmins({
+        type: "system",
+        title: `⚠️ Atividade suspeita (${label})`,
+        message: `${user.name} realizou ${userDeleteCount} exclusões nos últimos 5 minutos.`,
+      });
+      return;
+    }
+
+    // Conta exclusões totais nos últimos 5 min
+    const [totalDeletes] = await query(
+      `SELECT COUNT(*) as count FROM activity_logs
+       WHERE action = 'delete' AND created_at >= ${fiveMinAgo}`,
+    );
+
+    const totalDeleteCount = totalDeletes?.count || 0;
+
+    // Gera alerta se 10+ exclusões totais
+    if (totalDeleteCount >= 10) {
+      await notifyAdmins({
+        type: "system",
+        title: "⚠️ Volume alto de exclusões",
+        message: `Foram realizadas ${totalDeleteCount} exclusões nos últimos 5 minutos em toda a plataforma.`,
+      });
+    }
   }
 }
 
