@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AuthService } from "./service.js";
+import { logAction } from "../logs/routes.js";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,12 +20,32 @@ export async function authRoutes(app) {
   app.post("/register", async (request, reply) => {
     const body = registerSchema.parse(request.body);
     const result = await authService.register(body);
+
+    // Loga o registro (não bloqueante)
+    logAction({
+      user: result.user,
+      action: "create",
+      entityType: "users",
+      entityId: result.user.id,
+      ip: request.ip,
+    }).catch(() => {});
+
     return reply.status(201).send(result);
   });
 
   app.post("/login", async (request, reply) => {
     const body = loginSchema.parse(request.body);
     const result = await authService.login(body);
+
+    // Loga o login (não bloqueante)
+    logAction({
+      user: result.user,
+      action: "login",
+      entityType: "auth",
+      entityId: result.user.id,
+      ip: request.ip,
+    }).catch(() => {});
+
     return reply.send(result);
   });
 
