@@ -20,6 +20,9 @@ const updateUserSchema = z.object({
 });
 
 const adminUpdateSchema = z.object({
+  name: z.string().min(3).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   role: z.enum(["administrador", "gestor", "empresa", "motorista"]).optional(),
   active: z.coerce.number().min(0).max(1).optional(),
 });
@@ -97,32 +100,48 @@ export async function userRoutes(app) {
     return paginatedResponse(rows, total, page, limit);
   });
 
-  // Atualizar role ou status de um usuário
-  app.patch("/:id/admin", { preHandler: [adminOnly] }, async (request) => {
+  // Atualizar dados de um usuário (admin)
+  app.patch("/:id/admin", { preHandler: [adminOnly] }, async (request, reply) => {
     const { id } = request.params;
     const body = adminUpdateSchema.parse(request.body);
 
     // Impede auto-desativação
     if (id === request.user.id && body.active === 0) {
-      throw { statusCode: 400, message: "Não é possível desativar a si mesmo" };
+      return reply.status(400).send({ error: "Não é possível desativar a si mesmo" });
+    }
+
+    // Verifica se o usuário existe
+    const existing = await queryOne(`SELECT id FROM users WHERE id = ?`, [id]);
+    if (!existing) {
+      return reply.status(404).send({ error: "Usuário não encontrado" });
     }
 
     const sets = [];
     const params = [];
 
+    if (body.name !== undefined) { sets.push("name = ?"); params.push(body.name); }
+    if (body.email !== undefined) { sets.push("email = ?"); params.push(body.email); }
+    if (body.phone !== undefined) { sets.push("phone = ?"); params.push(body.phone); }
     if (body.role !== undefined) { sets.push("role = ?"); params.push(body.role); }
     if (body.active !== undefined) { sets.push("active = ?"); params.push(body.active); }
 
     if (sets.length === 0) {
-      throw { statusCode: 400, message: "Nenhum campo para atualizar" };
+      return reply.status(400).send({ error: "Nenhum campo para atualizar" });
     }
 
     sets.push("updated_at = CURRENT_TIMESTAMP");
     params.push(id);
 
-    await query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
+    try {
+      await query(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
+    } catch (err) {
+      if (err.message && err.message.includes("UNIQUE constraint failed: users.email")) {
+        return reply.status(400).send({ error: "E-mail já está em uso por outro usuário" });
+      }
+      throw err;
+    }
 
-    return await queryOne(`SELECT id, name, email, role, active FROM users WHERE id = ?`, [id]);
+    return await queryOne(`SELECT id, name, email, role, phone, active FROM users WHERE id = ?`, [id]);
   });
 
   // Excluir usuário (também remove do Supabase Auth se configurado)

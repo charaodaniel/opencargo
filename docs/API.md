@@ -52,12 +52,14 @@ Verifica se a API está funcionando.
 
 Registrar novo usuário.
 
+**Requisitos de senha:** Mínimo 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial.
+
 **Body:**
 ```json
 {
   "name": "João Silva",
   "email": "joao@email.com",
-  "password": "123456",
+  "password": "Teste@123",
   "role": "driver"
 }
 ```
@@ -66,13 +68,13 @@ Registrar novo usuário.
 
 ### `POST /api/auth/login`
 
-Login do usuário.
+Login do usuário. Usuários com senha fraca (que não atendem aos requisitos atuais) ainda podem logar, mas a resposta inclui `needsPasswordReset: true`.
 
 **Body:**
 ```json
 {
   "email": "joao@email.com",
-  "password": "123456"
+  "password": "minhaSenha"
 }
 ```
 
@@ -85,7 +87,28 @@ Login do usuário.
     "name": "João Silva",
     "email": "joao@email.com",
     "role": "driver"
-  }
+  },
+  "needsPasswordReset": false
+}
+```
+
+### `PATCH /api/auth/password` 🔐
+
+Alterar a própria senha. Gera um novo token JWT.
+
+**Body:**
+```json
+{
+  "currentPassword": "minhaSenhaAtual",
+  "newPassword": "Nova@123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "novo_jwt_token"
 }
 ```
 
@@ -101,7 +124,10 @@ Dados do usuário logado.
 |--------|------|-----------|:------------:|
 | GET | `/api/users` | Listar usuários (paginado: `{ data, total, page, limit, totalPages }`) | 🔐 |
 | GET | `/api/users/:id` | Buscar usuário | 🔐 |
-| PATCH | `/api/users/:id` | Atualizar usuário | 🔐 |
+| PATCH | `/api/users/:id` | Atualizar próprio perfil (name, phone) | 🔐 |
+| PATCH | `/api/users/:id/admin` | 🔐🔐 Admin: atualizar qualquer usuário (name, email, phone, role, active) | 🔐 Admin |
+| DELETE | `/api/users/:id/admin` | 🔐🔐 Admin: excluir usuário | 🔐 Admin |
+| GET | `/api/users/admin/all` | 🔐🔐 Admin: listar todos os usuários com detalhes | 🔐 Admin |
 
 ---
 
