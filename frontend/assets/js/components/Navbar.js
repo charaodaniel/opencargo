@@ -133,6 +133,16 @@ const Navbar = {
   toggleTheme() {
     const isDark = document.documentElement.classList.toggle("dark");
     Storage.setTheme(isDark ? "dark" : "light");
+
+    // Animação de rotação no botão de tema
+    const toggleBtn = document.querySelector('[onclick*="toggleTheme"]');
+    if (toggleBtn) {
+      toggleBtn.classList.remove("theme-spin");
+      // Força reflow para reiniciar a animação
+      void toggleBtn.offsetWidth;
+      toggleBtn.classList.add("theme-spin");
+      setTimeout(() => toggleBtn.classList.remove("theme-spin"), 500);
+    }
   },
 
   /**
