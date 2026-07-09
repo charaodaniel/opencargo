@@ -184,6 +184,52 @@ const Utils = {
   },
 
   /**
+   * Valida CPF (11 dígitos, dígitos verificadores)
+   */
+  validateCpf(cpf) {
+    if (!cpf) return false;
+    const nums = cpf.replace(/\D/g, "");
+    if (nums.length !== 11 || /^(\d)\1{10}$/.test(nums)) return false;
+    const calc = (digits, factors) =>
+      digits.reduce((sum, d, i) => sum + d * factors[i], 0) % 11;
+    const d1 = calc(nums.slice(0, 9).split("").map(Number), [10,9,8,7,6,5,4,3,2]);
+    const d2 = calc(nums.slice(0, 10).split("").map(Number), [11,10,9,8,7,6,5,4,3,2]);
+    return parseInt(nums[9]) === (d1 < 2 ? 0 : 11 - d1) &&
+           parseInt(nums[10]) === (d2 < 2 ? 0 : 11 - d2);
+  },
+
+  /**
+   * Valida CNPJ (14 dígitos, dígitos verificadores)
+   */
+  validateCnpj(cnpj) {
+    if (!cnpj) return false;
+    const nums = cnpj.replace(/\D/g, "");
+    if (nums.length !== 14 || /^(\d)\1{13}$/.test(nums)) return false;
+    const calc = (digits, factors) =>
+      digits.reduce((sum, d, i) => sum + d * factors[i], 0) % 11;
+    const d1 = calc(nums.slice(0, 12).split("").map(Number), [5,4,3,2,9,8,7,6,5,4,3,2]);
+    const d2 = calc(nums.slice(0, 13).split("").map(Number), [6,5,4,3,2,9,8,7,6,5,4,3,2]);
+    return parseInt(nums[12]) === (d1 < 2 ? 0 : 11 - d1) &&
+           parseInt(nums[13]) === (d2 < 2 ? 0 : 11 - d2);
+  },
+
+  /**
+   * Formata CPF: 000.000.000-00
+   */
+  formatCpf(cpf) {
+    const nums = cpf.replace(/\D/g, "").slice(0, 11);
+    return nums.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+  },
+
+  /**
+   * Formata CNPJ: 00.000.000/0000-00
+   */
+  formatCnpj(cnpj) {
+    const nums = cnpj.replace(/\D/g, "").slice(0, 14);
+    return nums.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  },
+
+  /**
    * Debounce para evitar execuções frequentes
    * @param {Function} fn
    * @param {number} delay

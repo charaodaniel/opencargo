@@ -2,9 +2,23 @@ import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
 import { getPagination, paginatedResponse } from "../common/pagination.js";
 
+/**
+ * Valida CNPJ (dígitos verificadores)
+ */
+function isValidCnpj(cnpj) {
+  const nums = cnpj.replace(/\D/g, "");
+  if (nums.length !== 14 || /^(\d)\1{13}$/.test(nums)) return false;
+  const calc = (digits, factors) =>
+    digits.reduce((sum, d, i) => sum + d * factors[i], 0) % 11;
+  const d1 = calc(nums.slice(0, 12).split("").map(Number), [5,4,3,2,9,8,7,6,5,4,3,2]);
+  const d2 = calc(nums.slice(0, 13).split("").map(Number), [6,5,4,3,2,9,8,7,6,5,4,3,2]);
+  return parseInt(nums[12]) === (d1 < 2 ? 0 : 11 - d1) &&
+         parseInt(nums[13]) === (d2 < 2 ? 0 : 11 - d2);
+}
+
 const createCompanySchema = z.object({
   name: z.string().min(3),
-  document: z.string().min(11),
+  document: z.string().min(14).max(18).refine(isValidCnpj, "CNPJ inválido"),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),

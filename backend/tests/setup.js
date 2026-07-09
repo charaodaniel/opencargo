@@ -138,7 +138,7 @@ export async function createTestData(app) {
     url: "/api/drivers",
     payload: {
       name: "Motorista Teste",
-      document: "12345678901",
+      document: "12345678909",
       cnh: "1234567890",
       phone: "11988888888",
       city: "São Paulo",

@@ -2,9 +2,23 @@ import { z } from "zod";
 import { query, queryOne, uuid } from "../common/database.js";
 import { getPagination, paginatedResponse } from "../common/pagination.js";
 
+/**
+ * Valida CPF (dígitos verificadores)
+ */
+function isValidCpf(cpf) {
+  const nums = cpf.replace(/\D/g, "");
+  if (nums.length !== 11 || /^(\d)\1{10}$/.test(nums)) return false;
+  const calc = (digits, factors) =>
+    digits.reduce((sum, d, i) => sum + d * factors[i], 0) % 11;
+  const d1 = calc(nums.slice(0, 9).split("").map(Number), [10,9,8,7,6,5,4,3,2]);
+  const d2 = calc(nums.slice(0, 10).split("").map(Number), [11,10,9,8,7,6,5,4,3,2]);
+  return parseInt(nums[9]) === (d1 < 2 ? 0 : 11 - d1) &&
+         parseInt(nums[10]) === (d2 < 2 ? 0 : 11 - d2);
+}
+
 const createDriverSchema = z.object({
   name: z.string().min(3),
-  document: z.string().min(11),
+  document: z.string().min(11).max(14).refine(isValidCpf, "CPF inválido"),
   cnh: z.string().optional(),
   phone: z.string().optional(),
   city: z.string().optional(),

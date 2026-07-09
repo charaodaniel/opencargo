@@ -165,7 +165,7 @@ describe("Companies CRUD", () => {
       url: "/api/companies",
       payload: {
         name: "Empresa CRUD Ltda",
-        document: "99888777000155",
+        document: "99888777000100",
         address: "Rua B, 200",
         city: "São Paulo",
         state: "SP",
@@ -175,7 +175,7 @@ describe("Companies CRUD", () => {
 
     assert.strictEqual(res.status, 201);
     assert.strictEqual(res.body.name, "Empresa CRUD Ltda");
-    assert.strictEqual(res.body.document, "99888777000155");
+    assert.strictEqual(res.body.document, "99888777000100");
     assert.ok(res.body.id);
   });
 
@@ -314,7 +314,7 @@ describe("Vehicles CRUD", () => {
       url: "/api/drivers",
       payload: {
         name: "Motorista Veículo",
-        document: "11122233344",
+        document: "11122233396",
         cnh: "1234509876",
         phone: "11955555555",
         city: "São Paulo",
@@ -411,7 +411,7 @@ describe("Routes CRUD", () => {
       url: "/api/drivers",
       payload: {
         name: "Motorista Rota",
-        document: "55566677788",
+        document: "55566677720",
         cnh: "5556667778",
         city: "São Paulo",
         state: "SP",
@@ -496,7 +496,7 @@ describe("Loads CRUD", () => {
       url: "/api/companies",
       payload: {
         name: "Empresa Carga Ltda",
-        document: "55443322000199",
+        document: "55443322000105",
         city: "São Paulo",
         state: "SP",
       },
