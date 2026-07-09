@@ -1,14 +1,24 @@
 {
-  "name": "OpenCargo",
+  "name": "OpenCargo — Logística Colaborativa",
   "short_name": "OpenCargo",
   "description": "Plataforma open source para logística colaborativa — encontre fretes de retorno e otimize suas rotas.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#f9fafb",
   "theme_color": "#2563eb",
-  "categories": ["business", "logistics", "productivity"],
+  "categories": ["business", "logistics", "productivity", "utilities"],
   "lang": "pt-BR",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
   "icons": [
     {
       "src": "assets/icons/icon-192.svg",

@@ -7,7 +7,7 @@
  * - Notificações push (futuro)
  */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `opencargo-static-${CACHE_VERSION}`;
 const CDN_CACHE = `opencargo-cdn-${CACHE_VERSION}`;
 const API_CACHE = `opencargo-api-${CACHE_VERSION}`;
@@ -21,11 +21,13 @@ const PRECACHE_ASSETS = [
   "/assets/css/style.css",
   "/assets/js/app.js",
   "/assets/js/router.js",
+  "/assets/js/env.js",
   "/assets/js/utils/config.js",
   "/assets/js/utils/storage.js",
   "/assets/js/utils/utils.js",
   "/assets/js/utils/api.js",
   "/assets/js/utils/geocoding.js",
+  "/assets/js/utils/icons.js",
   "/assets/js/components/Toast.js",
   "/assets/js/components/Modal.js",
   "/assets/js/components/Table.js",
@@ -40,10 +42,19 @@ const PRECACHE_ASSETS = [
   "/assets/js/pages/loads.js",
   "/assets/js/pages/matching.js",
   "/assets/js/pages/chat.js",
+  "/assets/js/pages/documents.js",
+  "/assets/js/pages/reviews.js",
+  "/assets/js/pages/freights.js",
   "/assets/js/pages/notifications.js",
   "/assets/js/pages/maps.js",
   "/assets/js/pages/login.js",
   "/assets/js/pages/landing.js",
+  "/assets/js/pages/admin-users.js",
+  "/assets/js/pages/settings.js",
+  "/assets/js/pages/logs.js",
+  "/assets/js/i18n/pt-BR.js",
+  "/assets/js/i18n/en.js",
+  "/assets/js/i18n/i18n.js",
   "/assets/icons/icon-192.svg",
   "/assets/icons/icon-512.svg",
 ];
@@ -98,6 +109,13 @@ self.addEventListener("activate", (event) => {
     })()
   );
   self.clients.claim();
+});
+
+// ── Mensagens do Cliente ────────────────────────────
+self.addEventListener("message", (event) => {
+  if (event.data?.action === "skipWaiting") {
+    self.skipWaiting();
+  }
 });
 
 // ── Interceptação de Fetch ────────────────────────────

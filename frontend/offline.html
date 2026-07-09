@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
   <title>OpenCargo — Sem Conexão</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -18,11 +20,15 @@
       50% { opacity: 0.6; }
     }
     .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+    .rotate-anim { animation: rotate 1.5s linear infinite; }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 dark:bg-gray-950 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
   <!-- Theme toggle -->
-  <button onclick="var btn=this;btn.classList.remove('theme-spin');void btn.offsetWidth;btn.classList.add('theme-spin');btn.addEventListener('animationend',function(){this.classList.remove('theme-spin')},{once:true});var d=document.documentElement;var isDark=d.classList.toggle('dark');localStorage.setItem('opencargo_theme',isDark?'dark':'light')" class="fixed top-4 right-4 p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-50" title="Alternar tema">
+  <button onclick="var btn=this;btn.classList.remove('theme-spin');void btn.offsetWidth;btn.classList.add('theme-spin');btn.addEventListener('animationend',function(){this.classList.remove('theme-spin')},{once:true});var d=document.documentElement;var isDark=d.classList.toggle('dark');localStorage.setItem('opencargo_theme',isDark?'dark':'light');document.querySelector('meta[name=theme-color][media*=light]')?.setAttribute('content',isDark?'#0f172a':'#2563eb');document.querySelector('meta[name=theme-color][media*:dark]')?.setAttribute('content',isDark?'#0f172a':'#2563eb')" class="fixed top-4 right-4 p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-50 touch-target" title="Alternar tema" aria-label="Alternar tema">
     <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
     </svg>
@@ -31,8 +37,8 @@
     </svg>
   </button>
 
-  <div class="text-center max-w-md mx-auto">
-    <div class="bounce-in mb-8">
+  <div class="text-center max-w-md mx-auto px-4">
+    <div class="bounce-in mb-6">
       <!-- Ícone WiFi offline -->
       <svg class="w-24 h-24 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m-2.829-2.829a5 5 0 000-7.07m-4.243 4.243a1 1 0 010-1.414" opacity="0.3"/>
@@ -41,20 +47,20 @@
       </svg>
     </div>
 
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
       Sem Conexão
     </h1>
 
-    <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-      Você está offline no momento. <br/>
+    <p class="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+      Você está offline no momento.<br/>
       Verifique sua conexão e tente novamente.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <button onclick="window.location.reload()"
-        class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
+      <button id="reconnect-btn" onclick="this.disabled=true;this.querySelector('.rotate-anim')?.classList.remove('hidden');window.location.reload()"
+        class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20 active:scale-95 touch-target">
         <span class="flex items-center justify-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 rotate-anim hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
           Tentar novamente
@@ -62,19 +68,36 @@
       </button>
 
       <a href="/"
-        class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        class="px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors touch-target text-center">
         Ir para o início
       </a>
     </div>
 
-    <p class="mt-10 text-sm text-gray-400 dark:text-gray-500 pulse-glow">
+    <p id="retry-msg" class="mt-8 text-sm text-gray-400 dark:text-gray-500 pulse-glow">
       Tentando reconectar...
     </p>
+
+    <p id="retry-count" class="mt-2 text-xs text-gray-400 dark:text-gray-600"></p>
   </div>
 
   <script>
+    // Aplica tema salvo
+    (function() {
+      var theme = localStorage.getItem('opencargo_theme');
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+    })();
+
+    // Contador de tentativas
+    var attempts = 0;
+    var retryEl = document.getElementById('retry-count');
+    var interval = setInterval(function() {
+      attempts++;
+      if (retryEl) retryEl.textContent = 'Tentativa ' + attempts + ' — ' + (attempts * 5) + 's sem conexão';
+    }, 5000);
+
     // Recarrega automaticamente quando a conexão voltar
-    window.addEventListener("online", () => {
+    window.addEventListener("online", function() {
+      clearInterval(interval);
       window.location.reload();
     });
   </script>

@@ -496,6 +496,100 @@ html.dark article {
   }
 }
 
+/* ═══ Mobile Responsive Utils ═══ */
+@media (max-width: 640px) {
+  .mobile-full-width {
+    width: 100% !important;
+  }
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+  .mobile-p-3 {
+    padding: 0.75rem !important;
+  }
+  .mobile-gap-2 {
+    gap: 0.5rem !important;
+  }
+  .hide-mobile {
+    display: none !important;
+  }
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .show-mobile {
+    display: none !important;
+  }
+}
+
+/* ═══ Mobile Sidebar Overlay ═══ */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+@media (max-width: 1023px) {
+  #sidebar {
+    position: fixed !important;
+    left: -16rem;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    transition: left 0.3s ease-in-out;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+  }
+  #sidebar.open {
+    left: 0;
+  }
+  .sidebar-content-wrapper {
+    margin-left: 0 !important;
+  }
+}
+
+/* ═══ Toast Mobile ═══ */
+@media (max-width: 640px) {
+  #toast-container {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+    bottom: 1rem;
+    top: auto;
+  }
+  .toast-item {
+    margin-bottom: 0.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+}
+
+/* ═══ Touch-friendly targets ═══ */
+@media (max-width: 640px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  button, a, select, .clickable {
+    cursor: default;
+  }
+}
+
 /* ═══ Leaflet Map (Dark Mode) ═══ */
 .leaflet-container {
   z-index: 1;
