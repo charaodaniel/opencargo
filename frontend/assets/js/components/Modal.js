@@ -29,7 +29,7 @@ const Modal = {
     this.element = document.createElement("div");
     this.element.id = "modal-container";
     this.element.className =
-      "fixed inset-0 z-50 flex items-center justify-center p-4 hidden";
+      "fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto hidden";
 
     this.element.innerHTML = `
       <div id="modal-content" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto transform scale-95 opacity-0 transition-all duration-300">
@@ -51,6 +51,10 @@ const Modal = {
 
     // Eventos
     this.backdrop.addEventListener("click", () => this.close());
+    this.element.addEventListener("click", (e) => {
+      // Fecha se clicou no scroll/padding fora do modal-content
+      if (e.target === this.element) this.close();
+    });
     this.element.querySelector("#modal-close").addEventListener("click", () => this.close());
 
     // Fecha com ESC
