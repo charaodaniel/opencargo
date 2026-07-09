@@ -84,7 +84,7 @@ const Sidebar = {
       labelKey: "sidebar.conta",
       items: [
         { icon: "users", labelKey: "nav.adminUsers", page: "admin-users" },
-        { icon: "profile", labelKey: "nav.profile", page: "profile" },
+        { icon: "profile", labelKey: "nav.profile", page: "settings" },
         { icon: "settings", labelKey: "nav.settings", page: "settings" },
       ],
     },

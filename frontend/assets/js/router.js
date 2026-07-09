@@ -163,7 +163,7 @@ const Router = {
       maps: "MapsPage",
       landing: "LandingPage",
       login: "LoginPage",
-      profile: "ProfilePage",
+      profile: "SettingsPage",
       settings: "SettingsPage",
       "admin-users": "AdminUsersPage",
     };
