@@ -74,6 +74,9 @@ const LogsPage = {
           ${Utils.renderFilterCard({ value: "login", label: "Logins", count: this._stats?.by_action?.find(a => a.action === "login")?.count || 0, isActive: this._filterCard === "login", pageNs: "LogsPage" })}
         </div>
 
+        <!-- Period quick filters -->
+        ${Utils.renderPeriodFilter({ dateFrom: this._filters.dateFrom, dateTo: this._filters.dateTo, pageNs: "LogsPage" })}
+
         <!-- Filters -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -289,6 +292,16 @@ const LogsPage = {
     if (key === "action") {
       this._filterCard = value;
     }
+    Router.refresh();
+  },
+
+  /**
+   * Define filtro por período predefinido
+   */
+  setPeriod(period) {
+    const { dateFrom, dateTo } = Utils.getPeriodDates(period);
+    this._filters.dateFrom = dateFrom;
+    this._filters.dateTo = dateTo;
     Router.refresh();
   },
 

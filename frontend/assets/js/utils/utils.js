@@ -318,4 +318,72 @@ const Utils = {
       </button>
     `;
   },
+
+  /**
+   * Calcula as datas de início e fim para períodos predefinidos.
+   * @param {'today'|'week'|'month'} period - Período desejado
+   * @returns {{ dateFrom: string, dateTo: string }} Datas no formato YYYY-MM-DD
+   */
+  getPeriodDates(period) {
+    const today = new Date();
+    const yyyyMMdd = (d) => d.toISOString().split("T")[0];
+
+    switch (period) {
+      case "today":
+        return { dateFrom: yyyyMMdd(today), dateTo: yyyyMMdd(today) };
+
+      case "week": {
+        const start = new Date(today);
+        // Segunda-feira da semana atual
+        const day = start.getDay(); // 0=domingo, 1=segunda, ..., 6=sabado
+        const diff = day === 0 ? -6 : 1 - day;
+        start.setDate(start.getDate() + diff);
+        return { dateFrom: yyyyMMdd(start), dateTo: yyyyMMdd(today) };
+      }
+
+      case "month": {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { dateFrom: yyyyMMdd(start), dateTo: yyyyMMdd(today) };
+      }
+
+      default:
+        return { dateFrom: "", dateTo: "" };
+    }
+  },
+
+  /**
+   * Renderiza os botões de período pré-definido (Hoje, Esta Semana, Este Mês).
+   * Usado em páginas com filtros de data (freights, logs, matching).
+   *
+   * @param {Object} opts
+   * @param {string} opts.dateFrom - Valor atual de dateFrom
+   * @param {string} opts.dateTo - Valor atual de dateTo
+   * @param {string} opts.pageNs - Namespace da página (ex: "FreightsPage")
+   * @returns {string} HTML dos botões
+   */
+  renderPeriodFilter({ dateFrom, dateTo, pageNs }) {
+    const periods = [
+      { key: "today", label: "Hoje" },
+      { key: "week", label: "Esta Semana" },
+      { key: "month", label: "Este Mês" },
+    ];
+
+    return `
+      <div class="flex flex-wrap gap-2 mb-3">
+        ${periods.map(({ key, label }) => {
+          const { dateFrom: df, dateTo: dt } = this.getPeriodDates(key);
+          const isActive = dateFrom === df && dateTo === dt;
+          return `
+            <button onclick="${pageNs}.setPeriod('${key}')"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${isActive
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-600'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }">
+              ${label}
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  },
 };

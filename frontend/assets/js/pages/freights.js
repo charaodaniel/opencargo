@@ -89,6 +89,9 @@ const FreightsPage = {
           ${Utils.renderFilterCard({ value: "cancelled", label: "Cancelados", count: this._stats?.cancelled || 0, isActive: this._filterCard === "cancelled", pageNs: "FreightsPage" })}
         </div>
 
+        <!-- Period quick filters -->
+        ${Utils.renderPeriodFilter({ dateFrom: this._filters.dateFrom, dateTo: this._filters.dateTo, pageNs: "FreightsPage" })}
+
         <!-- Filters -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -353,6 +356,16 @@ const FreightsPage = {
     if (key === "status") {
       this._filterCard = "";
     }
+    Router.refresh();
+  },
+
+  /**
+   * Define filtro por período predefinido
+   */
+  setPeriod(period) {
+    const { dateFrom, dateTo } = Utils.getPeriodDates(period);
+    this._filters.dateFrom = dateFrom;
+    this._filters.dateTo = dateTo;
     Router.refresh();
   },
 

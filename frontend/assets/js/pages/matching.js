@@ -212,6 +212,12 @@ const MatchingPage = {
                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
 
+            <!-- Period quick filters -->
+            <div class="lg:col-span-4">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Período</label>
+              ${Utils.renderPeriodFilter({ dateFrom: this._filters.dateFrom, dateTo: this._filters.dateTo, pageNs: "MatchingPage" })}
+            </div>
+
             <!-- Score Mín -->
             <div>
               <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${__("match.minScore")}</label>
@@ -499,6 +505,16 @@ const MatchingPage = {
    */
   setFilter(key, value) {
     this._filters[key] = value;
+    Router.refresh();
+  },
+
+  /**
+   * Define filtro por período predefinido
+   */
+  setPeriod(period) {
+    const { dateFrom, dateTo } = Utils.getPeriodDates(period);
+    this._filters.dateFrom = dateFrom;
+    this._filters.dateTo = dateTo;
     Router.refresh();
   },
 
