@@ -11,6 +11,9 @@ const LogsPage = {
   _page: 1,
   _totalPages: 1,
 
+  /** Instância do gráfico */
+  _chart: null,
+
   /** Card de filtro ativo (action) */
   _filterCard: "",
 
@@ -48,6 +51,19 @@ const LogsPage = {
 
         <!-- Stats -->
         ${this._stats ? this._renderStats() : ""}
+
+        <!-- Daily Activity Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <span>Atividade Diária (30 dias)</span>
+          </h3>
+          <div class="relative" style="height: 200px;">
+            <canvas id="chart-logs-activity"></canvas>
+          </div>
+        </div>
 
         <!-- Filter Cards (action) -->
         <div class="flex flex-wrap gap-2 mb-4">
@@ -315,6 +331,97 @@ const LogsPage = {
   },
 
   afterRender() {
-    // Nada por enquanto
+    this._initActivityChart();
+  },
+
+  /**
+   * Inicializa o gráfico de atividade diária
+   */
+  _initActivityChart() {
+    const canvas = document.getElementById("chart-logs-activity");
+    if (!canvas || !this._stats?.daily_30) return;
+
+    // Destrói chart anterior
+    if (this._chart) {
+      this._chart.destroy();
+      this._chart = null;
+    }
+
+    const days = this._stats.daily_30;
+    if (days.length === 0) {
+      canvas.parentElement.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-sm">Nenhum dado disponível</div>`;
+      return;
+    }
+
+    const isDark = document.documentElement.classList.contains("dark");
+    const textColor = isDark ? "#9ca3af" : "#6b7280";
+    const gridColor = isDark ? "#374151" : "#e5e7eb";
+
+    // Preenche dias sem atividade com 0
+    const labels = [];
+    const data = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const found = days.find(day => day.day === key);
+      labels.push(key.slice(5)); // MM-DD
+      data.push(found ? found.count : 0);
+    }
+
+    this._chart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Ações",
+          data,
+          backgroundColor: "rgba(59, 130, 246, 0.6)",
+          borderColor: "#3b82f6",
+          borderWidth: 1,
+          borderRadius: 3,
+          barPercentage: 0.8,
+          categoryPercentage: 0.9,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const dateStr = items[0].label;
+                const year = today.getFullYear();
+                const month = dateStr.split("-")[0];
+                const day = dateStr.split("-")[1];
+                return `${day}/${month}/${year}`;
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: textColor,
+              stepSize: 1,
+              precision: 0,
+            },
+            grid: { color: gridColor },
+          },
+          x: {
+            ticks: {
+              color: textColor,
+              maxTicksLimit: 10,
+              maxRotation: 0,
+            },
+            grid: { display: false },
+          },
+        },
+      },
+    });
   },
 };

@@ -144,7 +144,12 @@ export async function logRoutes(app) {
     const [byEntity] = await query(
       `SELECT entity_type, COUNT(*) as count FROM activity_logs GROUP BY entity_type ORDER BY count DESC`
     );
-    const [recent] = await query(
+    const [recent30] = await query(
+      `SELECT DATE(created_at) as day, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-30 days')
+       GROUP BY DATE(created_at) ORDER BY day ASC`
+    );
+    const [recent7] = await query(
       `SELECT DATE(created_at) as day, COUNT(*) as count FROM activity_logs
        WHERE created_at >= datetime('now', '-7 days')
        GROUP BY DATE(created_at) ORDER BY day DESC`
@@ -154,7 +159,8 @@ export async function logRoutes(app) {
       total: total?.total || 0,
       by_action: byAction || [],
       by_entity: byEntity || [],
-      recent_days: recent || [],
+      recent_days: recent7 || [],
+      daily_30: recent30 || [],
     };
   });
 
