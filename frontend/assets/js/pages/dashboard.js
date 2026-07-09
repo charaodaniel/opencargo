@@ -1,18 +1,22 @@
 /**
  * ── OpenCargo — Dashboard Page ────────────────────────
  * Página principal com cards de estatísticas, ações
- * rápidas e últimas atividades.
+ * rápidas, últimas atividades e gráficos Chart.js.
  */
 
 const DashboardPage = {
+  /** Dados para os gráficos */
+  _chartData: null,
+
+  /** Instâncias dos charts para destruir ao recarregar */
+  _charts: [],
+
   /**
    * Renderiza a página de dashboard
    * @returns {string} HTML completo da página
    */
   async render() {
     // Carrega dados em paralelo
-    // Nota: matches não é mais buscado via Api.get("matches") porque o backend
-    // expõe /api/matching (não /api/matches). O matching é opcional no dashboard.
     const [companies, drivers, loads, routes] = await Promise.all([
       Api.get("companies"),
       Api.get("drivers"),
@@ -20,14 +24,25 @@ const DashboardPage = {
       Api.get("routes"),
     ]);
 
-    // Tenta carregar matches, mas não quebra a página se falhar
+    // Tenta carregar users para o gráfico de distribuição
+    let users = [];
+    try {
+      const token = Storage.getToken();
+      const res = await fetch(`${CONFIG.API_BASE_URL}/users/admin/all?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        users = json.data || [];
+      }
+    } catch {}
+
+    // Tenta carregar matches
     let matches = [];
     try {
       const matchData = await Api.get("matching");
       matches = Array.isArray(matchData) ? matchData : (matchData?.data || []);
-    } catch {
-      // matches é opcional no dashboard
-    }
+    } catch {}
 
     const activeLoads = loads.filter((l) => l.status === "available").length;
     const activeRoutes = routes.filter((r) => r.status === "active").length;
@@ -35,6 +50,9 @@ const DashboardPage = {
     const availableDrivers = drivers.filter((d) => d.available).length;
     const pendingMatches = matches.filter((m) => m.status === "pending").length;
     const deliveredLoads = loads.filter((l) => l.status === "delivered").length;
+
+    // Guarda dados para o afterRender
+    this._chartData = { loads, users };
 
     const stats = [
       { title: __("dashboard.activeCompanies"), value: totalCompanies, icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' },
@@ -60,6 +78,22 @@ const DashboardPage = {
           ${stats.map((s) => Card.stat(s)).join("")}
         </div>
 
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div class="glass-card rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status das Cargas</h3>
+            <div class="relative" style="height: 260px;">
+              <canvas id="chart-loads-status"></canvas>
+            </div>
+          </div>
+          <div class="glass-card rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribuição de Usuários</h3>
+            <div class="relative" style="height: 260px;">
+              <canvas id="chart-users-role"></canvas>
+            </div>
+          </div>
+        </div>
+
         <!-- Quick Actions + Recent Activity -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           ${this._quickActions()}
@@ -67,6 +101,147 @@ const DashboardPage = {
         </div>
       </div>
     `;
+  },
+
+  /**
+   * Inicializa os gráficos após o render
+   */
+  afterRender() {
+    this._initCharts();
+  },
+
+  /**
+   * Inicializa todos os gráficos
+   */
+  _initCharts() {
+    const data = this._chartData;
+    if (!data) return;
+
+    // Destrói charts anteriores
+    this._charts.forEach(c => c.destroy());
+    this._charts = [];
+
+    this._chartLoadsStatus(data.loads);
+    this._chartUsersRole(data.users);
+  },
+
+  /**
+   * Gráfico de barras: status das cargas
+   */
+  _chartLoadsStatus(loads) {
+    const canvas = document.getElementById("chart-loads-status");
+    if (!canvas) return;
+
+    const isDark = document.documentElement.classList.contains("dark");
+    const textColor = isDark ? "#9ca3af" : "#6b7280";
+    const gridColor = isDark ? "#374151" : "#e5e7eb";
+
+    const statusOrder = ["pending", "available", "matched", "in_transit", "delivered", "cancelled"];
+    const statusLabels = {
+      pending: "Pendente", available: "Disponível", matched: "Compatível",
+      in_transit: "Em Trânsito", delivered: "Entregue", cancelled: "Cancelado",
+    };
+    const statusColors = {
+      pending: "#f59e0b", available: "#3b82f6", matched: "#8b5cf6",
+      in_transit: "#06b6d4", delivered: "#10b981", cancelled: "#ef4444",
+    };
+
+    const labels = statusOrder.map(s => statusLabels[s]);
+    const data = statusOrder.map(s => loads.filter(l => l.status === s).length);
+    const colors = statusOrder.map(s => statusColors[s]);
+
+    if (data.every(v => v === 0)) {
+      canvas.parentElement.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-sm">Nenhuma carga cadastrada</div>`;
+      return;
+    }
+
+    const chart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Cargas",
+          data,
+          backgroundColor: colors.map(c => c + "80"),
+          borderColor: colors,
+          borderWidth: 2,
+          borderRadius: 6,
+          barPercentage: 0.65,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: textColor, stepSize: 1 },
+            grid: { color: gridColor },
+          },
+          x: {
+            ticks: { color: textColor },
+            grid: { display: false },
+          },
+        },
+      },
+    });
+    this._charts.push(chart);
+  },
+
+  /**
+   * Gráfico doughnut: distribuição de usuários por role
+   */
+  _chartUsersRole(users) {
+    const canvas = document.getElementById("chart-users-role");
+    if (!canvas) return;
+
+    const isDark = document.documentElement.classList.contains("dark");
+    const textColor = isDark ? "#d1d5db" : "#374151";
+
+    const roles = ["administrador", "gestor", "empresa", "motorista"];
+    const roleLabels = { administrador: "Administradores", gestor: "Gestores", empresa: "Empresas", motorista: "Motoristas" };
+    const roleColors = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b"];
+
+    const data = roles.map(r => users.filter(u => u.role === r).length);
+
+    if (data.every(v => v === 0)) {
+      canvas.parentElement.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-sm">Nenhum dado disponível</div>`;
+      return;
+    }
+
+    const chart = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: roles.map(r => roleLabels[r]),
+        datasets: [{
+          data,
+          backgroundColor: roleColors,
+          borderWidth: 0,
+          hoverOffset: 8,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "65%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              color: textColor,
+              padding: 16,
+              usePointStyle: true,
+              pointStyle: "circle",
+              font: { size: 12 },
+            },
+          },
+        },
+      },
+    });
+    this._charts.push(chart);
   },
 
   /**
