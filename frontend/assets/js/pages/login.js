@@ -312,7 +312,8 @@ const LoginPage = {
 
       Toast.success(isLogin ? "Login realizado com sucesso!" : "Conta criada com sucesso!");
 
-      // Redireciona para o dashboard
+      // Redireciona para o dashboard — atualiza hash sem disparar hashchange
+      window.history.replaceState(null, "", "#dashboard");
       setTimeout(() => {
         App.initialize();
       }, 300);
