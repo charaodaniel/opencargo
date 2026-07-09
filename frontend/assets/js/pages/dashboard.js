@@ -105,10 +105,12 @@ const DashboardPage = {
   _recentActivity(matches, loads) {
     const recentItems = matches.slice(0, 5).map((m) => {
       const load = loads.find((l) => l.id === m.load_id);
+      const driverName = m.driver_name || m.driver?.name || (m.driver_id ? `Motorista #${m.driver_id.slice(0, 8)}` : "Motorista");
+      const loadTitle = load ? load.title : (m.load_title || `Carga #${m.load_id ? m.load_id.slice(0, 8) : ""}`);
       return {
         type: "match",
-        description: `Match: ${load ? load.title : "Carga #" + m.load_id}`,
-        subtitle: `${m.driver_name} - ${Utils.getStatusLabel(m.status)}`,
+        description: `Match: ${loadTitle}`,
+        subtitle: `${driverName} - ${Utils.getStatusLabel(m.status)}`,
         status: m.status,
       };
     });

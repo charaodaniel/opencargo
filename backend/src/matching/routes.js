@@ -319,12 +319,19 @@ export async function matchingRoutes(app) {
   });
 
   // ═══════════════════════════════════════════════════════
-  //  GET /matching — Listar matches (paginated)
+  //  GET /matching — Listar matches (paginated) com dados do motorista e carga
   // ═══════════════════════════════════════════════════════
   app.get("/", async (request) => {
     const { page, limit, offset } = getPagination(request.query);
     const [rows, [{ total }]] = await Promise.all([
-      query(`SELECT * FROM matches ORDER BY created_at DESC LIMIT ? OFFSET ?`, [limit, offset]),
+      query(`
+        SELECT m.*, d.name AS driver_name, l.title AS load_title
+        FROM matches m
+        LEFT JOIN drivers d ON m.driver_id = d.id
+        LEFT JOIN loads l ON m.load_id = l.id
+        ORDER BY m.created_at DESC
+        LIMIT ? OFFSET ?
+      `, [limit, offset]),
       query(`SELECT COUNT(*) AS total FROM matches`),
     ]);
     return paginatedResponse(rows, total, page, limit);
