@@ -31,6 +31,10 @@ export class AuthService {
   }
 
   async register(input) {
+    // Mapeia roles em ingles para portugues (compatibilidade frontend)
+    const roleMap = { company: "empresa", driver: "motorista" };
+    const mappedRole = roleMap[input.role] || input.role;
+
     if (isSupabaseAuth()) {
       // ── Modo Supabase Auth ──────────────────────────────────
       const supabase = getSupabase();
@@ -43,7 +47,7 @@ export class AuthService {
         email_confirm: true,
         user_metadata: {
           name: input.name,
-          role: input.role,
+          role: mappedRole,
         },
       });
 
@@ -64,9 +68,9 @@ export class AuthService {
         await query(
           `INSERT INTO users (id, name, email, role, updated_at) VALUES (?, ?, ?, ?, ?)
            ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, updated_at = excluded.updated_at`,
-          [authUser.id, input.name, input.email, input.role, new Date().toISOString()]
+          [authUser.id, input.name, input.email, mappedRole, new Date().toISOString()]
         );
-        user = { id: authUser.id, name: input.name, email: input.email, role: input.role };
+        user = { id: authUser.id, name: input.name, email: input.email, role: mappedRole };
       }
 
       // Gera um token de sessão via signInWithPassword
@@ -90,7 +94,7 @@ export class AuthService {
 
       await query(
         `INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)`,
-        [id, input.name, input.email, hashedPassword, input.role]
+        [id, input.name, input.email, hashedPassword, mappedRole]
       );
 
       const user = await queryOne(`SELECT id, name, email, role FROM users WHERE id = ?`, [id]);

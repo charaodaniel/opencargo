@@ -10,7 +10,7 @@ const registerSchema = z.object({
   name: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(["empresa", "motorista"]),
+  role: z.enum(["empresa", "motorista", "company", "driver"]),
 });
 
 export async function authRoutes(app) {
