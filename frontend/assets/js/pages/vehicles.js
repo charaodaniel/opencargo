@@ -103,9 +103,28 @@ const VehiclesPage = {
           { value: "inactive", label: "Inativo" },
         ]},
       ],
-      onSubmit: () => {
-        Toast.success(isEdit ? "Veículo atualizado!" : "Veículo criado com sucesso!");
-        Router.refresh();
+      onSubmit: async (data) => {
+        try {
+          const payload = {
+            plate: data.plate,
+            model: data.model,
+            year: data.year ? parseInt(data.year) : undefined,
+            capacityKg: parseFloat(data.capacity_kg),
+            capacityM3: parseFloat(data.capacity_m3),
+            type: data.type || undefined,
+            status: data.status || "active",
+          };
+          if (isEdit) {
+            await Api.patch(`vehicles/${vehicleId}`, payload);
+          } else {
+            await Api.post("vehicles", payload);
+          }
+          Modal.close();
+          Toast.success(isEdit ? "Veículo atualizado!" : "Veículo criado com sucesso!");
+          Router.refresh();
+        } catch (err) {
+          Toast.error(err.message || "Erro ao salvar veículo");
+        }
       },
     });
   },
@@ -114,9 +133,14 @@ const VehiclesPage = {
    * Confirma exclusão de veículo
    */
   confirmDelete(id) {
-    Modal.confirm("Tem certeza que deseja excluir este veículo?", () => {
-      Toast.success("Veículo excluído!");
-      Router.refresh();
+    Modal.confirm("Tem certeza que deseja excluir este veículo?", async () => {
+      try {
+        await Api.delete("vehicles", id);
+        Toast.success("Veículo excluído!");
+        Router.refresh();
+      } catch (err) {
+        Toast.error(err.message || "Erro ao excluir veículo");
+      }
     });
   },
 };

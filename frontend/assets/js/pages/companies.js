@@ -100,13 +100,19 @@ const CompaniesPage = {
         { name: "state", label: "Estado (UF)", type: "text", maxlength: 2, value: company?.state || "" },
         { name: "phone", label: "Telefone", type: "text", value: company?.phone || "" },
       ],
-      onSubmit: (data) => {
-        if (isEdit) {
-          Toast.success("Empresa atualizada com sucesso!");
-        } else {
-          Toast.success("Empresa criada com sucesso!");
+      onSubmit: async (data) => {
+        try {
+          if (isEdit) {
+            await Api.patch(`companies/${companyId}`, data);
+          } else {
+            await Api.post("companies", data);
+          }
+          Modal.close();
+          Toast.success(isEdit ? "Empresa atualizada com sucesso!" : "Empresa criada com sucesso!");
+          Router.refresh();
+        } catch (err) {
+          Toast.error(err.message || "Erro ao salvar empresa");
         }
-        Router.refresh();
       },
     });
   },
@@ -115,9 +121,14 @@ const CompaniesPage = {
    * Confirma exclusão de empresa
    */
   confirmDelete(id) {
-    Modal.confirm("Tem certeza que deseja excluir esta empresa?", () => {
-      Toast.success("Empresa excluída com sucesso!");
-      Router.refresh();
+    Modal.confirm("Tem certeza que deseja excluir esta empresa?", async () => {
+      try {
+        await Api.delete("companies", id);
+        Toast.success("Empresa excluída com sucesso!");
+        Router.refresh();
+      } catch (err) {
+        Toast.error(err.message || "Erro ao excluir empresa");
+      }
     });
   },
 };

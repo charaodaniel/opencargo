@@ -107,9 +107,19 @@ const DriversPage = {
         { name: "city", label: "Cidade", type: "text" },
         { name: "state", label: "Estado (UF)", type: "text", maxlength: 2 },
       ],
-      onSubmit: () => {
-        Toast.success(isEdit ? "Motorista atualizado!" : "Motorista criado com sucesso!");
-        Router.refresh();
+      onSubmit: async (data) => {
+        try {
+          if (isEdit) {
+            await Api.patch(`drivers/${driverId}`, data);
+          } else {
+            await Api.post("drivers", data);
+          }
+          Modal.close();
+          Toast.success(isEdit ? "Motorista atualizado!" : "Motorista criado com sucesso!");
+          Router.refresh();
+        } catch (err) {
+          Toast.error(err.message || "Erro ao salvar motorista");
+        }
       },
     });
   },
@@ -118,9 +128,14 @@ const DriversPage = {
    * Confirma exclusão de motorista
    */
   confirmDelete(id) {
-    Modal.confirm("Tem certeza que deseja excluir este motorista?", () => {
-      Toast.success("Motorista excluído!");
-      Router.refresh();
+    Modal.confirm("Tem certeza que deseja excluir este motorista?", async () => {
+      try {
+        await Api.delete("drivers", id);
+        Toast.success("Motorista excluído!");
+        Router.refresh();
+      } catch (err) {
+        Toast.error(err.message || "Erro ao excluir motorista");
+      }
     });
   },
 };

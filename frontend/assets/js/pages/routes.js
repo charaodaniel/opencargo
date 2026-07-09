@@ -112,9 +112,30 @@ const RoutesPage = {
           { value: "1", label: "Sim" },
         ]},
       ],
-      onSubmit: () => {
-        Toast.success(routeId ? "Rota atualizada!" : "Rota criada com sucesso!");
-        Router.refresh();
+      onSubmit: async (data) => {
+        try {
+          const payload = {
+            originCity: data.origin_city,
+            originState: data.origin_state,
+            destinationCity: data.destination_city,
+            destinationState: data.destination_state,
+            departureDate: data.departure_date,
+            arrivalDate: data.arrival_date,
+            availableWeight: data.available_weight ? parseFloat(data.available_weight) : undefined,
+            availableVolume: data.available_volume ? parseFloat(data.available_volume) : undefined,
+            isReturn: data.is_return === "1",
+          };
+          if (routeId) {
+            await Api.patch(`routes/${routeId}`, payload);
+          } else {
+            await Api.post("routes", payload);
+          }
+          Modal.close();
+          Toast.success(routeId ? "Rota atualizada!" : "Rota criada com sucesso!");
+          Router.refresh();
+        } catch (err) {
+          Toast.error(err.message || "Erro ao salvar rota");
+        }
       },
     });
   },

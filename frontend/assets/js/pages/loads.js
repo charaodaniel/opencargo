@@ -129,9 +129,32 @@ const LoadsPage = {
         { name: "pickup_date", label: "Data de Coleta", type: "date", required: true },
         { name: "delivery_date", label: "Data de Entrega", type: "date", required: true },
       ],
-      onSubmit: () => {
-        Toast.success(loadId ? "Carga atualizada!" : "Carga criada com sucesso!");
-        Router.refresh();
+      onSubmit: async (data) => {
+        try {
+          const payload = {
+            title: data.title,
+            description: data.description || undefined,
+            originCity: data.origin_city,
+            originState: data.origin_state,
+            destinationCity: data.destination_city,
+            destinationState: data.destination_state,
+            weightKg: parseFloat(data.weight_kg),
+            volumeM3: data.volume_m3 ? parseFloat(data.volume_m3) : undefined,
+            type: data.type || undefined,
+            pickupDate: data.pickup_date,
+            deliveryDate: data.delivery_date,
+          };
+          if (loadId) {
+            await Api.patch(`loads/${loadId}`, payload);
+          } else {
+            await Api.post("loads", payload);
+          }
+          Modal.close();
+          Toast.success(loadId ? "Carga atualizada!" : "Carga criada com sucesso!");
+          Router.refresh();
+        } catch (err) {
+          Toast.error(err.message || "Erro ao salvar carga");
+        }
       },
     });
   },
