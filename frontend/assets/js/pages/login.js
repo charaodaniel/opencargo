@@ -143,9 +143,27 @@ const LoginPage = {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                   </span>
-                  <input type="password" id="auth-password" required minlength="6" placeholder="Mínimo 6 caracteres"
+                  <input type="password" id="auth-password" required minlength="8" placeholder="Mín. 8 caracteres, maiúscula, número e caractere especial"
                     class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 transition-all" />
                 </div>
+                <!-- Strength indicator (apenas no registro) -->
+                ${isLogin ? "" : `
+                <div id="password-strength" class="mt-2 hidden">
+                  <div class="flex gap-1 mb-1.5">
+                    <div id="pw-bar-1" class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-all"></div>
+                    <div id="pw-bar-2" class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-all"></div>
+                    <div id="pw-bar-3" class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-all"></div>
+                    <div id="pw-bar-4" class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-all"></div>
+                  </div>
+                  <p id="pw-text" class="text-xs text-gray-400">Use 8+ caracteres, 1 maiúscula, 1 número e 1 caractere especial</p>
+                  <ul id="pw-requirements" class="text-xs space-y-0.5 mt-1">
+                    <li id="req-length" class="text-gray-400">● Mínimo 8 caracteres</li>
+                    <li id="req-upper" class="text-gray-400">● 1 letra maiúscula</li>
+                    <li id="req-number" class="text-gray-400">● 1 número</li>
+                    <li id="req-special" class="text-gray-400">● 1 caractere especial</li>
+                  </ul>
+                </div>
+                `}
               </div>
 
               <!-- Role (apenas no registro) -->
@@ -202,7 +220,7 @@ const LoginPage = {
   },
 
   /**
-   * Hook pós-renderização — ativa validação em tempo real
+   * Hook pós-renderização — ativa validação em tempo real e strength meter
    */
   afterRender() {
     const errorEl = document.getElementById("auth-error");
@@ -210,6 +228,11 @@ const LoginPage = {
 
     // Ativa o botão de submit após validação dos campos obrigatórios
     this._enableSubmitOnValid();
+
+    // Ativa indicador de força da senha no registro
+    if (this._mode === "register") {
+      this._initPasswordStrength();
+    }
   },
 
   /**
@@ -223,12 +246,73 @@ const LoginPage = {
       const email = document.getElementById("auth-email")?.value?.trim();
       const password = document.getElementById("auth-password")?.value?.trim();
       const name = document.getElementById("auth-name")?.value?.trim();
-      const valid = email && password && password.length >= 6 && (this._mode === "login" || name);
+      const valid = email && password && password.length >= 8 && (this._mode === "login" || name);
       submitBtn.disabled = !valid;
     };
 
     form?.addEventListener("input", check);
     check();
+  },
+
+  /**
+   * Inicializa o indicador de força da senha com validação em tempo real
+   */
+  _initPasswordStrength() {
+    const pwInput = document.getElementById("auth-password");
+    const container = document.getElementById("password-strength");
+    if (!pwInput || !container) return;
+
+    const bars = [1, 2, 3, 4].map(i => document.getElementById(`pw-bar-${i}`));
+    const text = document.getElementById("pw-text");
+    const reqs = {
+      length: document.getElementById("req-length"),
+      upper: document.getElementById("req-upper"),
+      number: document.getElementById("req-number"),
+      special: document.getElementById("req-special"),
+    };
+
+    pwInput.addEventListener("input", () => {
+      const pw = pwInput.value;
+      container.classList.remove("hidden");
+
+      // Verifica requisitos
+      const checks = {
+        length: pw.length >= 8,
+        upper: /[A-Z]/.test(pw),
+        number: /[0-9]/.test(pw),
+        special: /[^A-Za-z0-9]/.test(pw),
+      };
+
+      // Atualiza lista de requisitos
+      Object.keys(checks).forEach(key => {
+        const el = reqs[key];
+        if (el) {
+          el.innerHTML = checks[key]
+            ? `<span class="text-green-500">✓</span> ${el.textContent.slice(2)}`
+            : `<span class="text-gray-400">●</span> ${el.textContent.slice(2)}`;
+          el.className = `text-xs ${checks[key] ? "text-green-600 dark:text-green-400" : "text-gray-400"}`;
+        }
+      });
+
+      // Calcula força (0-4)
+      let score = 0;
+      if (checks.length) score++;
+      if (checks.upper) score++;
+      if (checks.number) score++;
+      if (checks.special) score++;
+
+      // Atualiza as barras
+      const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500"];
+      const labels = ["", "Fraca", "Média", "Forte", "Muito forte"];
+      const labelColors = ["", "text-red-500", "text-orange-500", "text-yellow-500", "text-green-500"];
+
+      bars.forEach((bar, i) => {
+        bar.className = `h-1.5 flex-1 rounded-full transition-all ${i < score ? colors[i] : "bg-gray-200 dark:bg-gray-700"}`;
+      });
+
+      text.className = `text-xs font-medium ${score > 0 ? labelColors[score] : "text-gray-400"}`;
+      text.textContent = score > 0 ? labels[score] : "Use 8+ caracteres, 1 maiúscula, 1 número e 1 caractere especial";
+    });
   },
 
   /**
@@ -310,7 +394,12 @@ const LoginPage = {
       Storage.setToken(response.token);
       Storage.setUser(response.user);
 
-      Toast.success(isLogin ? "Login realizado com sucesso!" : "Conta criada com sucesso!");
+      // Se login com senha fraca, mostra aviso para redefinir
+      if (isLogin && response.needsPasswordReset) {
+        Toast.warning("Sua senha não atende aos requisitos atuais. Acesse Configurações para redefini-la.");
+      } else {
+        Toast.success(isLogin ? "Login realizado com sucesso!" : "Conta criada com sucesso!");
+      }
 
       // Redireciona para o dashboard — atualiza hash sem disparar hashchange
       window.history.replaceState(null, "", "#dashboard");

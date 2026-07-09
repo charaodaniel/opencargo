@@ -204,6 +204,50 @@ const SettingsPage = {
           </div>
         </div>
 
+        <!-- Card: Alterar Senha -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center space-x-2">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Alterar Senha</h3>
+            </div>
+          </div>
+          <div class="p-6">
+            <form id="password-form" onsubmit="SettingsPage.changePassword(event)" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha atual</label>
+                <input type="password" id="pw-current" required
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova senha</label>
+                <input type="password" id="pw-new" required minlength="8"
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <p class="text-xs text-gray-400 mt-1">Mín. 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar nova senha</label>
+                <input type="password" id="pw-confirm" required
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              </div>
+              <p id="pw-error" class="text-red-500 text-xs hidden"></p>
+              <button type="submit" id="pw-submit"
+                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="pw-submit-text">Alterar Senha</span>
+                <span id="pw-submit-loading" class="hidden">
+                  <svg class="animate-spin inline-block w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Alterando...
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+
         <!-- Card: Logout -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div class="p-6">
@@ -375,6 +419,91 @@ const SettingsPage = {
    */
   setLang(locale) {
     Navbar.setLang(locale);
+  },
+
+  /**
+   * Altera a senha do usuário via API
+   */
+  async changePassword(event) {
+    event.preventDefault();
+
+    const currentPassword = document.getElementById("pw-current")?.value;
+    const newPassword = document.getElementById("pw-new")?.value;
+    const confirmPassword = document.getElementById("pw-confirm")?.value;
+    const errorEl = document.getElementById("pw-error");
+
+    if (!currentPassword || !newPassword || !confirmPassword) return;
+
+    // Validação client-side
+    if (newPassword !== confirmPassword) {
+      if (errorEl) {
+        errorEl.textContent = "As senhas não conferem.";
+        errorEl.classList.remove("hidden");
+      }
+      return;
+    }
+
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      if (errorEl) {
+        errorEl.textContent = "A senha deve ter 8+ caracteres, 1 maiúscula, 1 número e 1 caractere especial.";
+        errorEl.classList.remove("hidden");
+      }
+      return;
+    }
+
+    errorEl?.classList.add("hidden");
+
+    // Ativa loading
+    const submitBtn = document.getElementById("pw-submit");
+    const submitText = document.getElementById("pw-submit-text");
+    const submitLoading = document.getElementById("pw-submit-loading");
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitText) submitText.classList.add("hidden");
+    if (submitLoading) submitLoading.classList.remove("hidden");
+
+    try {
+      const token = Storage.getToken();
+      if (!token || !CONFIG.API_BASE_URL) {
+        throw new Error("Conecte-se ao backend para alterar a senha.");
+      }
+
+      const res = await fetch(`${CONFIG.API_BASE_URL}/auth/password`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao alterar senha");
+      }
+
+      // Atualiza o token no storage (novo token gerado pelo backend)
+      if (data.token) {
+        Storage.setToken(data.token);
+      }
+
+      // Limpa formulário
+      document.getElementById("pw-current").value = "";
+      document.getElementById("pw-new").value = "";
+      document.getElementById("pw-confirm").value = "";
+
+      Toast.success("Senha alterada com sucesso!");
+    } catch (err) {
+      if (errorEl) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove("hidden");
+      }
+      Toast.error(err.message);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitText) submitText.classList.remove("hidden");
+      if (submitLoading) submitLoading.classList.add("hidden");
+    }
   },
 
   /**

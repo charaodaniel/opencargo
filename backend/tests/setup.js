@@ -106,7 +106,7 @@ export async function createTestData(app) {
   const company = await registerUser(app, {
     name: "Empresa Teste Ltda",
     email: "empresa@teste.com",
-    password: "123456",
+    password: "Teste@123",
     role: "empresa",
   });
 
@@ -128,7 +128,7 @@ export async function createTestData(app) {
   const driver = await registerUser(app, {
     name: "Motorista Teste",
     email: "motorista@teste.com",
-    password: "123456",
+    password: "Teste@123",
     role: "motorista",
   });
 

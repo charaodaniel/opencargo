@@ -48,7 +48,7 @@ describe("Auth", () => {
       payload: {
         name: "Transportadora XYZ",
         email: "xyz@teste.com",
-        password: "123456",
+        password: "Teste@123",
         role: "empresa",
       },
     });
@@ -68,7 +68,7 @@ describe("Auth", () => {
       payload: {
         name: "João Motorista",
         email: "joao@teste.com",
-        password: "123456",
+        password: "Teste@123",
         role: "motorista",
       },
     });
@@ -85,7 +85,7 @@ describe("Auth", () => {
       payload: {
         name: "Outra Empresa",
         email: "xyz@teste.com",
-        password: "123456",
+        password: "Teste@123",
         role: "empresa",
       },
     });
@@ -99,7 +99,7 @@ describe("Auth", () => {
       url: "/api/auth/login",
       payload: {
         email: "xyz@teste.com",
-        password: "123456",
+        password: "Teste@123",
       },
     });
 
@@ -153,7 +153,7 @@ describe("Companies CRUD", () => {
     const user = await registerUser(app, {
       name: "Empresa CRUD",
       email: "crud@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "empresa",
     });
     token = user.token;
@@ -247,7 +247,7 @@ describe("Drivers CRUD", () => {
     const user = await registerUser(app, {
       name: "Motorista CRUD",
       email: "motorista-crud@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "motorista",
     });
     token = user.token;
@@ -304,7 +304,7 @@ describe("Vehicles CRUD", () => {
     const user = await registerUser(app, {
       name: "Motorista Veículo",
       email: "veiculo@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "motorista",
     });
     token = user.token;
@@ -401,7 +401,7 @@ describe("Routes CRUD", () => {
     const user = await registerUser(app, {
       name: "Motorista Rota",
       email: "rota@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "motorista",
     });
     token = user.token;
@@ -486,7 +486,7 @@ describe("Loads CRUD", () => {
     const user = await registerUser(app, {
       name: "Empresa Carga",
       email: "carga@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "empresa",
     });
     token = user.token;
@@ -733,7 +733,7 @@ describe("Notifications", () => {
     const user = await registerUser(app, {
       name: "Usuário Notificações",
       email: "notif@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "empresa",
     });
     token = user.token;
@@ -771,7 +771,7 @@ describe("Users", () => {
     const user = await registerUser(app, {
       name: "Admin Teste",
       email: "admin@teste.com",
-      password: "123456",
+      password: "Teste@123",
       role: "empresa",
     });
     token = user.token;
