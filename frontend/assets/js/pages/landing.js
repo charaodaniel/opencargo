@@ -12,25 +12,27 @@ const LandingPage = {
   _loads: [],
 
   /**
-   * Renderiza a landing page completa
-   * Busca cargas disponíveis para exibir como vitrine (estilo BlaBlaCar).
+   * Renderiza a landing page completa.
+   * Mantido síncrono para evitar qualquer interferência com o Router.
+   * As cargas disponíveis são carregadas em afterRender().
    */
-  async render() {
-    // Carrega cargas disponíveis para exibição pública
-    try {
-      const loads = await Api.get("loads");
-      this._loads = (Array.isArray(loads) ? loads : []).filter(
-        l => l.status === "available"
-      ).slice(0, 6);
-    } catch {
-      this._loads = [];
-    }
-
+  render() {
     return `
       <div class="min-h-screen bg-white dark:bg-gray-950 overflow-hidden">
         ${this._navbar()}
         ${this._hero()}
-        ${this._availableLoads()}
+        <!-- Available loads placeholder (preenchido via afterRender) -->
+        <div id="available-loads-section" class="py-16 md:py-20 bg-gray-50/50 dark:bg-gray-900/50">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center py-12">
+              <div class="animate-pulse flex flex-col items-center">
+                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full mb-4"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         ${this._trustedBy()}
         ${this._features()}
         ${this._howItWorks()}
@@ -48,6 +50,8 @@ const LandingPage = {
   afterRender() {
     this._initScrollReveal();
     this._animateNumbers();
+    // Carrega cargas disponíveis via afterRender (render() mantido síncrono)
+    this._loadAvailableLoads();
   },
 
   /**
@@ -261,122 +265,148 @@ const LandingPage = {
 
   // ═══ CARGAS DISPONÍVEIS (Vitrine Pública) ═════════
 
-  _availableLoads() {
-    const loads = this._loads;
+  /**
+   * Carrega cargas disponíveis via API e substitui o placeholder
+   * no DOM. Chamado em afterRender() para manter render() síncrono.
+   */
+  async _loadAvailableLoads() {
+    const container = document.getElementById("available-loads-section");
+    if (!container) return;
 
-    return `
-      <section class="py-16 md:py-20 bg-gray-50/50 dark:bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <!-- Header -->
-          <div data-reveal="up" class="text-center max-w-3xl mx-auto mb-12">
-            <span class="inline-block px-3 py-1 text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-full mb-4">
-              🚛 Cargas Disponíveis Agora
-            </span>
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Encontre cargas para sua <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600">rota de retorno</span>
-            </h2>
-            <p class="text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              Veja as cargas disponíveis agora mesmo. Faça login para aceitar ou entrar em contato com a empresa.
-            </p>
-          </div>
+    try {
+      const loads = await Api.get("loads");
+      this._loads = (Array.isArray(loads) ? loads : []).filter(
+        l => l.status === "available"
+      ).slice(0, 6);
+    } catch {
+      this._loads = [];
+    }
 
-          ${loads.length === 0 ? `
-            <div data-reveal="up" class="text-center py-12">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-              </svg>
-              <p class="text-gray-400 dark:text-gray-500 font-medium">Nenhuma carga disponível no momento.</p>
-              <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Volte mais tarde ou cadastre-se para criar novas cargas.</p>
-            </div>
-          ` : `
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              ${loads.map((load, i) => `
-                <div data-reveal="up" data-reveal-delay="${(i * 0.06).toFixed(2)}"
-                     class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden
-                            hover:border-green-300 dark:hover:border-green-700 hover:shadow-lg transition-all duration-200 group">
-                  <!-- Card Header -->
-                  <div class="p-5">
-                    <!-- Route -->
-                    <div class="flex items-start justify-between mb-3">
-                      <div class="flex-1 min-w-0">
-                        <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                          ${Utils.escapeHtml(load.title)}
-                        </h3>
-                      </div>
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 ml-2 shrink-0">
-                        ${Utils.formatNumber(load.weight_kg)} kg
-                      </span>
-                    </div>
+    const headerHTML = `
+      <div data-reveal="up" class="text-center max-w-3xl mx-auto mb-12">
+        <span class="inline-block px-3 py-1 text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-full mb-4">
+          🚛 Cargas Disponíveis Agora
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          Encontre cargas para sua <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600">rota de retorno</span>
+        </h2>
+        <p class="text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+          Veja as cargas disponíveis agora mesmo. Faça login para aceitar ou entrar em contato com a empresa.
+        </p>
+      </div>
+    `;
 
-                    <!-- Origin → Destination -->
-                    <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <div class="flex flex-col items-center">
-                        <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                        <div class="w-0.5 h-6 bg-gray-300 dark:bg-gray-600"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="font-medium text-gray-900 dark:text-white">${Utils.escapeHtml(load.origin_city)} <span class="text-xs text-gray-400">${load.origin_state || ""}</span></p>
-                        <div class="flex items-center gap-1.5 py-1">
-                          <span class="text-[10px] text-gray-400 uppercase tracking-wider">até</span>
-                          <span class="text-xs font-medium text-gray-500 dark:text-gray-300">${Utils.escapeHtml(load.destination_city)}</span>
-                          <span class="text-[10px] text-gray-400">${load.destination_state || ""}</span>
-                        </div>
-                      </div>
-                    </div>
+    let bodyHTML;
 
-                    <!-- Details -->
-                    <div class="flex flex-wrap gap-2 mt-3">
-                      ${load.type ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">${Utils.escapeHtml(load.type)}</span>` : ""}
-                      ${load.volume_m3 ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">${Utils.formatNumber(load.volume_m3)} m³</span>` : ""}
-                      ${load.pickup_date ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">📅 ${Utils.formatDate(load.pickup_date)}</span>` : ""}
-                    </div>
+    if (this._loads.length === 0) {
+      bodyHTML = `
+        <div data-reveal="up" class="text-center py-12">
+          <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          <p class="text-gray-400 dark:text-gray-500 font-medium">Nenhuma carga disponível no momento.</p>
+          <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Volte mais tarde ou cadastre-se para criar novas cargas.</p>
+        </div>
+      `;
+    } else {
+      const cards = this._loads.map((load, i) => {
+        const delay = (i * 0.06).toFixed(2);
+        const originCity = Utils.escapeHtml(load.origin_city || "");
+        const destCity = Utils.escapeHtml(load.destination_city || "");
+        const title = Utils.escapeHtml(load.title || "Carga");
+        const companyName = Utils.escapeHtml(load.company_name || "Empresa");
+        const weight = Utils.formatNumber(load.weight_kg);
+        const type = load.type ? Utils.escapeHtml(load.type) : "";
+        const volume = load.volume_m3 ? Utils.formatNumber(load.volume_m3) : "";
+        const pickupDate = load.pickup_date ? Utils.formatDate(load.pickup_date) : "";
+        const companyInitial = (load.company_name || "E")[0];
+        const originState = load.origin_state || "";
+        const destState = load.destination_state || "";
 
-                    <!-- Company -->
-                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[9px] font-bold">
-                        ${(load.company_name || "E")[0]}
-                      </div>
-                      <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        ${Utils.escapeHtml(load.company_name || "Empresa")}
-                      </span>
-                    </div>
-                  </div>
+        return `
+          <div data-reveal="up" data-reveal-delay="${delay}"
+               class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden
+                      hover:border-green-300 dark:hover:border-green-700 hover:shadow-lg transition-all duration-200 group">
+            <div class="p-5">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate">${title}</h3>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 ml-2 shrink-0">${weight} kg</span>
+              </div>
 
-                  <!-- Actions -->
-                  <div class="px-5 pb-5">
-                    <button onclick="Router.go('login')"
-                      class="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-semibold rounded-lg
-                             hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md shadow-green-500/20
-                             hover:shadow-green-500/30 active:scale-[0.98] group/btn">
-                      <span class="flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                        </svg>
-                        Entrar para Aceitar
-                      </span>
-                    </button>
+              <div class="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex flex-col items-center pt-0.5">
+                  <div class="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0"></div>
+                  <div class="w-0.5 h-6 bg-gray-300 dark:bg-gray-600 shrink-0"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-gray-900 dark:text-white">${originCity} <span class="text-xs text-gray-400">${originState}</span></p>
+                  <div class="flex items-center gap-1.5 py-1">
+                    <span class="text-[10px] text-gray-400 uppercase tracking-wider">até</span>
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-300">${destCity}</span>
+                    <span class="text-[10px] text-gray-400">${destState}</span>
                   </div>
                 </div>
-              `).join("")}
-            </div>
-          `}
+              </div>
 
-          <!-- CTA abaixo da grid -->
-          <div data-reveal="up" class="text-center mt-10">
-            <button onclick="Router.go('login')"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl
-                     border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 hover:text-green-600 dark:hover:text-green-400
-                     transition-all duration-200 hover:shadow-md">
-              Ver todas as cargas disponíveis
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
-            </button>
+              <div class="flex flex-wrap gap-2 mt-3">
+                ${type ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">${type}</span>` : ""}
+                ${volume ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">${volume} m³</span>` : ""}
+                ${pickupDate ? `<span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">📅 ${pickupDate}</span>` : ""}
+              </div>
+
+              <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">${companyInitial}</div>
+                <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${companyName}</span>
+              </div>
+            </div>
+
+            <div class="px-5 pb-5">
+              <button onclick="Router.go('login')"
+                      class="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-semibold rounded-lg
+                             hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md shadow-green-500/20
+                             hover:shadow-green-500/30 active:scale-[0.98]">
+                <span class="flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                  </svg>
+                  Entrar para Aceitar
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        `;
+      }).join("");
+
+      bodyHTML = `<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">${cards}</div>`;
+    }
+
+    const ctaHTML = `
+      <div data-reveal="up" class="text-center mt-10">
+        <button onclick="Router.go('login')"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl
+                       border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 hover:text-green-600 dark:hover:text-green-400
+                       transition-all duration-200 hover:shadow-md">
+          Ver todas as cargas disponíveis
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </button>
+      </div>
     `;
+
+    container.innerHTML = `
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        ${headerHTML}
+        ${bodyHTML}
+        ${ctaHTML}
+      </div>
+    `;
+
+    // Re-inicializa scroll reveal para os novos elementos
+    this._initScrollReveal();
   },
 
   // ═══ TRUSTED BY ═══════════════════════════════════
