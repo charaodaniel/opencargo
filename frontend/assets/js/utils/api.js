@@ -44,68 +44,110 @@ const Api = {
   },
 
   /**
-   * Envia dados para a API (futuro)
+   * Executa um fetch com fallback offline: se estiver offline,
+   * enfileira a ação para sincronização posterior.
+   */
+  async _fetchOrQueue({ endpoint, method, body = null, entityType = "unknown" }) {
+    if (!CONFIG.API_BASE_URL) {
+      console.log(`[API Mock] ${method} ${endpoint}:`, body);
+      return { success: true, id: Utils.generateId(), ...body };
+    }
+
+    // Se estiver offline, enfileira
+    if (!navigator.onLine) {
+      const item = OfflineQueue.add({
+        url: endpoint,
+        method,
+        body,
+        entityType,
+      });
+      Toast.info(`📥 Ação enfileirada para quando houver internet (fila: ${OfflineQueue.count()})`);
+      return { success: true, queued: true, queueId: item.id, ...body };
+    }
+
+    try {
+      const res = await this._fetch(endpoint, method, body);
+      return res;
+    } catch (err) {
+      // Se a requisição falhar por falta de rede, enfileira
+      if (err.message === "Failed to fetch" || err.name === "TypeError") {
+        const item = OfflineQueue.add({
+          url: endpoint,
+          method,
+          body,
+          entityType,
+        });
+        Toast.info(`📥 Ação enfileirada para quando houver internet (fila: ${OfflineQueue.count()})`);
+        return { success: true, queued: true, queueId: item.id, ...body };
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Executa fetch real com headers
+   */
+  async _fetch(endpoint, method, body = null) {
+    const res = await fetch(`${CONFIG.API_BASE_URL}/${endpoint}`, {
+      method,
+      headers: this._getHeaders(),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.error || `API error: ${res.status}`);
+    }
+    if (res.status === 204) return { success: true };
+    return res.json();
+  },
+
+  /**
+   * Envia dados para a API (com suporte offline)
    */
   async post(endpoint, data) {
-    if (!CONFIG.API_BASE_URL) {
-      console.log(`[API Mock] POST ${endpoint}:`, data);
-      return { success: true, id: Utils.generateId(), ...data };
-    }
-    const res = await fetch(`${CONFIG.API_BASE_URL}/${endpoint}`, {
+    return this._fetchOrQueue({
+      endpoint,
       method: "POST",
-      headers: this._getHeaders(),
-      body: JSON.stringify(data),
+      body: data,
+      entityType: endpoint.split("/")[0],
     });
-    return res.json();
   },
 
   /**
-   * Atualiza dados na API (futuro)
+   * Atualiza dados na API (com suporte offline)
    */
   async put(endpoint, id, data) {
-    if (!CONFIG.API_BASE_URL) {
-      console.log(`[API Mock] PUT ${endpoint}/${id}:`, data);
-      return { success: true, ...data };
-    }
-    const res = await fetch(`${CONFIG.API_BASE_URL}/${endpoint}/${id}`, {
+    return this._fetchOrQueue({
+      endpoint: `${endpoint}/${id}`,
       method: "PUT",
-      headers: this._getHeaders(),
-      body: JSON.stringify(data),
+      body: data,
+      entityType: endpoint,
     });
-    return res.json();
   },
 
   /**
-   * Remove dados na API (futuro)
+   * Remove dados na API (com suporte offline)
    */
   async delete(endpoint, id) {
-    if (!CONFIG.API_BASE_URL) {
-      console.log(`[API Mock] DELETE ${endpoint}/${id}`);
-      return { success: true };
-    }
-    const res = await fetch(`${CONFIG.API_BASE_URL}/${endpoint}/${id}`, {
+    return this._fetchOrQueue({
+      endpoint: `${endpoint}/${id}`,
       method: "DELETE",
-      headers: this._getHeaders(),
+      entityType: endpoint,
     });
-    return res.json();
   },
 
   /**
-   * Atualização parcial na API (ex: PATCH /notifications/:id/read)
+   * Atualização parcial na API (com suporte offline)
    * @param {string} path - Caminho após a base URL (ex: "notifications/abc-123/read")
    * @param {object} [data] - Dados opcionais para enviar no body
    */
   async patch(path, data) {
-    if (!CONFIG.API_BASE_URL) {
-      console.log(`[API Mock] PATCH ${path}:`, data);
-      return { success: true };
-    }
-    const res = await fetch(`${CONFIG.API_BASE_URL}/${path}`, {
+    return this._fetchOrQueue({
+      endpoint: path,
       method: "PATCH",
-      headers: this._getHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
+      body: data,
+      entityType: path.split("/")[0],
     });
-    return res.json();
   },
 
   /**

@@ -14,6 +14,20 @@ const DriversPage = {
     const drivers = await Api.get("drivers");
     this._drivers = drivers;
 
+    this._exportConfig = {
+      data: drivers,
+      columns: [
+        { key: "name", label: "Nome" },
+        { key: "document", label: "CPF" },
+        { key: "cnh", label: "CNH" },
+        { key: "phone", label: "Telefone" },
+        { key: "city", label: "Cidade" },
+        { key: "state", label: "UF" },
+        { key: "available", label: "Disponível" },
+      ],
+      filename: "motoristas",
+    };
+
     // Filtra dados conforme card ativo
     const filtered = this._filterCard === "all"
       ? drivers
@@ -31,10 +45,7 @@ const DriversPage = {
             <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie os motoristas cadastrados</p>
           </div>
           <div class="flex items-center space-x-2">
-            <button onclick="DriversPage.exportCsv()" class="flex items-center space-x-1.5 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="${__("action.exportCsv")}">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <span class="hidden sm:inline">${__("action.exportCsv")}</span>
-            </button>
+            ${Utils.renderExportCsvButton('DriversPage')}
             <button onclick="DriversPage.openForm()" class="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               <span class="hidden sm:inline">Novo Motorista</span>
@@ -96,25 +107,6 @@ const DriversPage = {
   setFilterCard(value) {
     this._filterCard = value;
     Router.refresh();
-  },
-
-  /**
-   * Exporta motoristas como CSV
-   */
-  exportCsv() {
-    Utils.exportCsv(
-      this._drivers,
-      [
-        { key: "name", label: "Nome" },
-        { key: "document", label: "CPF" },
-        { key: "cnh", label: "CNH" },
-        { key: "phone", label: "Telefone" },
-        { key: "city", label: "Cidade" },
-        { key: "state", label: "UF" },
-        { key: "available", label: "Disponível" },
-      ],
-      "motoristas"
-    );
   },
 
   /**

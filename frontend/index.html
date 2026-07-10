@@ -15,10 +15,6 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="OpenCargo" />
 
-  <!-- Apple Touch Icons -->
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg" />
-  <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.svg" />
-
   <!-- ═══ Tailwind CSS (compilado localmente) ═══ -->
   <link rel="stylesheet" href="assets/css/tailwind.min.css" />
 
@@ -31,10 +27,30 @@
   <link rel="stylesheet" href="assets/css/style.css" />
 
   <!-- ═══ Favicon ═══ -->
-  <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg" />
-  <link rel="mask-icon" href="assets/icons/icon-192.svg" color="#2563eb" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/logo-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/logo-512.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/icons/logo-192.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/logo-512.png" />
+  <link rel="mask-icon" href="assets/icons/logo-192.png" color="#2563eb" />
 </head>
 <body class="bg-background text-foreground min-h-screen antialiased">
+
+  <!-- ══════════════════ SPLASH SCREEN ══════════════════ -->
+  <div id="splash-screen" class="splash-screen" aria-hidden="true">
+    <div class="splash-content">
+      <!-- Logo animado -->
+      <div class="splash-logo-wrapper">
+        <img src="assets/icons/logo-192.png" alt="OpenCargo" class="splash-logo-img" />
+      </div>
+      <!-- Texto -->
+      <h1 class="splash-title">OpenCargo</h1>
+      <p class="splash-subtitle">Logística Colaborativa</p>
+      <!-- Loading bar -->
+      <div class="splash-loader">
+        <div class="splash-loader-bar"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════ APP ROOT ══════════════════ -->
   <div id="app"></div>
@@ -51,6 +67,7 @@
   <script src="assets/js/utils/api.js"></script>
   <script src="assets/js/utils/geocoding.js"></script>
   <script src="assets/js/utils/icons.js"></script>
+  <script src="assets/js/utils/offline-queue.js"></script>
 
   <!-- Internacionalização (i18n) -->
   <script src="assets/js/i18n/pt-BR.js"></script>
@@ -84,6 +101,8 @@
   <script src="assets/js/pages/admin-users.js"></script>
   <script src="assets/js/pages/settings.js"></script>
   <script src="assets/js/pages/logs.js"></script>
+  <script src="assets/js/pages/alerts.js"></script>
+  <script src="assets/js/pages/audit.js"></script>
 
   <!-- Router + App (devem ser os últimos) -->
   <script src="assets/js/router.js"></script>

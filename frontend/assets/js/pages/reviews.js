@@ -37,11 +37,24 @@ const ReviewsPage = {
    * Busca avaliações do usuário
    */
   async _fetchReviews(user) {
+    this._reviews = [];
+    this._exportConfig = {
+      data: [],
+      columns: [
+        { key: "reviewer_name", label: "Avaliador" },
+        { key: "reviewee_name", label: "Avaliado" },
+        { key: "score", label: "Nota" },
+        { key: "comment", label: "Comentário" },
+        { key: "created_at", label: "Data" },
+      ],
+      filename: "avaliacoes",
+    };
     try {
       const params = new URLSearchParams({ user_id: user.id });
       if (this._mode !== "all") params.set("role", this._mode);
 
       this._reviews = await Api.get(`reviews?${params.toString()}`);
+      this._exportConfig.data = this._reviews;
     } catch {
       this._reviews = [];
     }
@@ -87,10 +100,7 @@ const ReviewsPage = {
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">${__("page.reviews")}</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">${__("page.reviews.desc")}</p>
           </div>
-          <button onclick="ReviewsPage.exportCsv()" class="flex items-center space-x-1.5 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shrink-0" title="${__("action.exportCsv")}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span class="hidden sm:inline">${__("action.exportCsv")}</span>
-          </button>
+          ${Utils.renderExportCsvButton('ReviewsPage')}
         </div>
 
         <!-- Stats Card -->
@@ -265,23 +275,6 @@ const ReviewsPage = {
   },
 
   // ═══ Actions ═════════════════════════════════════
-
-  /**
-   * Exporta avaliações como CSV
-   */
-  exportCsv() {
-    Utils.exportCsv(
-      this._reviews,
-      [
-        { key: "reviewer_name", label: "Avaliador" },
-        { key: "reviewee_name", label: "Avaliado" },
-        { key: "score", label: "Nota" },
-        { key: "comment", label: "Comentário" },
-        { key: "created_at", label: "Data" },
-      ],
-      "avaliacoes"
-    );
-  },
 
   /**
    * Altera o modo de visualização

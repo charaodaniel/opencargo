@@ -419,23 +419,124 @@ const MatchingPage = {
           </div>
         ` : ""}
 
-        <!-- Ações: Chat / Anexar doc / Criar OS -->
-        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-2">
-          <button onclick="MatchingPage.openChat('${load.id}', '${route?.driver_id || ""}', '${Utils.escapeHtml(load.title)}')"
-            class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
-            ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
-            <span>Chat</span>
-          </button>
-          <button onclick="MatchingPage.attachDocument('${load.id}', '${Utils.escapeHtml(load.title)}')"
-            class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
-            ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
-            <span>Anexar doc</span>
-          </button>
-          <button onclick="MatchingPage.createServiceOrder('${load.id}', '${route?.id || ""}', '${Utils.escapeHtml(load.title)}')"
-            class="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium flex items-center space-x-1">
-            ${Icons.document({ class: 'w-3.5 h-3.5', noHover: true })}
-            <span>Criar OS</span>
-          </button>
+        <!-- Match Status & Actions -->
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+          ${(() => {
+            const match = (MatchingPage._matches || []).find(m => m.load_id === load.id || m.loadId === load.id);
+            const status = match?.status || null;
+            const matchId = match?.id || match?.match_id || null;
+            const hasRoute = route && route.id && route.driver_id;
+            const escapedTitle = Utils.escapeHtml(load.title);
+
+            if (!hasRoute) {
+              // Busca por proximidade — sem dados de rota, mostrar apenas ações básicas
+              return `
+                <div class="flex flex-wrap items-center gap-2">
+                  <button onclick="MatchingPage.openChat('${load.id}', '', '${escapedTitle}')"
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+                    ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Chat</span>
+                  </button>
+                  <button onclick="MatchingPage.attachDocument('${load.id}', '${escapedTitle}')"
+                    class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
+                    ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Anexar doc</span>
+                  </button>
+                </div>
+              `;
+            }
+
+            if (!match) {
+              // Nenhum match ainda — mostrar Criar Match e OS desabilitado
+              return `
+                <div class="flex flex-wrap items-center gap-2">
+                  <button onclick="MatchingPage.openChat('${load.id}', '${route.driver_id}', '${escapedTitle}')"
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+                    ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Chat</span>
+                  </button>
+                  <button onclick="MatchingPage.attachDocument('${load.id}', '${escapedTitle}')"
+                    class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
+                    ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Anexar doc</span>
+                  </button>
+                  <button onclick="MatchingPage.createMatch('${load.id}', '${route.id}', '${route.driver_id}')"
+                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center space-x-1 bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>Criar Match</span>
+                  </button>
+                  <button disabled
+                    class="text-xs text-gray-400 dark:text-gray-600 font-medium flex items-center space-x-1 cursor-not-allowed"
+                    title="Crie um match primeiro">
+                    ${Icons.document({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Criar OS</span>
+                  </button>
+                </div>
+              `;
+            } else if (status === 'pending') {
+              // Match pendente — mostrar Confirmar Viagem e OS desabilitado
+              return `
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center space-x-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2.5 py-1 rounded-full font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Aguardando confirmação</span>
+                  </span>
+                  <button onclick="MatchingPage.confirmMatch('${matchId}')"
+                    class="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium flex items-center space-x-1 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-lg">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Confirmar Viagem</span>
+                  </button>
+                  <button onclick="MatchingPage.openChat('${load.id}', '${route.driver_id}', '${escapedTitle}')"
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+                    ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Chat</span>
+                  </button>
+                  <button disabled
+                    class="text-xs text-gray-400 dark:text-gray-600 font-medium flex items-center space-x-1 cursor-not-allowed"
+                    title="Confirme a viagem primeiro">
+                    ${Icons.document({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Criar OS</span>
+                  </button>
+                </div>
+              `;
+            } else if (status === 'confirmed') {
+              // Match confirmado — OS liberada!
+              return `
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center space-x-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Viagem Confirmada</span>
+                  </span>
+                  <button onclick="MatchingPage.openChat('${load.id}', '${route.driver_id}', '${escapedTitle}')"
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+                    ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Chat</span>
+                  </button>
+                  <button onclick="MatchingPage.attachDocument('${load.id}', '${escapedTitle}')"
+                    class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium flex items-center space-x-1">
+                    ${Icons.paperclip({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Anexar doc</span>
+                  </button>
+                  <button onclick="MatchingPage.createServiceOrder('${load.id}', '${route.id}', '${escapedTitle}')"
+                    class="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium flex items-center space-x-1 bg-green-50 dark:bg-green-900/20 px-2.5 py-1 rounded-lg">
+                    ${Icons.document({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Criar OS</span>
+                  </button>
+                </div>
+              `;
+            } else {
+              // Status desconhecido — mostrar apenas Chat
+              return `
+                <div class="flex flex-wrap items-center gap-2">
+                  <button onclick="MatchingPage.openChat('${load.id}', '${route.driver_id}', '${escapedTitle}')"
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium flex items-center space-x-1">
+                    ${Icons.chat({ class: 'w-3.5 h-3.5', noHover: true })}
+                    <span>Chat</span>
+                  </button>
+                </div>
+              `;
+            }
+          })()}
         </div>
       </div>
     `;
@@ -777,6 +878,16 @@ const MatchingPage = {
   async createServiceOrder(loadId, routeId, loadTitle) {
     const user = Storage.getUser();
 
+    // Verifica se existe um match confirmado para esta carga
+    const confirmedMatch = (this._matches || []).find(m =>
+      (m.load_id === loadId || m.loadId === loadId) && m.status === "confirmed"
+    );
+
+    if (!confirmedMatch) {
+      Toast.error("A viagem precisa ser confirmada antes de gerar a OS.");
+      return;
+    }
+
     // Busca dados do motorista/empresa
     let driver = null;
     let company = null;
@@ -960,6 +1071,44 @@ const MatchingPage = {
       Modal.close();
     } catch (err) {
       Toast.error(err.message || "Erro ao criar OS");
+    }
+  },
+
+  // ═══ Criar / Confirmar Match ═══════════════════════
+
+  /**
+   * Cria um novo match (status = pending)
+   */
+  async createMatch(loadId, routeId, driverId) {
+    if (!loadId || !routeId || !driverId) {
+      Toast.error("Dados incompletos para criar o match.");
+      return;
+    }
+
+    try {
+      await Api.post("matching", { loadId, driverId, routeId });
+      Toast.success("Match criado com sucesso! Aguardando confirmação.");
+      Router.refresh();
+    } catch (err) {
+      Toast.error(err.message || "Erro ao criar match");
+    }
+  },
+
+  /**
+   * Confirma a viagem (match status → confirmed)
+   */
+  async confirmMatch(matchId) {
+    if (!matchId) {
+      Toast.error("Match não encontrado.");
+      return;
+    }
+
+    try {
+      await Api.patch(`matching/${matchId}`, { status: "confirmed" });
+      Toast.success("✅ Viagem confirmada! Agora você pode gerar a OS.");
+      Router.refresh();
+    } catch (err) {
+      Toast.error(err.message || "Erro ao confirmar viagem");
     }
   },
 

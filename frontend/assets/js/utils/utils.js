@@ -295,6 +295,40 @@ const Utils = {
   },
 
   /**
+   * Renderiza o botão padrão de exportar CSV usado nas páginas CRUD.
+   * Centraliza o HTML que era duplicado em 8 páginas.
+   *
+   * @param {string} pageNs - Namespace global da página (ex: "DriversPage")
+   * @returns {string} HTML do botão
+   */
+  renderExportCsvButton(pageNs) {
+    return `
+      <button onclick="Utils.handleExport('${pageNs}')" class="flex items-center space-x-1.5 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="${__("action.exportCsv")}">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="hidden sm:inline">${__("action.exportCsv")}</span>
+      </button>
+    `;
+  },
+
+  /**
+   * Dispara exportação CSV da página usando sua configuração _exportConfig.
+   * Lê do escopo global a página e chama Utils.exportCsv() com os parâmetros
+   * configurados (data, columns, filename).
+   *
+   * @param {string} pageNs - Namespace global da página (ex: "DriversPage")
+   */
+  handleExport(pageNs) {
+    const page = window[pageNs];
+    if (!page || !page._exportConfig) {
+      console.warn(`Export config not found for ${pageNs}`);
+      Toast.warning("Configuração de exportação não encontrada.");
+      return;
+    }
+    const { data, columns, filename } = page._exportConfig;
+    this.exportCsv(data, columns, filename);
+  },
+
+  /**
    * Renderiza um card de filtro clicável para as páginas CRUD.
    * Centraliza o HTML que era duplicado em 7 páginas.
    *

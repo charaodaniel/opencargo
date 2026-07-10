@@ -57,6 +57,8 @@ const PRECACHE_ASSETS = [
   "/assets/js/i18n/i18n.js",
   "/assets/icons/icon-192.svg",
   "/assets/icons/icon-512.svg",
+  "/assets/icons/logo-192.png",
+  "/assets/icons/logo-512.png",
 ];
 
 // URLs de CDN para cache
@@ -117,6 +119,33 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
+// ── Background Sync ──────────────────────────────────
+self.addEventListener("sync", (event) => {
+  if (event.tag === "sync-offline-queue") {
+    event.waitUntil(processOfflineQueue());
+  }
+});
+
+/**
+ * Processa a fila offline: envia as requisições pendentes
+ * para o servidor e notifica o cliente sobre o resultado.
+ */
+async function processOfflineQueue() {
+  try {
+    // Acessa os clients da service worker
+    const clients = await self.clients.matchAll({ type: "window" });
+    const activeClient = clients.find((c) => c.visibilityState === "visible") || clients[0];
+
+    if (!activeClient) return;
+
+    // Pede para o cliente processar a fila
+    activeClient.postMessage({ action: "processOfflineQueue" });
+  } catch (err) {
+    console.error("[SW] Erro ao processar fila offline:", err);
+  }
+}
+
 
 // ── Interceptação de Fetch ────────────────────────────
 self.addEventListener("fetch", (event) => {

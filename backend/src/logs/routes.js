@@ -201,8 +201,12 @@ export async function logRoutes(app) {
 
   /**
    * Estatísticas dos logs
+   * Query params:
+   *   days (number, default 30) — período do breakdown diário por ação
    */
   app.get("/stats", { preHandler: [adminOnly] }, async (request) => {
+    const days = Math.min(Math.max(parseInt(request.query.days) || 30, 1), 365);
+
     const [total] = await query(`SELECT COUNT(*) as total FROM activity_logs`);
     const [byAction] = await query(
       `SELECT action, COUNT(*) as count FROM activity_logs GROUP BY action ORDER BY count DESC`
@@ -210,9 +214,9 @@ export async function logRoutes(app) {
     const [byEntity] = await query(
       `SELECT entity_type, COUNT(*) as count FROM activity_logs GROUP BY entity_type ORDER BY count DESC`
     );
-    const [recent30] = await query(
+    const [daily] = await query(
       `SELECT DATE(created_at) as day, action, COUNT(*) as count FROM activity_logs
-       WHERE created_at >= datetime('now', '-30 days')
+       WHERE created_at >= datetime('now', '-${days} days')
        GROUP BY DATE(created_at), action ORDER BY day ASC, action ASC`
     );
     const [recent7] = await query(
@@ -226,8 +230,82 @@ export async function logRoutes(app) {
       by_action: byAction || [],
       by_entity: byEntity || [],
       recent_days: recent7 || [],
-      daily_30: recent30 || [],
+      daily,
+      daily_30: daily || [], // mantido para compatibilidade
+      days_requested: days,
     };
+  });
+
+  /**
+   * Auditoria — estatísticas avançadas
+   * Query params:
+   *   days (number, default 30) — período da análise
+   */
+  app.get("/audit", { preHandler: [adminOnly] }, async (request) => {
+    const days = Math.min(Math.max(parseInt(request.query.days) || 30, 1), 365);
+
+    // 1. Top usuários por quantidade de ações
+    const [topUsers] = await query(
+      `SELECT user_id, user_name, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-${days} days')
+       GROUP BY user_id ORDER BY count DESC LIMIT 20`
+    );
+
+    // 2. Distribuição por hora do dia (peak hours)
+    const [byHour] = await query(
+      `SELECT CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-${days} days')
+       GROUP BY hour ORDER BY hour ASC`
+    );
+
+    // 3. Distribuição por dia da semana
+    const [byWeekday] = await query(
+      `SELECT CAST(strftime('%w', created_at) AS INTEGER) as weekday, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-${days} days')
+       GROUP BY weekday ORDER BY weekday ASC`
+    );
+
+    // 4. Breakdown por ação + entidade (cruzado)
+    const [actionEntity] = await query(
+      `SELECT action, entity_type, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-${days} days')
+       GROUP BY action, entity_type ORDER BY count DESC LIMIT 30`
+    );
+
+    // 5. Total geral do período
+    const [periodTotalRow] = await query(
+      `SELECT COUNT(*) as periodTotal FROM activity_logs
+       WHERE created_at >= datetime('now', '-${days} days')`
+    );
+
+    // 6. Últimas 24h — contagem por hora
+    const [last24h] = await query(
+      `SELECT CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as count FROM activity_logs
+       WHERE created_at >= datetime('now', '-24 hours')
+       GROUP BY hour ORDER BY hour ASC`
+    );
+
+    return {
+      days_requested: days,
+      period_total: periodTotalRow?.periodTotal || 0,
+      top_users: topUsers || [],
+      by_hour: byHour || [],
+      by_weekday: byWeekday || [],
+      action_entity: actionEntity || [],
+      last_24h: last24h || [],
+    };
+  });
+
+  /**
+   * Lista usuários que possuem registros nos logs (para filtro)
+   */
+  app.get("/users", { preHandler: [adminOnly] }, async () => {
+    const users = await query(
+      `SELECT DISTINCT user_id, user_name FROM activity_logs
+       WHERE user_id IS NOT NULL AND user_name IS NOT NULL
+       ORDER BY user_name ASC`
+    );
+    return users || [];
   });
 
   /**

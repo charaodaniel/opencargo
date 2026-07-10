@@ -78,6 +78,7 @@ const Sidebar = {
         { icon: "reviews", labelKey: "nav.reviews", page: "reviews" },
         { icon: "notifications", labelKey: "nav.notifications", page: "notifications" },
         { icon: "documents", labelKey: "nav.alerts", page: "alerts" },
+        { icon: "documents", labelKey: "nav.audit", page: "audit" },
       ],
     },
     {
@@ -111,7 +112,7 @@ const Sidebar = {
       ...group,
       items: group.items.filter(item => {
         // Esconde páginas admin para usuários não-admin
-        if ((item.page === "admin-users" || item.page === "alerts") && !isAdmin) return false;
+        if ((item.page === "admin-users" || item.page === "alerts" || item.page === "audit") && !isAdmin) return false;
         return true;
       }),
     })).filter(group => group.items.length > 0);
@@ -139,10 +140,8 @@ const Sidebar = {
         <div class="flex items-center h-16 px-4 border-b border-sidebar-border shrink-0">
           <a href="#" onclick="Router.go('dashboard'); return false;"
              class="sidebar-logo flex items-center ${isCollapsed ? "justify-center w-full" : "space-x-3"}">
-            <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-              <svg class="w-5 h-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
+            <div class="w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-lg shadow-primary/20">
+              <img src="assets/icons/logo-192.png" alt="OpenCargo" class="w-full h-full object-cover" />
             </div>
             <div class="${isCollapsed ? "hidden" : "block"} overflow-hidden">
               <p class="text-sm font-bold text-sidebar-foreground leading-tight">OpenCargo</p>

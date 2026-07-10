@@ -408,6 +408,7 @@ const I18nEn = {
   "admin.users.activated": "User activated successfully!",
   "admin.users.deactivated": "User deactivated successfully!",
   "nav.alerts": "Alerts",
+  "nav.audit": "Audit",
   "nav.adminUsers": "Admin",
 
   // ── Themes ────────────────────────────────────────

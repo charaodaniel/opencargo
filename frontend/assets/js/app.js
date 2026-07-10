@@ -19,18 +19,26 @@ const App = {
     // Verifica se usuário está logado
     const isLoggedIn = Storage.isLoggedIn();
 
-    if (isLoggedIn) {
-      // Valida o token com a API antes de renderizar o app
-      const tokenValid = await this._validateToken();
-      if (tokenValid) {
-        await this._renderApp();
+    try {
+      if (isLoggedIn) {
+        // Valida o token com a API antes de renderizar o app
+        const tokenValid = await this._validateToken();
+        if (tokenValid) {
+          await this._renderApp();
+        } else {
+          Storage.logout();
+          this._renderLanding();
+        }
       } else {
-        Storage.logout();
         this._renderLanding();
       }
-    } else {
-      this._renderLanding();
+    } finally {
+      // Esconde a splash screen com fade-out suave
+      this._hideSplash();
     }
+
+    // Inicializa suporte offline (fila de ações pendentes)
+    this._initOfflineSupport();
   },
 
   /**
@@ -165,6 +173,66 @@ const App = {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+    }
+  },
+
+  /**
+   * Esconde a splash screen com fade-out suave
+   */
+  _hideSplash() {
+    const splash = document.getElementById("splash-screen");
+    if (!splash) return;
+
+    // Aplica classe de fade-out
+    splash.classList.add("splash-hidden");
+
+    // Remove o elemento do DOM após a animação terminar
+    setTimeout(() => {
+      if (splash.parentNode) {
+        splash.parentNode.removeChild(splash);
+      }
+    }, 600);
+  },
+
+  /**
+   * Inicializa listeners de online/offline e mensagens do SW
+   */
+  _initOfflineSupport() {
+    // Listener do Service Worker para processamento da fila
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.action === "processOfflineQueue") {
+        OfflineQueue.processAll();
+      }
+    });
+
+    // Listener: voltou ao online → processa fila pendente
+    window.addEventListener("online", () => {
+      Toast.success("🌐 Conexão restabelecida!");
+      const pending = OfflineQueue.count();
+      if (pending > 0) {
+        Toast.info(`🔄 Sincronizando ${pending} ação(ões) pendente(s)...`);
+        OfflineQueue.processAll().then(() => {
+          Navbar.updateOfflineBadge();
+        });
+      }
+      Navbar.updateOfflineBadge();
+    });
+
+    // Listener: ficou offline
+    window.addEventListener("offline", () => {
+      Toast.warning("📡 Você está offline. As ações serão enfileiradas.");
+      Navbar.updateOfflineBadge();
+    });
+
+    // Processa fila pendente na inicialização (se online)
+    if (navigator.onLine) {
+      const pending = OfflineQueue.count();
+      if (pending > 0) {
+        setTimeout(() => {
+          Toast.info(`🔄 Sincronizando ${pending} ação(ões) pendente(s)...`);
+          OfflineQueue.processAll();
+        }, 2000);
+      }
     }
   },
 };

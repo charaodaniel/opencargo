@@ -11,5 +11,8 @@
     "seed": "cd backend && npm run seed",
     "test": "cd backend && npm test",
     "docker": "docker compose up --build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
   }
 }
