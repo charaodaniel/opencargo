@@ -407,6 +407,8 @@ const I18nPtBr = {
   "admin.users.deactivated": "Usuário desativado com sucesso!",
   "nav.alerts": "Alertas",
   "nav.audit": "Auditoria",
+  "nav.companyDashboard": "Painel da Empresa",
+  "nav.docs": "Documentação",
   "nav.adminUsers": "Admin",
 
   // ── Temas ─────────────────────────────────────────

@@ -207,12 +207,15 @@ OpenCargo/
 ├── frontend/
 │   └── assets/
 │       ├── js/
-│       │   ├── utils/      # config, api, storage, utils, geocoding
+│       │   ├── utils/      # config, api, storage, utils, geocoding, offline-queue, icons
 │       │   ├── components/ # Toast, Modal, Table, Card, Navbar, Sidebar
 │       │   └── pages/      # dashboard, companies, drivers, vehicles,
 │       │                      routes, loads, matching, chat, notifications,
-│       │                      maps, login
-│       └── css/style.css
+│       │                      maps, login, landing, audit, alerts,
+│       │                      company-dashboard, profile, docs-page,
+│       │                      admin-users, logs, freights
+│       ├── css/            # style.css, tailwind.css
+│       └── icons/          # logo-48, logo-192, logo-512, logo-1024
 ├── docs/                    # Documentação
 ├── docker/                  # Dockerfiles + nginx.conf
 ├── scripts/                 # Setup + seed (shell)

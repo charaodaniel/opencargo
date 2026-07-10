@@ -409,6 +409,8 @@ const I18nEn = {
   "admin.users.deactivated": "User deactivated successfully!",
   "nav.alerts": "Alerts",
   "nav.audit": "Audit",
+  "nav.companyDashboard": "Company Panel",
+  "nav.docs": "Documentation",
   "nav.adminUsers": "Admin",
 
   // ── Themes ────────────────────────────────────────

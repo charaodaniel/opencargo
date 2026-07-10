@@ -57,8 +57,10 @@ const PRECACHE_ASSETS = [
   "/assets/js/i18n/i18n.js",
   "/assets/icons/icon-192.svg",
   "/assets/icons/icon-512.svg",
+  "/assets/icons/logo-48.png",
   "/assets/icons/logo-192.png",
   "/assets/icons/logo-512.png",
+  "/assets/icons/logo-1024.png",
 ];
 
 // URLs de CDN para cache

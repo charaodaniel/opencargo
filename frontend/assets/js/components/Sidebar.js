@@ -85,8 +85,11 @@ const Sidebar = {
       id: "conta",
       labelKey: "sidebar.conta",
       items: [
+        { icon: "companies", labelKey: "nav.companyDashboard", page: "company", roles: ["empresa", "company"] },
         { icon: "users", labelKey: "nav.adminUsers", page: "admin-users" },
+        { icon: "documents", labelKey: "nav.docs", page: "docs" },
         { icon: "settings", labelKey: "nav.settings", page: "settings" },
+        { icon: "users", labelKey: "nav.profile", page: "profile" },
       ],
     },
   ],
@@ -112,7 +115,10 @@ const Sidebar = {
       ...group,
       items: group.items.filter(item => {
         // Esconde páginas admin para usuários não-admin
+        // Esconde páginas admin para usuários não-admin
         if ((item.page === "admin-users" || item.page === "alerts" || item.page === "audit") && !isAdmin) return false;
+        // Mostra company-dashboard apenas para empresas
+        if (item.roles && !item.roles.includes(user?.role)) return false;
         return true;
       }),
     })).filter(group => group.items.length > 0);

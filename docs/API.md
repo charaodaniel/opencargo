@@ -137,6 +137,7 @@ Dados do usuário logado.
 |--------|------|-----------|:------------:|
 | POST | `/api/companies` | Cadastrar empresa | 🔐 |
 | GET | `/api/companies` | Listar empresas (paginado) | 🔐 |
+| GET | `/api/companies/me` | Empresa do usuário logado | 🔐 |
 | GET | `/api/companies/:id` | Buscar empresa | 🔐 |
 | PATCH | `/api/companies/:id` | Atualizar empresa | 🔐 |
 
@@ -148,6 +149,7 @@ Dados do usuário logado.
 |--------|------|-----------|:------------:|
 | POST | `/api/drivers` | Cadastrar motorista | 🔐 |
 | GET | `/api/drivers` | Listar motoristas (paginado) | 🔐 |
+| GET | `/api/drivers/me` | Motorista do usuário logado | 🔐 |
 | GET | `/api/drivers/available` | Motoristas disponíveis | 🔐 |
 | GET | `/api/drivers/:id` | Buscar motorista | 🔐 |
 | PATCH | `/api/drivers/:id` | Atualizar motorista | 🔐 |
@@ -176,6 +178,7 @@ Dados do usuário logado.
 | GET | `/api/routes/return` | Rotas de retorno (paginado) | 🔐 |
 | GET | `/api/routes/:id` | Buscar rota | 🔐 |
 | PATCH | `/api/routes/:id` | Atualizar rota | 🔐 |
+| DELETE | `/api/routes/:id` | Remover rota | 🔐 |
 
 ---
 
@@ -184,10 +187,61 @@ Dados do usuário logado.
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|:------------:|
 | POST | `/api/loads` | Cadastrar carga | 🔐 |
-| GET | `/api/loads` | Listar cargas | 🔐 |
+| GET | `/api/loads` | Listar cargas (paginado) | 🔐 |
 | GET | `/api/loads/available` | Cargas disponíveis | 🔐 |
+| GET | `/api/loads/nearby` | Cargas próximas (GPS ou cidade) | 🔐 |
 | GET | `/api/loads/:id` | Buscar carga | 🔐 |
 | PATCH | `/api/loads/:id` | Atualizar carga | 🔐 |
+| DELETE | `/api/loads/:id` | Remover carga | 🔐 |
+
+---
+
+## Service Orders
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/service-orders` | Criar ordem de serviço | 🔐 |
+
+---
+
+## Documents
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/documents/upload` | Upload de arquivo | 🔐 |
+| GET | `/api/documents/:entityType/:entityId` | Listar documentos | 🔐 |
+| DELETE | `/api/documents/:id` | Remover documento | 🔐 |
+
+---
+
+## Reviews
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| POST | `/api/reviews` | Criar avaliação | 🔐 |
+| GET | `/api/reviews` | Listar avaliações (paginado) | 🔐 |
+| GET | `/api/reviews/stats/:userId` | Estatísticas de avaliações | 🔐 |
+
+---
+
+## Activity Logs
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/logs` | Listar logs (paginado, filtrável) | 🔐 Admin |
+| GET | `/api/logs/stats` | Estatísticas dos logs | 🔐 Admin |
+| GET | `/api/logs/audit` | Auditoria avançada (top users, horários, dias) | 🔐 Admin |
+| GET | `/api/logs/users` | Usuários com registros nos logs | 🔐 Admin |
+| GET | `/api/logs/alerts` | Alertas de segurança consolidados | 🔐 Admin |
+
+---
+
+## Freights
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|:------------:|
+| GET | `/api/freights` | Listar fretes realizados | 🔐 |
+| GET | `/api/freights/stats` | Estatísticas de fretes | 🔐 |
 
 ---
 

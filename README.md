@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
 [![Tests](https://img.shields.io/badge/Tests-38%20passing-brightgreen)](https://github.com/charaodaniel/opencargo)
+[![PWA](https://img.shields.io/badge/PWA-ready-blue)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+[![Offline](https://img.shields.io/badge/Offline--First-supported-orange)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)](https://www.postgresql.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](docs/CONTRIBUTING.md)
 [![GitHub last commit](https://img.shields.io/github/last-commit/charaodaniel/opencargo)](https://github.com/charaodaniel/opencargo/commits/master)
@@ -70,6 +72,7 @@ São Paulo ──(carregado)──▶ Porto Alegre
 - 🔗 **Matching inteligente** — Encontre motoristas com rotas compatíveis para frete de retorno
 - 💬 **Chat em tempo real** — Comunique-se com motoristas após o match
 - 🗺️ **Visualização no mapa** — Veja cargas, rotas e cidades no mapa interativo
+- 📊 **Painel da Empresa** — Dashboard exclusivo com métricas, cargas e matches
 
 ### Para Motoristas
 - 🛣️ **Cadastro de rotas** — Informe suas viagens programadas e capacidade ociosa
@@ -80,9 +83,13 @@ São Paulo ──(carregado)──▶ Porto Alegre
 ### Gerais
 - 🔐 **Autenticação JWT** — Registro e login seguro
 - 📊 **Dashboard** — Visão geral de cargas, rotas e matches
+- 📋 **Perfil do Usuário** — Página dedicada com avatar, avaliações e edição
 - 🔔 **Notificações** — Alertas sobre matches e mensagens
 - 🗺️ **Mapa interativo** — Leaflet + OpenStreetMap com clustering e dark mode
-- 📖 **Swagger** — Documentação interativa da API em `/docs`
+- 📡 **Suporte Offline** — Ações enfileiradas quando sem internet, sincronizam automaticamente
+- 🔄 **Notificações Push** — Alertas de sincronização offline quando o app está em segundo plano
+- 🕵️ **Auditoria** — Logs detalhados de atividade com gráficos e exportação
+- 📖 **Documentação integrada** — Guia do sistema acessível diretamente na plataforma
 
 ---
 

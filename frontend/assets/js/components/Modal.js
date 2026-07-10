@@ -74,7 +74,8 @@ const Modal = {
   open({ title, body, footer, onSubmit } = {}) {
     this.init();
 
-    this.element.querySelector("#modal-title").textContent = title || "";
+    // Aceita HTML no título (ex: avatar + nome em viewUser)
+    this.element.querySelector("#modal-title").innerHTML = title || "";
     this.element.querySelector("#modal-body").innerHTML = body || "";
     const footerEl = this.element.querySelector("#modal-footer");
 

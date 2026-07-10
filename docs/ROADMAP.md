@@ -38,8 +38,11 @@
 
 ## ✅ Versão 0.3 — Experiência do Usuário
 
-- [ ] Notificações push
-- [ ] PWA (Progressive Web App)
+- [x] Notificações push (Web Notification API)
+- [x] PWA (Progressive Web App) com Service Worker
+- [x] Suporte offline (fila de ações em localStorage)
+- [x] Sincronização automática ao voltar ao online
+- [x] Banner de atualização PWA (skipWaiting)
 - [x] Upload de documentos
 - [x] Filtros avançados no matching
 - [x] Suporte a múltiplos idiomas (pt-BR, en)
@@ -48,16 +51,26 @@
 - [x] Paginação em todas as listas
 - [x] Supabase + RLS (Row Level Security)
 - [x] Roles: administrador, gestor, empresa, motorista
+- [x] Painel da Empresa (dashboard exclusivo)
+- [x] Perfil separado de Configurações
+- [x] Página de Auditoria com gráficos e estatísticas
+- [x] Página de Documentação integrada
+- [x] Splash screen animado no carregamento
+- [x] Landing page redesenhada com hero image
+- [x] Modo mock com persistência em memória (POST/PATCH/DELETE)
+- [x] Relatório de atividades suspeitas (segurança)
 
 ---
 
-## ⏳ Versão 0.4 — Inteligência e Otimização
+## 🔄 Versão 0.4 — Inteligência e Otimização
 
 - [ ] Matching com distância máxima
 - [ ] Desvios permitidos no trajeto
 - [ ] Cálculo automático de frete
 - [ ] Score de compatibilidade avançado
 - [ ] Sugestão de rotas otimizadas
+- [ ] Exportar relatórios em PDF
+- [ ] Dashboard inteligente por role (admin, empresa, motorista)
 
 ---
 
@@ -69,6 +82,8 @@
 - [ ] Cooperativas e grupos
 - [ ] Marketplace de fretes
 - [ ] Testes de carga e performance
+- [ ] Modo escuro avançado (mais temas)
+- [ ] Notificações push via Service Worker (background)
 
 ---
 
@@ -80,6 +95,8 @@
 - [ ] IA para otimização de cargas
 - [ ] Painel administrativo avançado
 - [ ] Plataforma internacional
+- [ ] Integração com Google Maps / Waze
+- [ ] Gateway de pagamento
 
 ---
 
